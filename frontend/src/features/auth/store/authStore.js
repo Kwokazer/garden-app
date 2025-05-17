@@ -7,8 +7,6 @@ import { useRouter } from "vue-router";
 
 /**
  * Функция для декодирования JWT токена (без проверки подписи)
- * @param {string} token - JWT токен
- * @returns {Object|null} - Данные из токена или null при ошибке
  */
 function parseJwt(token) {
   try {
@@ -56,7 +54,6 @@ export const useAuthStore = defineStore("auth", () => {
 
   /**
    * Устанавливает пользовательские данные из JWT токена
-   * @param {string} token - JWT токен
    */
   function setUserFromToken(token) {
     if (!token) {
@@ -92,8 +89,6 @@ export const useAuthStore = defineStore("auth", () => {
 
   /**
    * Выполняет вход пользователя
-   * @param {Object} credentials - Учетные данные (email, password)
-   * @returns {Promise<boolean>} - Результат операции
    */
   async function login(credentials) {
     isLoading.value = true;
@@ -160,8 +155,6 @@ export const useAuthStore = defineStore("auth", () => {
 
   /**
    * Регистрирует нового пользователя
-   * @param {Object} userData - Данные пользователя
-   * @returns {Promise<boolean>} - Результат операции
    */
   async function register(userData) {
     isLoading.value = true;
@@ -195,7 +188,6 @@ export const useAuthStore = defineStore("auth", () => {
 
   /**
    * Выполняет выход пользователя
-   * @returns {Promise<void>}
    */
   async function logout() {
     isLoading.value = true;
@@ -226,7 +218,6 @@ export const useAuthStore = defineStore("auth", () => {
 
   /**
    * Пытается обновить токены с помощью refresh-токена
-   * @returns {Promise<boolean>} - Результат операции
    */
   async function attemptRefreshToken() {
     isLoading.value = true;

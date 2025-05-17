@@ -45,7 +45,7 @@ services:
       - /app/node_modules
     env_file:
       - ./frontend/.env
-    command: npm run dev
+    command: npx vite --host 0.0.0.0
     networks:
       - garden-network
 

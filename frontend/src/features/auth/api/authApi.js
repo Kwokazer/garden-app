@@ -8,8 +8,6 @@ const BASE_API_URL = "/api/v1"; // Основной URL для API
 
 /**
  * Обрабатывает ответы от API
- * @param {Response} response - ответ от fetch
- * @returns {Promise<Object>} - обработанный ответ
  */
 async function handleResponse(response) {
   const contentType = response.headers.get("content-type");

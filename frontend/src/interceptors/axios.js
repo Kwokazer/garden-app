@@ -36,7 +36,6 @@ instance.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) {
           // Если нет refresh токена, выходим из системы
-          // Здесь можно добавить вызов функции logout из хранилища
           window.location.href = '/login';
           return Promise.reject(error);
         }

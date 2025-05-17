@@ -10,12 +10,9 @@ import DashboardPage from '../features/auth/views/DashboardPage.vue';
 
 /**
  * Функция проверки аутентификации для защищенных маршрутов
- * @param {Object} to - маршрут назначения
- * @param {Object} from - исходный маршрут
- * @param {Function} next - функция для продолжения навигации
  */
 const authGuard = (to, from, next) => {
-  // Проверяем наличие токена в localStorage (для случаев, когда хранилище еще не проинициализировано)
+  // Проверяем наличие токена в localStorage
   const accessToken = localStorage.getItem('accessToken');
   
   // Пытаемся получить состояние аутентификации из хранилища

@@ -1,5 +1,4 @@
 <!-- src/features/auth/components/LoginForm.vue -->
-
 <template>
     <form @submit.prevent="handleSubmit" class="auth-form">
       <div v-if="error" class="alert alert-danger" role="alert">
