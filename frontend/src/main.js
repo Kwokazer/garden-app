@@ -1,17 +1,31 @@
-import { createApp } from "vue";
-import { createPinia } from "pinia";
-import App from "./App.vue";
-import router from "./router";
+// src/main.js
 
-// Импортируем стили Bootstrap
-import "bootstrap/dist/css/bootstrap.min.css";
-// При необходимости можно импортировать и JavaScript Bootstrap
-// import 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import App from './App.vue';
+import router from './router';
+import axios from '@/interceptors/axios';
 
+// Импорт стилей Bootstrap
+import 'bootstrap/dist/css/bootstrap.min.css';
+
+// Создание экземпляра приложения
 const app = createApp(App);
 
-// Инициализируем Pinia ПЕРЕД роутером (важно для authStore в navigation guards)
-app.use(createPinia());
+// Добавление глобальных свойств
+app.config.globalProperties.$axios = axios;
+
+// Инициализация Pinia (хранилище) ПЕРЕД роутером
+// Это важно для корректной работы навигационных guard'ов
+const pinia = createPinia();
+app.use(pinia);
+
+// Инициализация маршрутизатора
 app.use(router);
 
-app.mount("#app");
+// Монтирование приложения
+app.mount('#app');
+
+// После монтирования подключаем необходимые скрипты Bootstrap
+// для работы интерактивных компонентов (dropdown, modal и т.д.)
+import('bootstrap/dist/js/bootstrap.bundle.min.js');

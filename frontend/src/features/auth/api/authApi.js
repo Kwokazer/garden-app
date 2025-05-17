@@ -1,7 +1,16 @@
-// API клиент для аутентификации с реальными запросами к вашему бэкенду
+// src/features/auth/api/authApi.js
 
-const BASE_API_URL = "/api/v1"; // Общий базовый URL для API
+/**
+ * API клиент для аутентификации с запросами к бэкенду
+ */
 
+const BASE_API_URL = "/api/v1"; // Основной URL для API
+
+/**
+ * Обрабатывает ответы от API
+ * @param {Response} response - ответ от fetch
+ * @returns {Promise<Object>} - обработанный ответ
+ */
 async function handleResponse(response) {
   const contentType = response.headers.get("content-type");
   let data;
@@ -26,7 +35,7 @@ async function handleResponse(response) {
         : data && data.message
         ? data.message
         : response.statusText;
-    // Сохраняем статус и полные данные ошибки для возможной более детальной обработки
+    // Возвращаем объект с ошибкой
     return Promise.reject({
       success: false,
       message: message,
@@ -34,68 +43,91 @@ async function handleResponse(response) {
       errorData: data,
     });
   }
-  // Успешный ответ, data содержит тело ответа от сервера
+
+  // Успешный ответ
   return Promise.resolve({ success: true, data: data });
 }
 
+/**
+ * API клиент для работы с аутентификацией
+ */
 export const authApi = {
+  /**
+   * Выполняет вход пользователя
+   * @param {string} email - email пользователя
+   * @param {string} password - пароль пользователя
+   * @returns {Promise<Object>} - ответ от сервера с токенами
+   */
   async login(email, password) {
     const response = await fetch(`${BASE_API_URL}/auth/login`, {
-      // Путь из auth.py
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      // LoginRequest ожидает email и password
       body: JSON.stringify({ email, password }),
     });
-    return handleResponse(response); // Ожидаемый ответ: TokenResponse
+    return handleResponse(response);
   },
 
+  /**
+   * Регистрирует нового пользователя
+   * @param {string} username - имя пользователя
+   * @param {string} email - email пользователя
+   * @param {string} password - пароль пользователя
+   * @param {string} firstName - имя (опционально)
+   * @param {string} lastName - фамилия (опционально)
+   * @returns {Promise<Object>} - ответ от сервера
+   */
   async register(username, email, password, firstName, lastName) {
     const registrationData = {
       username,
       email,
       password,
     };
+    
+    // Добавляем опциональные поля только если они переданы
     if (firstName) registrationData.first_name = firstName;
     if (lastName) registrationData.last_name = lastName;
 
     const response = await fetch(`${BASE_API_URL}/auth/register`, {
-      // Путь из auth.py
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      // RegistrationRequest ожидает username, email, password и опционально first_name, last_name
       body: JSON.stringify(registrationData),
     });
-    return handleResponse(response); // Ожидаемый ответ: RegistrationResponse
+    return handleResponse(response);
   },
 
+  /**
+   * Выполняет выход пользователя (инвалидация refresh токена)
+   * @param {string} refreshToken - refresh токен
+   * @returns {Promise<Object>} - ответ от сервера
+   */
   async logout(refreshToken) {
     if (!refreshToken) {
-      // Если refresh токена нет, можно просто имитировать успешный выход
-      // или вернуть ошибку, что пользователь не был залогинен для выхода.
       console.warn("Попытка выхода без refresh токена.");
       return Promise.resolve({
         success: true,
         data: { message: "Выход выполнен (локально)." },
       });
     }
+    
     const response = await fetch(`${BASE_API_URL}/auth/logout`, {
-      // Путь из auth.py
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // Logout на бэкенде не требует Authorization заголовка, он инвалидирует переданный refresh_token
       },
-      // Logout ожидает RefreshTokenRequest с refresh_token в теле
       body: JSON.stringify({ refresh_token: refreshToken }),
     });
-    return handleResponse(response); // Ожидаемый ответ: SuccessResponse
+    return handleResponse(response);
   },
 
+  /**
+   * Обновляет токены с помощью refresh токена
+   * @param {string} token - refresh токен
+   * @returns {Promise<Object>} - ответ от сервера с новыми токенами
+   */
   async refreshToken(token) {
     const response = await fetch(`${BASE_API_URL}/auth/refresh`, {
       method: "POST",
@@ -104,6 +136,76 @@ export const authApi = {
       },
       body: JSON.stringify({ refresh_token: token }),
     });
-    return handleResponse(response); // Ожидаемый ответ: TokenResponse
+    return handleResponse(response);
   },
+
+  /**
+   * Запрашивает сброс пароля
+   * @param {string} email - email пользователя
+   * @returns {Promise<Object>} - ответ от сервера
+   */
+  async resetPassword(email) {
+    const response = await fetch(`${BASE_API_URL}/auth/reset-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Подтверждает сброс пароля с новым паролем
+   * @param {string} resetToken - токен сброса пароля
+   * @param {string} newPassword - новый пароль
+   * @returns {Promise<Object>} - ответ от сервера
+   */
+  async resetPasswordConfirm(resetToken, newPassword) {
+    const response = await fetch(`${BASE_API_URL}/auth/reset-password-confirm`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        reset_token: resetToken,
+        new_password: newPassword,
+      }),
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Подтверждает email пользователя
+   * @param {string} verificationToken - токен подтверждения email
+   * @returns {Promise<Object>} - ответ от сервера
+   */
+  async verifyEmail(verificationToken) {
+    const response = await fetch(`${BASE_API_URL}/auth/verify-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        verification_token: verificationToken,
+      }),
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Получает текущего пользователя с его профилем
+   * @param {string} accessToken - JWT токен доступа
+   * @returns {Promise<Object>} - ответ от сервера с данными пользователя
+   */
+  async getCurrentUser(accessToken) {
+    const response = await fetch(`${BASE_API_URL}/users/me`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return handleResponse(response);
+  }
 };

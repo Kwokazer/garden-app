@@ -1,13 +1,22 @@
+// src/features/auth/store/authStore.js
+
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { authApi } from "../api/authApi.js";
 import { useRouter } from "vue-router";
 
-// Функция для декодирования JWT (простая, без проверки подписи)
+/**
+ * Функция для декодирования JWT токена (без проверки подписи)
+ * @param {string} token - JWT токен
+ * @returns {Object|null} - Данные из токена или null при ошибке
+ */
 function parseJwt(token) {
   try {
+    // Разделяем JWT на части и берем payload (вторую часть)
     const base64Url = token.split(".")[1];
     const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    
+    // Декодируем Base64
     const jsonPayload = decodeURIComponent(
       atob(base64)
         .split("")
@@ -16,27 +25,28 @@ function parseJwt(token) {
         })
         .join("")
     );
+    
     return JSON.parse(jsonPayload);
   } catch (e) {
-    console.error("Error decoding JWT: ", e);
+    console.error("Ошибка декодирования JWT: ", e);
     return null;
   }
 }
 
-export const useAuthStore = defineStore("authStore", () => {
-  // Примечание: useRouter() здесь будет работать корректно, если Pinia
-  // и Vue Router правильно инициализированы в main.js (Pinia store создается
-  // в контексте, где router уже доступен).
+/**
+ * Хранилище для управления состоянием аутентификации
+ */
+export const useAuthStore = defineStore("auth", () => {
   const router = useRouter();
 
-  // State
+  // State (состояние)
   const accessToken = ref(localStorage.getItem("accessToken") || null);
   const refreshToken = ref(localStorage.getItem("refreshToken") || null);
   const user = ref(JSON.parse(localStorage.getItem("user")) || null);
   const isLoading = ref(false);
   const error = ref(null);
 
-  // Getters
+  // Getters (вычисляемые свойства)
   const isLoggedIn = computed(() => !!accessToken.value);
   const authUser = computed(() => user.value);
   const getAccessToken = computed(() => accessToken.value);
@@ -44,90 +54,132 @@ export const useAuthStore = defineStore("authStore", () => {
   const getError = computed(() => error.value);
   const getIsLoading = computed(() => isLoading.value);
 
-  // Actions
+  /**
+   * Устанавливает пользовательские данные из JWT токена
+   * @param {string} token - JWT токен
+   */
   function setUserFromToken(token) {
     if (!token) {
       user.value = null;
       localStorage.removeItem("user");
       return;
     }
+    
     const decodedToken = parseJwt(token);
     if (decodedToken && decodedToken.sub) {
-      // TokenResponse от бэкенда не содержит user object, только токены.
-      // Мы можем извлечь user_id (sub) и, возможно, роли из токена.
-      // Для полного объекта user потребуется отдельный запрос /users/me (предположительно)
-      user.value = {
+      // Из токена можем получить базовую информацию
+      const userData = {
         id: decodedToken.sub,
         roles: decodedToken.roles || [],
-        // Другие поля (email, username) нужно будет загружать отдельно
       };
-      localStorage.setItem("user", JSON.stringify(user.value));
+      
+      // Если в токене есть email или username, добавляем их
+      if (decodedToken.email) userData.email = decodedToken.email;
+      if (decodedToken.username) userData.username = decodedToken.username;
+      
+      user.value = userData;
+      localStorage.setItem("user", JSON.stringify(userData));
     } else {
       user.value = null;
       localStorage.removeItem("user");
     }
   }
-  // Инициализация user из токена при загрузке store
+  
+  // Инициализация пользователя из токена при загрузке store
   if (accessToken.value) {
     setUserFromToken(accessToken.value);
   }
 
+  /**
+   * Выполняет вход пользователя
+   * @param {Object} credentials - Учетные данные (email, password)
+   * @returns {Promise<boolean>} - Результат операции
+   */
   async function login(credentials) {
     isLoading.value = true;
     error.value = null;
+    
     try {
       const response = await authApi.login(
         credentials.email,
         credentials.password
       );
-      // Ожидаемый ответ от API (TokenResponse): { access_token, refresh_token, token_type, expires_in }
+      
       if (response.success && response.data.access_token) {
+        // Сохраняем токены
         accessToken.value = response.data.access_token;
         refreshToken.value = response.data.refresh_token;
 
         localStorage.setItem("accessToken", accessToken.value);
         localStorage.setItem("refreshToken", refreshToken.value);
 
+        // Устанавливаем данные пользователя из токена
         setUserFromToken(accessToken.value);
+        
+        // Если нужно, можно запросить дополнительные данные профиля
+        try {
+          const userResponse = await authApi.getCurrentUser(accessToken.value);
+          if (userResponse.success && userResponse.data) {
+            // Дополняем данные пользователя полной информацией из профиля
+            const fullUserData = {
+              ...user.value,
+              ...userResponse.data
+            };
+            user.value = fullUserData;
+            localStorage.setItem("user", JSON.stringify(fullUserData));
+          }
+        } catch (userError) {
+          console.warn("Не удалось получить дополнительные данные пользователя:", userError);
+          // Продолжаем с базовыми данными из токена
+        }
 
+        // Перенаправляем на дашборд
         router.push("/dashboard");
+        return true;
       } else {
-        // Это условие может быть избыточным, если handleResponse уже выбросил ошибку
         throw new Error(
           response.message || "Ошибка входа: неверные данные ответа."
         );
       }
     } catch (e) {
       error.value = e.message || "Не удалось выполнить вход.";
+      
+      // Очищаем все данные аутентификации при ошибке
       accessToken.value = null;
       refreshToken.value = null;
       user.value = null;
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
+      
+      return false;
     } finally {
       isLoading.value = false;
     }
   }
 
+  /**
+   * Регистрирует нового пользователя
+   * @param {Object} userData - Данные пользователя
+   * @returns {Promise<boolean>} - Результат операции
+   */
   async function register(userData) {
     isLoading.value = true;
     error.value = null;
+    
     try {
-      // Передаем все данные, включая опциональные first_name, last_name, если они есть в userData
       const response = await authApi.register(
         userData.username,
         userData.email,
         userData.password,
-        userData.first_name,
-        userData.last_name
+        userData.firstName,
+        userData.lastName
       );
-      // Ожидаемый ответ (RegistrationResponse): { id, email, username, is_verified, message }
+      
       if (response.success && response.data.id) {
-        alert(
-          response.data.message || "Регистрация успешна! Пожалуйста, войдите."
-        );
+        // Показываем сообщение об успешной регистрации
         router.push("/login");
+        return true;
       } else {
         throw new Error(
           response.message || "Ошибка регистрации: неверные данные ответа."
@@ -135,46 +187,56 @@ export const useAuthStore = defineStore("authStore", () => {
       }
     } catch (e) {
       error.value = e.message || "Не удалось зарегистрироваться.";
+      return false;
     } finally {
       isLoading.value = false;
     }
   }
 
+  /**
+   * Выполняет выход пользователя
+   * @returns {Promise<void>}
+   */
   async function logout() {
     isLoading.value = true;
     error.value = null;
     const currentRefreshToken = refreshToken.value;
 
-    // Сначала очищаем локальные данные, чтобы пользователь сразу считался вышедшим
+    // Сначала очищаем локальные данные
     accessToken.value = null;
     refreshToken.value = null;
     user.value = null;
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
-    router.push("/login"); // Перенаправляем немедленно
+    
+    // Затем делаем редирект (еще до вызова API)
+    router.push("/login");
 
     try {
       if (currentRefreshToken) {
-        await authApi.logout(currentRefreshToken); // Вызов API для инвалидации refresh токена на бэкенде
+        await authApi.logout(currentRefreshToken);
       }
     } catch (e) {
-      // Ошибка на бэкенде при выходе не критична для пользователя, т.к. локально он уже вышел
-      console.error("Ошибка при вызове API выхода на бэкенде: ", e.message);
-      // Можно сохранить эту ошибку в отдельное состояние, если нужно её где-то показать
+      console.error("Ошибка при вызове API выхода: ", e.message);
     } finally {
-      isLoading.value = false; // Завершаем загрузку после API вызова
+      isLoading.value = false;
     }
   }
 
+  /**
+   * Пытается обновить токены с помощью refresh-токена
+   * @returns {Promise<boolean>} - Результат операции
+   */
   async function attemptRefreshToken() {
     isLoading.value = true;
     error.value = null;
     const currentRefreshToken = refreshToken.value;
+    
     if (!currentRefreshToken) {
       error.value = "Нет refresh токена для обновления.";
       isLoading.value = false;
-      await logout(); // Если нет refresh токена, разлогиниваем пользователя
+      await logout();
       return false;
     }
 
@@ -182,12 +244,12 @@ export const useAuthStore = defineStore("authStore", () => {
       const response = await authApi.refreshToken(currentRefreshToken);
       if (response.success && response.data.access_token) {
         accessToken.value = response.data.access_token;
-        // Бэкенд может вернуть новый refresh_token, а может и нет.
-        // Если возвращает, обновляем:
+        
         if (response.data.refresh_token) {
           refreshToken.value = response.data.refresh_token;
           localStorage.setItem("refreshToken", refreshToken.value);
         }
+        
         localStorage.setItem("accessToken", accessToken.value);
         setUserFromToken(accessToken.value);
         isLoading.value = false;
@@ -197,30 +259,37 @@ export const useAuthStore = defineStore("authStore", () => {
       }
     } catch (e) {
       error.value = e.message || "Ошибка при обновлении токена.";
-      // Если обновление токена не удалось (например, refresh токен истек или невалиден),
-      // нужно разлогинить пользователя.
       await logout();
       isLoading.value = false;
       return false;
     }
   }
 
+  /**
+   * Очищает сообщение об ошибке
+   */
   function clearError() {
     error.value = null;
   }
 
+  // Возвращаем публичное API хранилища
   return {
+    // State
     accessToken,
     refreshToken,
     user,
     isLoading,
     error,
+    
+    // Getters
     isLoggedIn,
     authUser,
     getAccessToken,
     getRefreshToken,
     getError,
     getIsLoading,
+    
+    // Actions
     login,
     register,
     logout,

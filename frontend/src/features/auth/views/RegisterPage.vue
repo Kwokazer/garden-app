@@ -1,40 +1,21 @@
+<!-- src/features/auth/views/RegisterPage.vue -->
+
 <template>
   <div class="container mt-5">
     <div class="row justify-content-center">
-      <div class="col-md-6">
-        <div class="card">
-          <div class="card-header">
-            Регистрация
+      <div class="col-md-8">
+        <div class="card shadow border-0 rounded-3">
+          <div class="card-header bg-success text-white py-3">
+            <h4 class="mb-0 text-center">Регистрация нового пользователя</h4>
           </div>
-          <div class="card-body">
-            <form @submit.prevent="handleRegisterSubmit">
-              <div v-if="auth.error" class="alert alert-danger" role="alert">
-                {{ auth.error }}
-              </div>
-              <div class="mb-3">
-                <label for="username" class="form-label">Имя пользователя</label>
-                <input type="text" class="form-control" id="username" v-model="username" required :disabled="auth.isLoading">
-              </div>
-              <div class="mb-3">
-                <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="email" v-model="email" required :disabled="auth.isLoading">
-              </div>
-              <div class="mb-3">
-                <label for="password" class="form-label">Пароль</label>
-                <input type="password" class="form-control" id="password" v-model="password" required :disabled="auth.isLoading">
-              </div>
-              <div class="mb-3">
-                <label for="confirmPassword" class="form-label">Подтвердите пароль</label>
-                <input type="password" class="form-control" id="confirmPassword" v-model="confirmPassword" required :disabled="auth.isLoading">
-              </div>
-              <button type="submit" class="btn btn-primary" :disabled="auth.isLoading">
-                <span v-if="auth.isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                {{ auth.isLoading ? 'Регистрация...' : 'Зарегистрироваться' }}
-              </button>
-            </form>
-            <div class="mt-3 text-center">
-              <p>Уже есть аккаунт? <router-link to="/login">Войти</router-link></p>
-            </div>
+          <div class="card-body p-4">
+            <RegisterForm 
+              :isLoading="auth.isLoading" 
+              :error="auth.error" 
+              @submit="handleRegister" 
+              @clearError="auth.clearError()"
+              @error="setError"
+            />
           </div>
         </div>
       </div>
@@ -43,45 +24,62 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '../store/authStore.js';
+import RegisterForm from '../components/RegisterForm.vue';
 
-const username = ref('');
-const email = ref('');
-const password = ref('');
-const confirmPassword = ref('');
+const router = useRouter();
 const auth = useAuthStore();
 
 onMounted(() => {
+  // Очищаем ошибки при монтировании компонента
   auth.clearError();
 });
 
-watch([username, email, password, confirmPassword], () => {
-  if (auth.error) {
-    auth.clearError();
-  }
-});
+// Устанавливает сообщение об ошибке
+function setError(message) {
+  auth.error = message;
+}
 
-const handleRegisterSubmit = async () => {
-  if (password.value !== confirmPassword.value) {
-    auth.error = 'Пароли не совпадают!';
-    return;
+// Обрабатывает отправку формы регистрации
+async function handleRegister(userData) {
+  const success = await auth.register(userData);
+  
+  if (success) {
+    // Показываем уведомление об успешной регистрации и перенаправляем на страницу входа
+    // с параметром, указывающим на успешную регистрацию
+    router.push({
+      path: '/login',
+      query: { registered: 'true' }
+    });
   }
-  if (!username.value || !email.value || !password.value) {
-    auth.error = 'Все поля обязательны для заполнения.';
-    return;
-  }
-  await auth.register({ 
-    username: username.value, 
-    email: email.value, 
-    password: password.value 
-  });
-  // Сообщение об успехе (alert) и редирект обрабатываются в authStore
-};
+}
 </script>
 
 <style scoped>
-.alert {
-  margin-bottom: 1rem;
+.card {
+  transition: transform 0.3s ease;
 }
-</style> 
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+.card-header {
+  border-top-left-radius: calc(0.3rem - 1px) !important;
+  border-top-right-radius: calc(0.3rem - 1px) !important;
+}
+
+@media (max-width: 576px) {
+  .container {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  
+  .card-body {
+    padding: 1.5rem !important;
+  }
+}
+</style>
