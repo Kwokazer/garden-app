@@ -106,12 +106,10 @@ async def get_user_profile(
     
     return profile
 
-@router.get("/", response_model=UserListResponse)
-@check_role("admin")
+@router.get("/", response_model=UserListResponse, dependencies=[Depends(check_role("admin"))])
 async def get_users(
     page: int = Query(1, description="Номер страницы", ge=1),
     size: int = Query(10, description="Размер страницы", ge=1, le=100),
-    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ) -> Dict[str, Any]:
     """
@@ -120,7 +118,6 @@ async def get_users(
     Args:
         page: Номер страницы
         size: Размер страницы
-        current_user: Текущий пользователь с ролью admin
         db: Сессия базы данных
     
     Returns:
@@ -227,12 +224,10 @@ async def update_current_user(
             detail="Ошибка при обновлении пользователя"
         )
 
-@router.patch("/{id}", response_model=UserResponse)
-@check_role("admin")
+@router.patch("/{id}", response_model=UserResponse, dependencies=[Depends(check_role("admin"))])
 async def update_user(
     user_data: UserUpdate,
     id: int = Path(..., description="ID пользователя"),
-    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ) -> Dict[str, Any]:
     """
@@ -241,7 +236,6 @@ async def update_user(
     Args:
         user_data: Данные для обновления
         id: ID пользователя
-        current_user: Текущий пользователь с ролью admin
         db: Сессия базы данных
     
     Returns:
@@ -308,12 +302,10 @@ async def update_user(
             detail=f"Ошибка при обновлении пользователя с ID {id}"
         )
 
-@router.post("/{id}/roles", response_model=AddRoleResponse)
-@check_role("admin")
+@router.post("/{id}/roles", response_model=AddRoleResponse, dependencies=[Depends(check_role("admin"))])
 async def add_role_to_user(
     role_data: ChangeRoleRequest,
     id: int = Path(..., description="ID пользователя"),
-    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ) -> Dict[str, Any]:
     """
@@ -322,7 +314,6 @@ async def add_role_to_user(
     Args:
         role_data: Данные роли для добавления
         id: ID пользователя
-        current_user: Текущий пользователь с ролью admin
         db: Сессия базы данных
     
     Returns:
@@ -384,12 +375,10 @@ async def add_role_to_user(
             detail="Ошибка при добавлении роли пользователю"
         )
 
-@router.delete("/{id}/roles/{role_id}", response_model=RemoveRoleResponse)
-@check_role("admin")
+@router.delete("/{id}/roles/{role_id}", response_model=RemoveRoleResponse, dependencies=[Depends(check_role("admin"))])
 async def remove_role_from_user(
     id: int = Path(..., description="ID пользователя"),
     role_id: int = Path(..., description="ID роли"),
-    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ) -> Dict[str, Any]:
     """
@@ -398,7 +387,6 @@ async def remove_role_from_user(
     Args:
         id: ID пользователя
         role_id: ID роли
-        current_user: Текущий пользователь с ролью admin
         db: Сессия базы данных
     
     Returns:

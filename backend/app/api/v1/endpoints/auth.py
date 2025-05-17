@@ -6,6 +6,7 @@ from fastapi import (APIRouter, BackgroundTasks, Body, Depends, HTTPException,
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.dependencies import get_auth_service, get_email_service
+from app.application.dependencies.dependencies import get_current_active_user
 from app.application.services.auth_service import AuthService
 from app.domain.models.user import User
 from app.domain.schemas.auth import (EmailVerificationRequest,

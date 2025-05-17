@@ -33,7 +33,7 @@ class AuthService(BaseService):
     def __init__(
         self,
         db: AsyncSession = Depends(get_db),
-        redis_cache: Optional[RedisService] = None
+        redis_cache: Any = None
     ):
         super().__init__()
         self.db = db
