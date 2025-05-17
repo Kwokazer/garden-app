@@ -1,4 +1,4 @@
-!-- src/shared/components/AppLayout.vue -->
+<!-- src/shared/components/AppLayout.vue -->
 
 <template>
   <div class="app-container d-flex flex-column min-vh-100">

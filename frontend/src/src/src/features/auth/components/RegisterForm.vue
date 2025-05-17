@@ -314,7 +314,7 @@
   }
   </script>
   
-  <style scoped>
+<style scoped>
   .auth-form {
     max-width: 100%;
     margin: 0 auto;
@@ -337,3 +337,4 @@
   .password-strength {
     font-size: 0.85rem;
   }
+  </style>

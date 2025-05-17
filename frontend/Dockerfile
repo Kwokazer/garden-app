@@ -1,16 +1,16 @@
-# Этап сборки
-FROM node:18-alpine AS build-stage
+FROM node:18-alpine
+
 WORKDIR /app
+
+# Копируем package.json и устанавливаем зависимости
 COPY package*.json ./
 RUN npm install
-COPY . .
-# Убедитесь, что команда сборки в вашем package.json называется 'build'
-RUN npm run build
 
-# Этап запуска
-FROM nginx:stable-alpine AS production-stage
-COPY --from=build-stage /app/dist /usr/share/nginx/html
-# Использование нашей конфигурации Nginx для корректной работы Vue Router
-COPY nginx.conf /etc/nginx/conf.d/default.conf 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Копируем исходники
+COPY . .
+
+# Открываем порт
+EXPOSE 3000
+
+# Запускаем приложение
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
