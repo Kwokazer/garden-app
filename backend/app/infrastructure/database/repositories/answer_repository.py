@@ -179,3 +179,43 @@ class AnswerRepository(BaseRepository[Answer]):
             }
             
         return result 
+    
+
+    async def unaccept_answer(self, answer_id: int, question_id: int) -> bool:
+        """
+        Отменить принятие ответа
+        
+        Args:
+            answer_id: ID ответа
+            question_id: ID вопроса (для проверки)
+            
+        Returns:
+            bool: True, если ответ успешно отмечен как непринятый
+        """
+        try:
+            # Отмечаем ответ как непринятый
+            stmt = (
+                update(Answer)
+                .where(
+                    and_(
+                        Answer.id == answer_id,
+                        Answer.question_id == question_id
+                    )
+                )
+                .values(is_accepted=False)
+            )
+            result = await self.session.execute(stmt)
+            
+            # Если ответ успешно отменен, также отмечаем вопрос как нерешенный
+            if result.rowcount > 0:
+                question_stmt = (
+                    update(Question)
+                    .where(Question.id == question_id)
+                    .values(is_solved=False)
+                )
+                await self.session.execute(question_stmt)
+                return True
+            
+            return False
+        except Exception as e:
+            raise DatabaseError(f"Ошибка при отмене принятия ответа: {str(e)}")

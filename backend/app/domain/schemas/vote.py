@@ -1,3 +1,4 @@
+# backend/app/domain/schemas/vote.py
 from enum import Enum
 from typing import Optional
 
@@ -8,8 +9,8 @@ from app.domain.schemas.base import BaseSchema
 
 class VoteTypeEnum(str, Enum):
     """Типы голосования за вопросы и ответы"""
-    UPVOTE = "upvote"
-    DOWNVOTE = "downvote"
+    UP = "up"      # Изменено с UPVOTE
+    DOWN = "down"  # Изменено с DOWNVOTE
 
 
 class VoteBase(BaseSchema):
@@ -19,15 +20,15 @@ class VoteBase(BaseSchema):
 
 class QuestionVoteCreate(VoteBase):
     """Схема для создания голоса за вопрос"""
-    question_id: int = Field(..., description="ID вопроса, за который голосуют")
+    pass  # question_id передается в URL
 
 
 class AnswerVoteCreate(VoteBase):
     """Схема для создания голоса за ответ"""
-    answer_id: int = Field(..., description="ID ответа, за который голосуют")
+    pass  # answer_id передается в URL
 
 
 class VoteResponse(VoteBase, BaseSchema):
     """Схема ответа для голосования"""
     id: int = Field(..., description="Уникальный идентификатор голоса")
-    user_id: int = Field(..., description="ID пользователя, который голосовал") 
+    user_id: int = Field(..., description="ID пользователя, который голосовал")

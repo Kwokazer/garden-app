@@ -1,3 +1,4 @@
+# backend/app/api/v1/endpoints/answers.py
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, Path, HTTPException, status
@@ -7,7 +8,6 @@ from app.application.services.answer_service import AnswerService
 from app.application.services.base import NotFoundError, AuthorizationError, ValidationError
 from app.api.common.security import get_current_user, optional_current_user
 from app.domain.models.user import User
-from app.domain.models.vote import VoteType
 from app.domain.schemas.answer import AnswerCreate, AnswerResponse, AnswerUpdate
 from app.domain.schemas.vote import AnswerVoteCreate as AnswerVote
 from app.infrastructure.database import get_db
@@ -87,21 +87,21 @@ async def vote_for_answer(
         user_id=current_user.id
     )
 
-@router.post("/questions/{question_id}/answers/{id}/unaccept", response_model=QuestionDetailResponse)
+# ИСПРАВЛЕНО: Изменен параметр с 'id' на 'answer_id'
+@router.post("/{answer_id}/unaccept", response_model=QuestionDetailResponse)
 async def unaccept_answer(
-    question_id: int = Path(..., description="ID вопроса"),
-    id: int = Path(..., description="ID ответа"),
+    answer_id: int = Path(..., description="ID ответа"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Отменить принятие ответа как решение вопроса.
     
-    - **question_id**: ID вопроса
+    - **answer_id**: ID ответа
     """
     service = AnswerService(db)
     try:
-        return await service.unaccept_answer(question_id, current_user)
+        return await service.unaccept_answer(answer_id, current_user.id)
     except NotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -116,4 +116,4 @@ async def unaccept_answer(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Не удалось отменить принятие ответа: {str(e)}"
-        ) 
+        )

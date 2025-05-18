@@ -214,47 +214,70 @@ class QuestionService(BaseService):
             self._log_error("Ошибка при получении списка вопросов", e)
             raise
     
-    async def vote_for_question(self, question_id: int, vote_data: QuestionVoteSchema, user_id: int) -> Dict[str, Any]:
+    async def vote_for_question(self, question_id: int, user_id: int, vote_type: str) -> bool:
         """
         Проголосовать за вопрос
         
         Args:
             question_id: ID вопроса
-            vote_data: Данные голоса (up/down)
-            user_id: ID пользователя, который голосует
+            user_id: ID пользователя
+            vote_type: Тип голоса (up/down)
             
         Returns:
-            Dict[str, Any]: Обновленный вопрос
-            
-        Raises:
-            NotFoundError: Если вопрос не найден
+            bool: True, если голос успешно добавлен/изменен/удален
         """
         try:
-            # Получаем вопрос
-            question = await self.question_repository.get(question_id)
+            from app.domain.models.vote import QuestionVote
+            
+            # Проверяем существующий голос
+            existing_vote_stmt = select(QuestionVote).where(
+                and_(
+                    QuestionVote.question_id == question_id,
+                    QuestionVote.user_id == user_id
+                )
+            )
+            result = await self.session.execute(existing_vote_stmt)
+            existing_vote = result.scalars().first()
+            
+            question = await self.get(question_id)
             if not question:
-                raise NotFoundError("Question", question_id)
+                raise EntityNotFoundError("Question", question_id)
             
-            # Проверяем, не голосует ли пользователь за свой вопрос
-            if question.author_id == user_id:
-                raise ValidationError("Нельзя голосовать за свой собственный вопрос")
+            if existing_vote:
+                if existing_vote.vote_type == vote_type:
+                    # Удаляем голос (отмена)
+                    await self.session.delete(existing_vote)
+                    if vote_type == "up":
+                        question.votes_up = max(0, question.votes_up - 1)
+                    else:
+                        question.votes_down = max(0, question.votes_down - 1)
+                else:
+                    # Меняем тип голоса
+                    existing_vote.vote_type = vote_type
+                    if vote_type == "up":
+                        question.votes_up += 1
+                        question.votes_down = max(0, question.votes_down - 1)
+                    else:
+                        question.votes_down += 1
+                        question.votes_up = max(0, question.votes_up - 1)
+            else:
+                # Добавляем новый голос
+                new_vote = QuestionVote(
+                    question_id=question_id,
+                    user_id=user_id,
+                    vote_type=vote_type
+                )
+                self.session.add(new_vote)
+                if vote_type == "up":
+                    question.votes_up += 1
+                else:
+                    question.votes_down += 1
             
-            # Добавляем голос
-            vote_type = vote_data.vote_type
-            await self._handle_question_vote(question_id, user_id, vote_type)
-            
-            # Инвалидируем кеш
-            await self.qa_cache.invalidate_question(question_id)
-            await self.qa_cache.invalidate_questions_list()
-            
-            # Получаем обновленный вопрос
-            updated_question = await self.question_repository.get_with_details(question_id, user_id)
-            return updated_question
-        except (NotFoundError, ValidationError):
-            raise
+            await self.session.commit()
+            return True
         except Exception as e:
-            self._log_error(f"Ошибка при голосовании за вопрос {question_id}", e)
-            raise
+            await self.session.rollback()
+            raise DatabaseError(f"Ошибка при голосовании за вопрос: {str(e)}")
     
     async def _handle_question_vote(self, question_id: int, user_id: int, vote_type: str) -> None:
         """
@@ -265,67 +288,6 @@ class QuestionService(BaseService):
             user_id: ID пользователя
             vote_type: Тип голоса (up/down)
         """
-        # Получаем текущий голос пользователя
-        current_vote = await self.question_repository._get_user_vote(question_id, user_id)
-        
-        # Если голос такой же, удаляем его (отмена голоса)
-        if current_vote == vote_type:
-            await self.db.execute(f"""
-                DELETE FROM question_votes
-                WHERE question_id = {question_id} AND user_id = {user_id}
-            """)
-            
-            # Обновляем счетчики
-            if vote_type == "up":
-                await self.db.execute(f"""
-                    UPDATE questions
-                    SET votes_up = votes_up - 1
-                    WHERE id = {question_id}
-                """)
-            else:
-                await self.db.execute(f"""
-                    UPDATE questions
-                    SET votes_down = votes_down - 1
-                    WHERE id = {question_id}
-                """)
-        # Если голос противоположный, меняем его
-        elif current_vote:
-            await self.db.execute(f"""
-                UPDATE question_votes
-                SET vote_type = '{vote_type}'
-                WHERE question_id = {question_id} AND user_id = {user_id}
-            """)
-            
-            # Обновляем счетчики
-            if vote_type == "up":
-                await self.db.execute(f"""
-                    UPDATE questions
-                    SET votes_up = votes_up + 1, votes_down = votes_down - 1
-                    WHERE id = {question_id}
-                """)
-            else:
-                await self.db.execute(f"""
-                    UPDATE questions
-                    SET votes_up = votes_up - 1, votes_down = votes_down + 1
-                    WHERE id = {question_id}
-                """)
-        # Если голоса нет, добавляем новый
-        else:
-            await self.db.execute(f"""
-                INSERT INTO question_votes (question_id, user_id, vote_type)
-                VALUES ({question_id}, {user_id}, '{vote_type}')
-            """)
-            
-            # Обновляем счетчики
-            if vote_type == "up":
-                await self.db.execute(f"""
-                    UPDATE questions
-                    SET votes_up = votes_up + 1
-                    WHERE id = {question_id}
-                """)
-            else:
-                await self.db.execute(f"""
-                    UPDATE questions
-                    SET votes_down = votes_down + 1
-                    WHERE id = {question_id}
-                """) 
+        success = await self.question_repository.vote_for_question(question_id, user_id, vote_type)
+        if not success:
+            raise ValidationError("Не удалось обработать голос за вопрос")

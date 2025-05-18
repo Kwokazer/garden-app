@@ -10,7 +10,7 @@ from app.domain.schemas.question import (
     QuestionCreate, QuestionUpdate, QuestionResponse, QuestionDetailResponse,
     QuestionListResponse
 )
-from app.domain.schemas.vote import VoteTypeEnum as QuestionVote
+from app.domain.schemas.vote import QuestionVoteCreate as QuestionVote
 from app.application.services.base import NotFoundError, ValidationError, AuthorizationError
 from app.infrastructure.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,6 +26,7 @@ async def create_question(
     """Создать новый вопрос"""
     question_service = QuestionService(db=db)
     return await question_service.create_question(data=question, author_id=current_user.id)
+
 
 @router.get("/", response_model=QuestionListResponse)
 async def get_questions(
@@ -130,3 +131,40 @@ async def vote_for_question(
         vote_data=vote,
         user_id=current_user.id
     ) 
+
+
+router.get("/by-plant/{plant_id}", response_model=QuestionListResponse)
+async def get_questions_by_plant(
+    plant_id: int,
+    page: int = Query(1, ge=1, description="Номер страницы"),
+    per_page: int = Query(10, ge=1, le=50, description="Количество записей на странице"),
+    search: Optional[str] = Query(None, description="Поиск по вопросам"),
+    is_solved: Optional[bool] = Query(None, description="Фильтр по статусу решения"),
+    sort_by: str = Query("created_at", description="Поле для сортировки"),
+    sort_order: str = Query("desc", description="Порядок сортировки (asc/desc)"),
+    current_user: Optional[User] = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Получить вопросы по конкретному растению"""
+    question_service = QuestionService(db=db)
+    
+    # Расчет skip из page и per_page
+    skip = (page - 1) * per_page
+    
+    questions, total = await question_service.get_questions(
+        skip=skip,
+        limit=per_page,
+        search=search,
+        plant_id=plant_id,  # Фильтр по ID растения
+        is_solved=is_solved,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        user_id=current_user.id if current_user else None
+    )
+    return {
+        "items": questions,
+        "total": total,
+        "page": page,
+        "size": per_page,
+        "pages": (total + per_page - 1) // per_page
+    }
