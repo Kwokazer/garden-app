@@ -87,7 +87,7 @@ export const questionsApi = {
         params.append('author_id', filters.author_id);
       }
       
-      if (filters.is_solved !== undefined) {
+      if (filters.is_solved !== null && filters.is_solved !== undefined) {
         params.append('is_solved', filters.is_solved);
       }
       

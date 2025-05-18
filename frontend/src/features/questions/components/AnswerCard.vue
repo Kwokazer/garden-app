@@ -1,173 +1,159 @@
-<!-- frontend/src/features/questions/components/AnswerForm.vue -->
+<!-- frontend/src/features/questions/components/AnswerCard.vue -->
 <template>
-    <div class="answer-form">
-      <form @submit.prevent="handleSubmit" class="needs-validation" novalidate>
-        <!-- Answer text -->
-        <div class="mb-3">
-          <label for="answerBody" class="form-label">
-            {{ isEditing ? 'Редактирование ответа' : 'Ваш ответ' }}
-            <span class="text-danger">*</span>
-          </label>
-          <textarea
-            id="answerBody"
-            v-model="formData.body"
-            class="form-control"
-            :class="{ 'is-invalid': errors.body }"
-            rows="6"
-            placeholder="Напишите подробный и полезный ответ на вопрос..."
-            required
-            :disabled="isLoading"
-            @input="clearFieldError('body')"
-          ></textarea>
-          <div v-if="errors.body" class="invalid-feedback">
-            {{ errors.body }}
-          </div>
-          <div class="form-text">
-            Минимум 10 символов. Поддерживается простая разметка: **жирный текст**, *курсив*
-          </div>
-        </div>
-        
-        <!-- Preview button and preview -->
-        <div v-if="showPreview" class="mb-3">
-          <button
-            type="button"
-            class="btn btn-outline-secondary btn-sm"
-            @click="togglePreview"
-          >
-            <i class="bi" :class="isPreviewVisible ? 'bi-eye-slash' : 'bi-eye'"></i>
-            {{ isPreviewVisible ? 'Скрыть предпросмотр' : 'Показать предпросмотр' }}
-          </button>
-          
-          <!-- Preview content -->
-          <div v-if="isPreviewVisible" class="answer-preview mt-3">
-            <div class="card bg-light">
-              <div class="card-header py-2">
-                <h6 class="mb-0">
-                  <i class="bi bi-eye me-2"></i>
-                  Предпросмотр
-                </h6>
+    <div class="answer-card">
+      <div class="card shadow-sm border-0 mb-3" :class="{ 'accepted-answer': answer.is_accepted }">
+        <div class="card-body">
+          <div class="d-flex">
+            <!-- Панель голосования -->
+            <div class="voting-section me-3">
+              <VotingButtons
+                type="answer"
+                :item-id="answer.id"
+                :votes-up="answer.votes_up"
+                :votes-down="answer.votes_down"
+                :user-vote="answer.user_vote"
+                :is-loading="isVoting"
+                :author-id="answer.author_id"
+                @vote="handleVote"
+              />
+            </div>
+            
+            <!-- Содержимое ответа -->
+            <div class="answer-content flex-grow-1">
+              <!-- Метка принятого решения -->
+              <div v-if="answer.is_accepted" class="accepted-badge mb-3">
+                <span class="badge bg-success py-2 px-3">
+                  <i class="bi bi-check-circle me-1"></i>
+                  Принятое решение
+                </span>
               </div>
-              <div class="card-body">
-                <div v-html="formatPreview(formData.body)" class="preview-content"></div>
-              </div>
+              
+              <!-- Режим редактирования -->
+              <template v-if="isEditing">
+                <AnswerForm
+                  :initial-data="answer"
+                  :is-loading="isUpdating"
+                  :show-preview="true"
+                  @submit="handleUpdate"
+                  @cancel="cancelEdit"
+                />
+              </template>
+              
+              <!-- Основной режим отображения -->
+              <template v-else>
+                <!-- Текст ответа -->
+                <div class="answer-text">
+                  <div v-html="formatAnswerText(answer.body)" class="formatted-content"></div>
+                </div>
+                
+                <!-- Мета-информация и действия -->
+                <div class="answer-meta d-flex flex-wrap justify-content-between align-items-center mt-3">
+                  <div class="author-info">
+                    <small class="text-muted">
+                      Автор: 
+                      <span class="author-name">{{ answer.author?.username || 'Неизвестно' }}</span>
+                      <span class="mx-1">•</span>
+                      <time :datetime="answer.created_at" :title="getFullDate(answer.created_at)">
+                        {{ getRelativeTime(answer.created_at) }}
+                      </time>
+                    </small>
+                  </div>
+                  
+                  <div class="answer-actions d-flex flex-wrap">
+                    <!-- Принятие ответа (только для автора вопроса) -->
+                    <div v-if="isQuestionAuthor && !answer.is_accepted" class="me-2">
+                      <button
+                        class="btn btn-outline-success btn-sm"
+                        @click="handleAccept"
+                        :disabled="isAccepting"
+                      >
+                        <span v-if="isAccepting" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                        <i v-else class="bi bi-check-circle me-1"></i>
+                        Принять ответ
+                      </button>
+                    </div>
+                    
+                    <!-- Отмена принятия (только для автора вопроса) -->
+                    <div v-if="isQuestionAuthor && answer.is_accepted" class="me-2">
+                      <button
+                        class="btn btn-outline-warning btn-sm"
+                        @click="handleUnaccept"
+                        :disabled="isAccepting"
+                      >
+                        <span v-if="isAccepting" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                        <i v-else class="bi bi-x-circle me-1"></i>
+                        Отменить принятие
+                      </button>
+                    </div>
+                    
+                    <!-- Действия автора ответа -->
+                    <div v-if="canEdit" class="author-actions">
+                      <button
+                        class="btn btn-outline-secondary btn-sm me-2"
+                        @click="startEdit"
+                      >
+                        <i class="bi bi-pencil me-1"></i>
+                        Редактировать
+                      </button>
+                      <button
+                        class="btn btn-outline-danger btn-sm"
+                        @click="handleDelete"
+                        :disabled="isDeleting"
+                      >
+                        <span v-if="isDeleting" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                        <i v-else class="bi bi-trash me-1"></i>
+                        Удалить
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </template>
             </div>
           </div>
         </div>
-        
-        <!-- Action buttons -->
-        <div class="form-actions d-flex justify-content-between">
-          <div class="form-info">
-            <small class="text-muted">
-              <i class="bi bi-info-circle me-1"></i>
-              Ваш ответ поможет другим пользователям решить их проблемы
-            </small>
-          </div>
-          
-          <div class="button-group">
-            <button
-              v-if="showCancel"
-              type="button"
-              class="btn btn-outline-secondary me-2"
-              @click="handleCancel"
-              :disabled="isLoading"
-            >
-              Отмена
-            </button>
-            <button
-              type="submit"
-              class="btn btn-primary"
-              :disabled="isLoading || !isFormValid"
-            >
-              <span v-if="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              <i v-else class="bi bi-send me-2"></i>
-              {{ submitButtonText }}
-            </button>
-          </div>
-        </div>
-      </form>
+      </div>
     </div>
   </template>
   
   <script setup>
-  import { reactive, computed, ref, watch } from 'vue';
+  import { ref, computed } from 'vue';
+  import { useAuthStore } from '../../auth/store/authStore';
+  import VotingButtons from './VotingButtons.vue';
+  import AnswerForm from './AnswerForm.vue';
   
   const props = defineProps({
-    questionId: {
+    answer: {
+      type: Object,
+      required: true
+    },
+    questionAuthorId: {
       type: Number,
       default: null
-    },
-    initialData: {
-      type: Object,
-      default: () => ({})
-    },
-    isLoading: {
-      type: Boolean,
-      default: false
-    },
-    showCancel: {
-      type: Boolean,
-      default: true
-    },
-    showPreview: {
-      type: Boolean,
-      default: false
     }
   });
   
-  const emit = defineEmits(['submit', 'cancel', 'clear-error']);
+  const emit = defineEmits(['vote', 'accept', 'unaccept', 'update', 'delete']);
   
-  // Determine if the form is for editing
-  const isEditing = computed(() => !!props.initialData.body);
+  const authStore = useAuthStore();
   
-  // Preview visibility state
-  const isPreviewVisible = ref(false);
+  // Состояние компонента
+  const isVoting = ref(false);
+  const isAccepting = ref(false);
+  const isEditing = ref(false);
+  const isUpdating = ref(false);
+  const isDeleting = ref(false);
   
-  // Submit button text
-  const submitButtonText = computed(() => {
-    return isEditing.value ? 'Сохранить изменения' : 'Отправить ответ';
+  // Вычисляемые свойства
+  const isQuestionAuthor = computed(() => {
+    return authStore.isLoggedIn && authStore.user && authStore.user.id === props.questionAuthorId;
   });
   
-  // Form data
-  const formData = reactive({
-    body: props.initialData.body || '',
-    question_id: props.questionId || props.initialData.question_id
+  const canEdit = computed(() => {
+    return authStore.isLoggedIn && authStore.user && authStore.user.id === props.answer.author_id;
   });
   
-  // Validation errors
-  const errors = reactive({
-    body: null
-  });
-  
-  // Watch for changes in initialData
-  watch(() => props.initialData, (newData) => {
-    formData.body = newData.body || '';
-    formData.question_id = props.questionId || newData.question_id;
-  }, { deep: true });
-  
-  // Form validation
-  const isFormValid = computed(() => {
-    return formData.body.trim().length >= 10;
-  });
-  
-  // Methods
-  function validateForm() {
-    errors.body = null;
-    
-    // Validate answer body
-    if (!formData.body.trim()) {
-      errors.body = 'Описание ответа обязательно';
-      return false;
-    }
-    
-    if (formData.body.trim().length < 10) {
-      errors.body = 'Ответ должен содержать минимум 10 символов';
-      return false;
-    }
-    
-    return true;
-  }
-  
-  function formatPreview(text) {
+  // Методы
+  function formatAnswerText(text) {
     if (!text) return '';
     
     return text
@@ -176,161 +162,231 @@
       .replace(/\*(.*?)\*/g, '<em>$1</em>');
   }
   
-  function togglePreview() {
-    isPreviewVisible.value = !isPreviewVisible.value;
-  }
-  
-  function clearFieldError(field) {
-    errors[field] = null;
-    emit('clear-error');
-  }
-  
-  function handleSubmit() {
-    if (!validateForm()) {
-      return;
+  function getRelativeTime(dateString) {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now - date;
+    const diffInSeconds = Math.floor(diffInMs / 1000);
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+    
+    if (diffInDays > 7) {
+      return date.toLocaleDateString('ru-RU');
+    } else if (diffInDays > 0) {
+      return `${diffInDays} ${diffInDays === 1 ? 'день' : diffInDays <= 4 ? 'дня' : 'дней'} назад`;
+    } else if (diffInHours > 0) {
+      return `${diffInHours} ${diffInHours === 1 ? 'час' : diffInHours <= 4 ? 'часа' : 'часов'} назад`;
+    } else if (diffInMinutes > 0) {
+      return `${diffInMinutes} ${diffInMinutes === 1 ? 'минуту' : diffInMinutes <= 4 ? 'минуты' : 'минут'} назад`;
+    } else {
+      return 'только что';
     }
-    
-    const submitData = {
-      body: formData.body.trim(),
-      question_id: formData.question_id
-    };
-    
-    emit('submit', submitData);
   }
   
-  function handleCancel() {
-    // Reset form to initial values
-    formData.body = props.initialData.body || '';
-    formData.question_id = props.questionId || props.initialData.question_id;
-    errors.body = null;
-    isPreviewVisible.value = false;
-    
-    emit('cancel');
+  function getFullDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleString('ru-RU');
   }
   
-  // Clear errors when body changes
-  watch(() => formData.body, () => {
-    if (errors.body) {
-      errors.body = null;
+  async function handleVote(voteData) {
+    isVoting.value = true;
+    
+    try {
+      emit('vote', voteData);
+    } catch (error) {
+      console.error('Error voting for answer:', error);
+    } finally {
+      isVoting.value = false;
     }
-  });
+  }
+  
+  async function handleAccept() {
+    if (isAccepting.value) return;
+    
+    isAccepting.value = true;
+    
+    try {
+      emit('accept', props.answer.id);
+    } catch (error) {
+      console.error('Error accepting answer:', error);
+    } finally {
+      isAccepting.value = false;
+    }
+  }
+  
+  async function handleUnaccept() {
+    if (isAccepting.value) return;
+    
+    const confirmed = confirm('Вы уверены, что хотите отменить принятие этого ответа?');
+    if (!confirmed) return;
+    
+    isAccepting.value = true;
+    
+    try {
+      emit('unaccept', props.answer.id);
+    } catch (error) {
+      console.error('Error unaccepting answer:', error);
+    } finally {
+      isAccepting.value = false;
+    }
+  }
+  
+  function startEdit() {
+    isEditing.value = true;
+  }
+  
+  function cancelEdit() {
+    isEditing.value = false;
+  }
+  
+  async function handleUpdate(formData) {
+    isUpdating.value = true;
+    
+    try {
+      emit('update', { id: props.answer.id, data: formData });
+      isEditing.value = false;
+    } catch (error) {
+      console.error('Error updating answer:', error);
+    } finally {
+      isUpdating.value = false;
+    }
+  }
+  
+  async function handleDelete() {
+    if (isDeleting.value) return;
+    
+    const confirmed = confirm('Вы уверены, что хотите удалить этот ответ? Это действие нельзя отменить.');
+    if (!confirmed) return;
+    
+    isDeleting.value = true;
+    
+    try {
+      emit('delete', props.answer.id);
+    } catch (error) {
+      console.error('Error deleting answer:', error);
+    } finally {
+      isDeleting.value = false;
+    }
+  }
   </script>
   
   <style scoped>
-  .answer-form {
-    width: 100%;
+  .answer-card {
+    margin-bottom: 1.5rem;
   }
   
-  .form-label {
-    font-weight: 600;
-    color: #333;
+  .card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 8px;
+    overflow: hidden;
   }
   
-  .form-control {
-    border-radius: 0.375rem;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
   }
   
-  .form-control:focus {
-    border-color: var(--bs-primary);
-    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+  /* Стилизация принятого ответа */
+  .accepted-answer {
+    border-left: 4px solid #28a745 !important;
+    background: linear-gradient(to right, rgba(40, 167, 69, 0.05), transparent);
   }
   
-  .form-text {
-    color: #6c757d;
-    font-size: 0.875rem;
+  .accepted-badge {
+    animation: fadeInScale 0.5s ease;
   }
   
-  /* Preview */
-  .answer-preview {
-    animation: fadeIn 0.3s ease;
+  .voting-section {
+    flex-shrink: 0;
   }
   
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  .answer-content {
+    min-width: 0; /* Для корректного переноса текста */
   }
   
-  .preview-content {
+  .answer-text {
     line-height: 1.6;
-    color: #333;
+    font-size: 0.95rem;
   }
   
-  .preview-content p {
+  .answer-text p {
     margin-bottom: 1rem;
   }
   
-  .preview-content p:last-child {
+  .answer-text p:last-child {
     margin-bottom: 0;
   }
   
-  /* Form actions */
-  .form-actions {
-    align-items: center;
-    margin-top: 1.5rem;
-  }
-  
-  .form-info {
-    flex: 1;
-  }
-  
-  .button-group {
-    display: flex;
-    align-items: center;
-  }
-  
-  .btn {
-    padding: 0.5rem 1rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
-  }
-  
-  .btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-  
-  /* Validation */
-  .is-invalid {
-    border-color: #dc3545;
-  }
-  
-  .invalid-feedback {
-    color: #dc3545;
+  .answer-meta {
     font-size: 0.875rem;
-    margin-top: 0.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f0f0f0;
   }
   
-  /* Mobile responsiveness */
-  @media (max-width: 768px) {
-    .form-actions {
+  .author-name {
+    font-weight: 500;
+    color: var(--bs-primary);
+  }
+  
+  .answer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .author-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  /* Анимации */
+  @keyframes fadeInScale {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  /* Мобильная адаптивность */
+  @media (max-width: 576px) {
+    .card-body .d-flex {
       flex-direction: column;
-      align-items: stretch;
-      gap: 1rem;
     }
     
-    .form-info {
-      text-align: center;
+    .voting-section {
+      align-self: stretch;
+      margin-bottom: 1rem;
+      margin-right: 0;
     }
     
-    .button-group {
+    .voting-section .voting-buttons {
+      flex-direction: row;
       justify-content: center;
+      width: 100%;
     }
-  }
-  
-  textarea.form-control {
-    resize: vertical;
-    min-height: 120px;
+    
+    .voting-section .voting-buttons > * {
+      margin: 0 0.5rem;
+    }
+    
+    .answer-meta {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    .answer-actions {
+      width: 100%;
+      justify-content: center;
+      margin-top: 0.5rem;
+    }
   }
   </style>

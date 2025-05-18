@@ -3,6 +3,7 @@ import json
 from app.core.config import settings
 from app.infrastructure.cache.redis_service import RedisService
 from app.utils.logger import get_logger
+from app.utils.json_encoder import json_dumps, json_loads
 
 logger = get_logger(__name__)
 
@@ -53,35 +54,26 @@ class QACacheService:
     
     async def set_question(self, question_id: int, question_data: Dict[str, Any]) -> bool:
         """
-        Сохранить вопрос в кеш
+        Сохранить данные вопроса в кэш
         
         Args:
             question_id: ID вопроса
             question_data: Данные вопроса
             
         Returns:
-            bool: True, если успешно сохранено
+            bool: True, если данные успешно сохранены
         """
-        redis = await self.get_redis()
-        key = f"{self.questions_key_prefix}{question_id}"
-        
-        # Сохраняем в Redis с TTL
-        return await redis.set(key, question_data, expires=self.ttl)
-    
-    async def invalidate_question(self, question_id: int) -> bool:
-        """
-        Инвалидировать кеш вопроса
-        
-        Args:
-            question_id: ID вопроса
+        try:
+            redis = await self.get_redis()
+            if not redis:
+                return False
             
-        Returns:
-            bool: True, если успешно инвалидировано
-        """
-        redis = await self.get_redis()
-        key = f"{self.questions_key_prefix}{question_id}"
-        
-        return await redis.delete(key)
+            key = f"{self.questions_key_prefix}{question_id}"
+            # Используем правильное название параметра - expire, а не expires
+            return await redis.set(key, question_data, expire=self.ttl)
+        except Exception as e:
+            logger.error(f"Ошибка при сохранении вопроса {question_id} в кэш: {str(e)}")
+            return False
     
     async def get_questions_list(self, cache_key: str) -> Optional[Tuple[List[Dict[str, Any]], int]]:
         """
@@ -112,18 +104,40 @@ class QACacheService:
         Returns:
             bool: True, если успешно сохранено
         """
+        try:
+            redis = await self.get_redis()
+            if not redis:
+                return False
+            
+            key = f"{self.questions_list_key_prefix}{cache_key}"
+            
+            # Сериализуем данные
+            questions_list, total = data
+            serialized_data = {
+                "items": questions_list,
+                "total": total
+            }
+            
+            # Сохраняем в Redis с правильным параметром TTL (expire вместо expires)
+            return await redis.set(key, serialized_data, expire=self.ttl)
+        except Exception as e:
+            logger.error(f"Ошибка при сохранении списка вопросов в кэш: {str(e)}")
+            return False
+    
+    async def invalidate_question(self, question_id: int) -> bool:
+        """
+        Инвалидировать кеш конкретного вопроса
+        
+        Args:
+            question_id: ID вопроса
+            
+        Returns:
+            bool: True, если успешно инвалидировано
+        """
         redis = await self.get_redis()
-        key = f"{self.questions_list_key_prefix}{cache_key}"
-        
-        # Сериализуем данные
-        questions_list, total = data
-        serialized_data = {
-            "items": questions_list,
-            "total": total
-        }
-        
-        # Сохраняем в Redis с TTL
-        return await redis.set(key, serialized_data, expires=self.ttl)
+        key = f"{self.questions_key_prefix}{question_id}"
+        await redis.delete(key)
+        return True
     
     async def invalidate_questions_list(self) -> bool:
         """
@@ -132,13 +146,17 @@ class QACacheService:
         Returns:
             bool: True, если успешно инвалидировано
         """
-        redis = await self.get_redis()
-        
-        # Получаем все ключи списков вопросов и удаляем их
-        keys = await redis.keys(f"{self.questions_list_key_prefix}*")
-        if keys:
-            await redis.delete(*keys)
-        return True
+        try:
+            redis = await self.get_redis()
+            
+            # Получаем все ключи списков вопросов и удаляем их
+            keys = await redis.keys(f"{self.questions_list_key_prefix}*")
+            if keys:
+                await redis.delete_many(keys)
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка при инвалидации кеша списка вопросов: {str(e)}")
+            return False
 
 # Предоставляем синоним класса для обратной совместимости
-QACache = QACacheService 
+QACache = QACacheService

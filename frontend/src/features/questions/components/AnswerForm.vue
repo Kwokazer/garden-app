@@ -76,93 +76,79 @@
   </template>
   
   <script setup>
-  import { reactive, computed, watch } from 'vue';
-  
-  const props = defineProps({
-    questionId: {
-      type: Number,
-      default: null
-    },
-    initialData: {
-      type: Object,
-      default: () => ({})
-    },
-    isLoading: {
-      type: Boolean,
-      default: false
-    },
-    showCancel: {
-      type: Boolean,
-      default: true
-    },
-    showPreview: {
-      type: Boolean,
-      default: false
-    }
-  });
-  
-  const emit = defineEmits(['submit', 'cancel']);
-  
-  // Определяем, является ли форма редактированием
-  const isEditing = computed(() => !!props.initialData.body);
-  
-  // Текст кнопки отправки
-  const submitButtonText = computed(() => {
-    return isEditing.value ? 'Сохранить изменения' : 'Отправить ответ';
-  });
-  
-  // Данные формы
-  const formData = reactive({
-    body: props.initialData.body || '',
-    question_id: props.questionId || props.initialData.question_id
-  });
-  
-  // Ошибки валидации
-  const errors = reactive({
-    body: null
-  });
-  
-  // Наблюдаем за изменениями в initialData
-  watch(() => props.initialData, (newData) => {
-    formData.body = newData.body || '';
-    formData.question_id = props.questionId || newData.question_id;
-  }, { deep: true });
-  
-  // Валидация формы
-  const isFormValid = computed(() => {
-    return formData.body.trim().length >= 10;
-  });
-  
-  // Методы
-  f// Методы
+import { reactive, computed, watch } from 'vue';
+
+const props = defineProps({
+  questionId: {
+    type: Number,
+    default: null
+  },
+  initialData: {
+    type: Object,
+    default: () => ({})
+  },
+  isLoading: {
+    type: Boolean,
+    default: false
+  },
+  showCancel: {
+    type: Boolean,
+    default: true
+  },
+  showPreview: {
+    type: Boolean,
+    default: false
+  },
+  error: {
+    type: String,
+    default: null
+  }
+});
+
+const emit = defineEmits(['submit', 'cancel', 'clear-error']);
+
+// Определяем, является ли форма редактированием
+const isEditing = computed(() => !!props.initialData.body);
+
+// Текст кнопки отправки
+const submitButtonText = computed(() => {
+  return isEditing.value ? 'Сохранить изменения' : 'Отправить ответ';
+});
+
+// Данные формы
+const formData = reactive({
+  body: props.initialData.body || '',
+  question_id: props.questionId || props.initialData.question_id
+});
+
+// Ошибки валидации
+const errors = reactive({
+  body: null
+});
+
+// Наблюдаем за изменениями в initialData
+watch(() => props.initialData, (newData) => {
+  formData.body = newData.body || '';
+  formData.question_id = props.questionId || newData.question_id;
+}, { deep: true });
+
+// Валидация формы
+const isFormValid = computed(() => {
+  return formData.body.trim().length >= 10;
+});
+
+// Методы
 function validateForm() {
-  errors.title = null;
   errors.body = null;
   
-  // Валидация заголовка
-  if (!formData.title.trim()) {
-    errors.title = 'Заголовок вопроса обязателен';
-    return false;
-  }
-  
-  if (formData.title.trim().length < 5) {
-    errors.title = 'Заголовок должен содержать минимум 5 символов';
-    return false;
-  }
-  
-  if (formData.title.trim().length > 255) {
-    errors.title = 'Заголовок не должен превышать 255 символов';
-    return false;
-  }
-  
-  // Валидация текста вопроса
+  // Валидация текста ответа
   if (!formData.body.trim()) {
-    errors.body = 'Описание вопроса обязательно';
+    errors.body = 'Текст ответа обязателен';
     return false;
   }
   
   if (formData.body.trim().length < 10) {
-    errors.body = 'Описание должно содержать минимум 10 символов';
+    errors.body = 'Ответ должен содержать минимум 10 символов';
     return false;
   }
   
@@ -178,8 +164,9 @@ function formatPreview(text) {
     .replace(/\*(.*?)\*/g, '<em>$1</em>');
 }
 
-function togglePreview() {
-  isPreviewVisible.value = !isPreviewVisible.value;
+function clearFieldError(field) {
+  errors[field] = null;
+  emit('clear-error');
 }
 
 function handleSubmit() {
@@ -188,9 +175,8 @@ function handleSubmit() {
   }
   
   const submitData = {
-    title: formData.title.trim(),
     body: formData.body.trim(),
-    plant_id: formData.plant_id
+    question_id: formData.question_id
   };
   
   emit('submit', submitData);
@@ -198,23 +184,14 @@ function handleSubmit() {
 
 function handleCancel() {
   // Сбрасываем форму к начальным значениям
-  formData.title = props.initialData.title || '';
   formData.body = props.initialData.body || '';
-  formData.plant_id = props.initialData.plant_id || null;
-  errors.title = null;
+  formData.question_id = props.questionId || props.initialData.question_id;
   errors.body = null;
-  isPreviewVisible.value = false;
   
   emit('cancel');
 }
 
 // Очистка ошибок при изменении полей
-watch(() => formData.title, () => {
-  if (errors.title) {
-    errors.title = null;
-  }
-});
-
 watch(() => formData.body, () => {
   if (errors.body) {
     errors.body = null;

@@ -90,13 +90,6 @@ class QuestionRepository(BaseRepository[Question]):
     async def get_with_details(self, question_id: int, user_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
         """
         Получить вопрос со всеми деталями, включая ответы, автора и теги
-        
-        Args:
-            question_id: ID вопроса
-            user_id: ID текущего пользователя (для определения голоса)
-            
-        Returns:
-            Dict[str, Any]: Вопрос с деталями или None, если не найден
         """
         try:
             # Получаем вопрос с деталями
@@ -104,7 +97,6 @@ class QuestionRepository(BaseRepository[Question]):
                 select(Question)
                 .options(
                     joinedload(Question.author),
-                    joinedload(Question.tags),
                     joinedload(Question.plant),
                     joinedload(Question.answers).joinedload(Answer.author)
                 )
@@ -116,21 +108,100 @@ class QuestionRepository(BaseRepository[Question]):
             if not question:
                 return None
             
-            # Преобразуем в словарь
-            question_dict = self._entity_to_dict(question)
+            # Преобразуем вопрос в словарь
+            question_dict = {}
             
-            # Добавляем информацию о голосе пользователя
-            if user_id:
-                question_dict["user_vote"] = await self._get_user_vote(question_id, user_id)
+            # Базовые поля вопроса
+            for column in question.__table__.columns:
+                question_dict[column.name] = getattr(question, column.name)
+            
+            # Добавляем информацию об авторе
+            if question.author:
+                question_dict["author"] = {
+                    "id": question.author.id,
+                    "username": question.author.username,
+                    "avatar_url": question.author.avatar_url if hasattr(question.author, "avatar_url") else None
+                }
+            
+            # Добавляем информацию о растении
+            if question.plant:
+                question_dict["plant"] = {
+                    "id": question.plant.id,
+                    "name": question.plant.name,
+                    "image_url": question.plant.image_url if hasattr(question.plant, "image_url") else None
+                }
+            
+            # Предварительно загружаем голоса пользователя за ответы
+            answer_votes = {}
+            
+            if user_id and question.answers:
+                # Получаем ID всех ответов
+                answer_ids = [a.id for a in question.answers]
                 
-                # Также добавляем информацию о голосах пользователя для каждого ответа
-                for answer in question_dict["answers"]:
-                    answer["user_vote"] = await self._get_user_vote_for_answer(answer["id"], user_id)
+                # Получаем все голоса пользователя за эти ответы
+                votes_query = (
+                    select(AnswerVote.answer_id, AnswerVote.vote_type)
+                    .where(
+                        and_(
+                            AnswerVote.answer_id.in_(answer_ids),
+                            AnswerVote.user_id == user_id
+                        )
+                    )
+                )
+                votes_result = await self.session.execute(votes_query)
+                for row in votes_result:
+                    answer_votes[row[0]] = row[1]  # answer_id -> vote_type
+            
+            # Добавляем ответы
+            answers_list = []
+            
+            if question.answers:
+                for answer in question.answers:
+                    answer_dict = {}
+                    
+                    # Базовые поля ответа
+                    for column in answer.__table__.columns:
+                        answer_dict[column.name] = getattr(answer, column.name)
+                    
+                    # Добавляем информацию об авторе ответа
+                    if answer.author:
+                        answer_dict["author"] = {
+                            "id": answer.author.id,
+                            "username": answer.author.username,
+                            "avatar_url": answer.author.avatar_url if hasattr(answer.author, "avatar_url") else None
+                        }
+                    
+                    # Добавляем информацию о голосе пользователя
+                    if user_id:
+                        answer_dict["user_vote"] = answer_votes.get(answer.id)
+                    
+                    answers_list.append(answer_dict)
+            
+            question_dict["answers"] = answers_list
+            
+            # Добавляем информацию о голосе пользователя за вопрос
+            if user_id:
+                vote_query = (
+                    select(QuestionVote.vote_type)
+                    .where(
+                        and_(
+                            QuestionVote.question_id == question_id,
+                            QuestionVote.user_id == user_id
+                        )
+                    )
+                )
+                vote_result = await self.session.execute(vote_query)
+                vote_type = vote_result.scalar_one_or_none()
+                question_dict["user_vote"] = vote_type
             
             return question_dict
-        except SQLAlchemyError as e:
-            raise DatabaseError(f"Ошибка при получении вопроса с деталями: {str(e)}")
+        except Exception as e:
+            import traceback
+            error_msg = f"Ошибка при получении вопроса с деталями: {str(e)}\n{traceback.format_exc()}"
+            raise DatabaseError(error_msg)
     
+    # Удаляем метод _entity_to_dict полностью и реализуем сериализацию напрямую в методах get_with_details и get_many_with_details
+
     async def get_many_with_details(
         self, 
         skip: int = 0, 
@@ -145,29 +216,13 @@ class QuestionRepository(BaseRepository[Question]):
     ) -> Tuple[List[Dict[str, Any]], int]:
         """
         Получить список вопросов с фильтрацией, сортировкой и пагинацией
-        
-        Args:
-            skip: Смещение для пагинации
-            limit: Лимит для пагинации
-            search: Строка поиска
-            tag: Фильтр по тегу
-            plant_id: Фильтр по ID растения
-            author_id: Фильтр по ID автора
-            is_solved: Фильтр по статусу решения
-            sort_by: Поле для сортировки
-            sort_order: Порядок сортировки (asc/desc)
-            user_id: ID текущего пользователя
-            
-        Returns:
-            Tuple[List[Dict[str, Any]], int]: Список вопросов и общее количество
         """
         try:
-            # Строим базовый запрос
+            # Строим базовый запрос без joinedload для answers, так как они не нужны в списке
             query = (
                 select(Question)
                 .options(
                     joinedload(Question.author),
-                    joinedload(Question.tags),
                     joinedload(Question.plant)
                 )
             )
@@ -209,28 +264,82 @@ class QuestionRepository(BaseRepository[Question]):
             result = await self.session.execute(query)
             questions = result.scalars().all()
             
-            # Преобразуем в список словарей
+            # Предварительно загружаем голоса пользователя
+            user_votes = {}
+            
+            if user_id and questions:
+                # Получаем ID всех вопросов
+                question_ids = [q.id for q in questions]
+                
+                # Получаем все голоса пользователя за эти вопросы
+                votes_query = (
+                    select(QuestionVote.question_id, QuestionVote.vote_type)
+                    .where(
+                        and_(
+                            QuestionVote.question_id.in_(question_ids),
+                            QuestionVote.user_id == user_id
+                        )
+                    )
+                )
+                votes_result = await self.session.execute(votes_query)
+                for row in votes_result:
+                    user_votes[row[0]] = row[1]  # question_id -> vote_type
+            
+            # Получаем количество ответов для каждого вопроса
+            answers_count = {}
+            
+            # Если есть вопросы, получаем количество ответов для них
+            if questions:
+                question_ids = [q.id for q in questions]
+                answers_count_query = (
+                    select(Answer.question_id, func.count(Answer.id))
+                    .where(Answer.question_id.in_(question_ids))
+                    .group_by(Answer.question_id)
+                )
+                answers_count_result = await self.session.execute(answers_count_query)
+                for row in answers_count_result:
+                    answers_count[row[0]] = row[1]  # question_id -> count
+            
+            # Теперь преобразуем вопросы в словари
             questions_list = []
+            
             for question in questions:
-                question_dict = self._entity_to_dict(question)
+                question_dict = {}
                 
-                # Добавляем количество ответов
-                question_dict["answers_count"] = len(question.answers)
+                # Базовые поля вопроса
+                for column in question.__table__.columns:
+                    question_dict[column.name] = getattr(question, column.name)
                 
-                # Удаляем полные ответы, так как они не нужны в списке
-                if "answers" in question_dict:
-                    del question_dict["answers"]
+                # Добавляем информацию об авторе
+                if question.author:
+                    question_dict["author"] = {
+                        "id": question.author.id,
+                        "username": question.author.username,
+                        "avatar_url": question.author.avatar_url if hasattr(question.author, "avatar_url") else None
+                    }
+                
+                # Добавляем информацию о растении
+                if question.plant:
+                    question_dict["plant"] = {
+                        "id": question.plant.id,
+                        "name": question.plant.name,
+                        "image_url": question.plant.image_url if hasattr(question.plant, "image_url") else None
+                    }
+                
+                # Добавляем количество ответов из предварительно загруженного словаря
+                question_dict["answers_count"] = answers_count.get(question.id, 0)
                 
                 # Добавляем информацию о голосе пользователя
                 if user_id:
-                    question_dict["user_vote"] = await self._get_user_vote(question.id, user_id)
+                    question_dict["user_vote"] = user_votes.get(question.id)
                 
                 questions_list.append(question_dict)
             
             return questions_list, total
-        except SQLAlchemyError as e:
-            raise DatabaseError(f"Ошибка при получении списка вопросов: {str(e)}")
-    
+        except Exception as e:
+            import traceback
+            error_msg = f"Ошибка при получении списка вопросов: {str(e)}\n{traceback.format_exc()}"
+            raise DatabaseError(error_msg)
     async def _get_user_vote(self, question_id: int, user_id: int) -> Optional[str]:
         """
         Получить тип голоса пользователя за вопрос

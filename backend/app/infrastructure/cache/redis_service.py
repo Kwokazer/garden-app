@@ -3,7 +3,7 @@
 import json
 import logging
 from typing import Any, Dict, List, Optional, Union
-
+from app.utils.json_encoder import json_dumps, json_loads
 import redis.asyncio as redis
 
 from app.core.config import settings
@@ -55,7 +55,7 @@ class RedisService:
                 if value:
                     # Пытаемся десериализовать JSON, если это не удается, возвращаем строку
                     try:
-                        return json.loads(value)
+                        return json_loads(value)
                     except (json.JSONDecodeError, TypeError):
                         return value
                 return None
@@ -87,7 +87,7 @@ class RedisService:
                 
             # Сериализуем значение, если это не строка
             if not isinstance(value, str):
-                value = json.dumps(value)
+                value = json_dumps(value)
                 
             # Устанавливаем значение
             if expire:
@@ -141,7 +141,7 @@ class RedisService:
                 value = values[i] if i < len(values) else None
                 if value:
                     try:
-                        result[key] = json.loads(value)
+                        result[key] = json_loads(value)
                     except (json.JSONDecodeError, TypeError):
                         result[key] = value
                 else:
@@ -162,7 +162,7 @@ class RedisService:
             serialized_items = {}
             for key, value in items.items():
                 if not isinstance(value, str):
-                    serialized_items[key] = json.dumps(value)
+                    serialized_items[key] = json_dumps(value)
                 else:
                     serialized_items[key] = value
             

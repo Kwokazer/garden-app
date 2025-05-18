@@ -5,6 +5,7 @@ from app.domain.models.answer import Answer
 from app.domain.schemas.answer import (
     AnswerCreate, AnswerUpdate, AnswerDetailResponse
 )
+from app.domain.models.vote import AnswerVote
 from app.domain.schemas.vote import AnswerVoteCreate as AnswerVoteSchema
 from app.infrastructure.database.repositories import AnswerRepository, QuestionRepository, UserRepository
 from app.infrastructure.cache.qa_cache import QACache
@@ -229,71 +230,58 @@ class AnswerService(BaseService):
             self._log_error(f"Ошибка при отметке ответа {answer_id} как принятого", e)
             raise
     
-    async def vote_for_answer(self, answer_id: int, user_id: int, vote_type: str) -> bool:
+    async def vote_for_answer(self, answer_id: int, vote_data: AnswerVoteSchema, user_id: int) -> Dict[str, Any]:
         """
         Проголосовать за ответ
         
         Args:
             answer_id: ID ответа
+            vote_data: Данные голоса
             user_id: ID пользователя
-            vote_type: Тип голоса (up/down)
             
         Returns:
-            bool: True, если голос успешно добавлен/изменен/удален
+            Dict[str, Any]: Обновленный ответ
         """
         try:
-            # Проверяем существующий голос
-            existing_vote_stmt = select(AnswerVote).where(
-                and_(
-                    AnswerVote.answer_id == answer_id,
-                    AnswerVote.user_id == user_id
-                )
-            )
-            result = await self.session.execute(existing_vote_stmt)
-            existing_vote = result.scalars().first()
-            
-            answer = await self.get(answer_id)
+            # Получаем ответ
+            answer = await self.answer_repository.get(answer_id)
             if not answer:
-                raise EntityNotFoundError("Answer", answer_id)
+                raise NotFoundError("Answer", answer_id)
             
-            if existing_vote:
-                if existing_vote.vote_type == vote_type:
-                    # Удаляем голос (отмена)
-                    await self.session.delete(existing_vote)
-                    if vote_type == "up":
-                        answer.votes_up = max(0, answer.votes_up - 1)
-                    else:
-                        answer.votes_down = max(0, answer.votes_down - 1)
-                else:
-                    # Меняем тип голоса
-                    existing_vote.vote_type = vote_type
-                    if vote_type == "up":
-                        answer.votes_up += 1
-                        answer.votes_down = max(0, answer.votes_down - 1)
-                    else:
-                        answer.votes_down += 1
-                        answer.votes_up = max(0, answer.votes_up - 1)
-            else:
-                # Добавляем новый голос
-                new_vote = AnswerVote(
-                    answer_id=answer_id,
-                    user_id=user_id,
-                    vote_type=vote_type
-                )
-                self.session.add(new_vote)
-                if vote_type == "up":
-                    answer.votes_up += 1
-                else:
-                    answer.votes_down += 1
+            # Выполняем голосование с помощью метода answer_repository
+            success = await self._handle_answer_vote(answer_id, user_id, vote_data.vote_type)
             
-            await self.session.commit()
-            return True
+            if not success:
+                raise ValidationError("Не удалось проголосовать за ответ")
+            
+            # Инвалидируем кеш вопроса
+            await self.qa_cache.invalidate_question(answer.question_id)
+            
+            # Получаем обновленные данные ответа
+            answers = await self.answer_repository.get_for_question(answer.question_id, user_id)
+            for answer_data in answers:
+                if answer_data["id"] == answer_id:
+                    return answer_data
+            
+            # Если ответ не найден в списке (маловероятно), возвращаем базовую информацию
+            return {
+                "id": answer.id,
+                "body": answer.body,
+                "author_id": answer.author_id,
+                "question_id": answer.question_id,
+                "created_at": answer.created_at,
+                "votes_up": answer.votes_up,
+                "votes_down": answer.votes_down,
+                "is_accepted": answer.is_accepted
+            }
+        except (NotFoundError, ValidationError):
+            raise
         except Exception as e:
-            await self.session.rollback()
-            raise DatabaseError(f"Ошибка при голосовании за ответ: {str(e)}")
+            self._log_error(f"Ошибка при голосовании за ответ {answer_id}", e)
+            raise
 
 # Аналогично для QuestionRepository - метод vote_for_question
-    async def _handle_answer_vote(self, answer_id: int, user_id: int, vote_type: str) -> None:
+    async def _handle_answer_vote(self, answer_id: int, user_id: int, vote_type: str) -> bool:
         """
         Обработать голос за ответ
         
@@ -301,59 +289,75 @@ class AnswerService(BaseService):
             answer_id: ID ответа
             user_id: ID пользователя
             vote_type: Тип голоса (up/down)
+            
+        Returns:
+            bool: True, если голос успешно обработан
         """
-        success = await self.answer_repository.vote_for_answer(answer_id, user_id, vote_type)
-        if not success:
-            raise ValidationError("Не удалось обработать голос за ответ")
+        try:
+            # Проверяем, что ответ существует
+            answer = await self.answer_repository.get(answer_id)
+            if not answer:
+                raise NotFoundError("Answer", answer_id)
+            
+            # Проверяем, что пользователь не голосует за свой ответ
+            if answer.author_id == user_id:
+                raise ValidationError("Нельзя голосовать за свой ответ")
+            
+            # Обрабатываем голос
+            success = await self.answer_repository.vote_for_answer(answer_id, user_id, vote_type)
+            return success
+        except Exception as e:
+            self._log_error(f"Ошибка при обработке голоса за ответ {answer_id}", e)
+            raise ValidationError("Не удалось проголосовать за ответ")
 
-async def unaccept_answer(self, answer_id: int, user_id: int) -> Dict[str, Any]:
-    """
-    Отменить принятие ответа
-    
-    Args:
-        answer_id: ID ответа
-        user_id: ID пользователя, который отменяет принятие
+    async def unaccept_answer(self, answer_id: int, user_id: int) -> Dict[str, Any]:
+        """
+        Отменить принятие ответа
         
-    Returns:
-        Dict[str, Any]: Обновленный вопрос с ответами
-        
-    Raises:
-        NotFoundError: Если ответ не найден
-        AuthorizationError: Если пользователь не имеет прав на отмену принятия
-    """
-    try:
-        # Получаем ответ
-        answer = await self.answer_repository.get(answer_id)
-        if not answer:
-            raise NotFoundError("Answer", answer_id)
-        
-        # Получаем вопрос
-        question = await self.question_repository.get(answer.question_id)
-        if not question:
-            raise NotFoundError("Question", answer.question_id)
-        
-        # Проверяем, что пользователь является автором вопроса
-        if question.author_id != user_id:
-            raise AuthorizationError("Отмена принятия ответа")
-        
-        # Проверяем, что ответ действительно принят
-        if not answer.is_accepted:
-            raise ValidationError("Ответ уже не принят")
-        
-        # Отменяем принятие ответа
-        success = await self.answer_repository.unaccept_answer(answer_id, question.id)
-        if not success:
-            raise ValidationError("Не удалось отменить принятие ответа")
-        
-        # Инвалидируем кеш вопроса
-        await self.qa_cache.invalidate_question(question.id)
-        await self.qa_cache.invalidate_questions_list()
-        
-        # Получаем обновленные данные вопроса
-        question_data = await self.question_repository.get_with_details(question.id, user_id)
-        return question_data
-    except (NotFoundError, AuthorizationError, ValidationError):
-        raise
-    except Exception as e:
-        self._log_error(f"Ошибка при отмене принятия ответа {answer_id}", e)
-        raise
+        Args:
+            answer_id: ID ответа
+            user_id: ID пользователя, который отменяет принятие
+            
+        Returns:
+            Dict[str, Any]: Обновленный вопрос с ответами
+            
+        Raises:
+            NotFoundError: Если ответ не найден
+            AuthorizationError: Если пользователь не имеет прав на отмену принятия
+        """
+        try:
+            # Получаем ответ
+            answer = await self.answer_repository.get(answer_id)
+            if not answer:
+                raise NotFoundError("Answer", answer_id)
+            
+            # Получаем вопрос
+            question = await self.question_repository.get(answer.question_id)
+            if not question:
+                raise NotFoundError("Question", answer.question_id)
+            
+            # Проверяем, что пользователь является автором вопроса
+            if question.author_id != user_id:
+                raise AuthorizationError("Отмена принятия ответа")
+            
+            # Проверяем, что ответ действительно принят
+            if not answer.is_accepted:
+                raise ValidationError("Ответ уже не принят")
+            
+            # Отменяем принятие ответа
+            success = await self.answer_repository.unaccept_answer(answer_id, question.id)
+            if not success:
+                raise ValidationError("Не удалось отменить принятие ответа")
+            
+            # Инвалидируем кеш вопроса
+            await self.qa_cache.invalidate_question(question.id)
+            await self.qa_cache.invalidate_questions_list()
+            
+            # Получаем обновленные данные вопроса
+            question_data = await self.question_repository.get_with_details(question.id, user_id)
+            return question_data
+        except (NotFoundError, AuthorizationError, ValidationError):
+            raise
+        except Exception as e:
+            self._log_error(f"Ошибка при отмене принятия ответа {answer_id}", e)
+            raise

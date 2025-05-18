@@ -205,24 +205,24 @@
   
             <!-- Форма добавления ответа -->
             <div v-if="authStore.isLoggedIn" class="answer-form-section mt-5">
-              <div class="card border-0 shadow-sm">
-                <div class="card-header bg-light">
-                  <h5 class="mb-0">
-                    <i class="bi bi-chat-left-text me-2"></i>
-                    Ваш ответ
-                  </h5>
-                </div>
-                <div class="card-body">
-                  <AnswerForm
-                    :question-id="question.id"
-                    :is-loading="isCreatingAnswer"
-                    :error="answerFormError"
-                    @submit="handleCreateAnswer"
-                    @clear-error="answerFormError = null"
-                  />
+                <div class="card border-0 shadow-sm">
+                  <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                      <i class="bi bi-chat-left-text me-2"></i>
+                      Ваш ответ
+                    </h5>
+                  </div>
+                  <div class="card-body">
+                    <AnswerForm
+                      :question-id="question.id"
+                      :is-loading="isCreatingAnswer"
+                      :error="answerFormError"
+                      @submit="handleCreateAnswer"
+                      @clear-error="answerFormError = null"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
   
             <!-- Призыв к авторизации -->
             <div v-else class="auth-prompt text-center py-4">
@@ -425,22 +425,26 @@
     }
   }
   
-  async function handleCreateAnswer(answerData) {
+    async function handleCreateAnswer(answerData) {
     if (isCreatingAnswer.value) return;
     
     isCreatingAnswer.value = true;
     answerFormError.value = null;
     
     try {
-      await questionsStore.createAnswer(answerData);
-      // Форма очистится автоматически после успешного создания
+        await questionsStore.createAnswer(answerData);
+        // Очищаем форму после успешного создания
+        const answerForm = document.getElementById('answerBody');
+        if (answerForm) {
+        answerForm.value = '';
+        }
     } catch (error) {
-      console.error('Ошибка при создании ответа:', error);
-      answerFormError.value = error.message || 'Не удалось создать ответ';
+        console.error('Ошибка при создании ответа:', error);
+        answerFormError.value = error.message || 'Не удалось создать ответ';
     } finally {
-      isCreatingAnswer.value = false;
+        isCreatingAnswer.value = false;
     }
-  }
+    }
   
   async function handleUpdateAnswer(updateData) {
     try {

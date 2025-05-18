@@ -180,7 +180,73 @@ class AnswerRepository(BaseRepository[Answer]):
             
         return result 
     
-
+    async def vote_for_answer(self, answer_id: int, user_id: int, vote_type: str) -> bool:
+        """
+        Проголосовать за ответ
+        
+        Args:
+            answer_id: ID ответа
+            user_id: ID пользователя
+            vote_type: Тип голоса (up/down)
+            
+        Returns:
+            bool: True, если голос успешно добавлен/изменен/удален
+        """
+        try:
+            # Получаем ответ
+            answer = await self.get(answer_id)
+            if not answer:
+                raise EntityNotFoundError("Answer", answer_id)
+                
+            # Проверяем существующий голос
+            stmt = select(AnswerVote).where(
+                and_(
+                    AnswerVote.answer_id == answer_id,
+                    AnswerVote.user_id == user_id
+                )
+            )
+            result = await self.session.execute(stmt)
+            existing_vote = result.scalars().first()
+            
+            if existing_vote:
+                if existing_vote.vote_type == vote_type:
+                    # Удаляем голос (отмена)
+                    await self.session.delete(existing_vote)
+                    if vote_type == "up":
+                        answer.votes_up = max(0, answer.votes_up - 1)
+                    else:
+                        answer.votes_down = max(0, answer.votes_down - 1)
+                else:
+                    # Меняем тип голоса
+                    existing_vote.vote_type = vote_type
+                    self.session.add(existing_vote)
+                    if vote_type == "up":
+                        answer.votes_up += 1
+                        answer.votes_down = max(0, answer.votes_down - 1)
+                    else:
+                        answer.votes_down += 1
+                        answer.votes_up = max(0, answer.votes_up - 1)
+            else:
+                # Добавляем новый голос
+                new_vote = AnswerVote(
+                    answer_id=answer_id,
+                    user_id=user_id,
+                    vote_type=vote_type
+                )
+                self.session.add(new_vote)
+                if vote_type == "up":
+                    answer.votes_up += 1
+                else:
+                    answer.votes_down += 1
+            
+            # Сохраняем изменения в ответе
+            self.session.add(answer)
+            await self.session.flush()
+            
+            return True
+        except Exception as e:
+            await self.session.rollback()
+            raise DatabaseError(f"Ошибка при голосовании за ответ: {str(e)}")
     async def unaccept_answer(self, answer_id: int, question_id: int) -> bool:
         """
         Отменить принятие ответа

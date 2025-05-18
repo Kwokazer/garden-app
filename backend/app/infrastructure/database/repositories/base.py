@@ -59,6 +59,19 @@ class BaseRepository(Generic[T]):
             logger.error(f"Ошибка при получении {self.model_class.__name__} по ID {entity_id}: {str(e)}")
             raise DatabaseError(f"Ошибка базы данных: {str(e)}")
     
+
+    async def get(self, entity_id: int) -> Optional[T]:
+        """
+        Получить сущность по ID (синоним для get_by_id, но возвращает None вместо исключения)
+        """
+        try:
+            query = select(self.model_class).where(self.model_class.id == entity_id)
+            result = await self.session.execute(query)
+            return result.scalars().first()
+        except SQLAlchemyError as e:
+            logger.error(f"Ошибка при получении {self.model_class.__name__} по ID {entity_id}: {str(e)}")
+            raise DatabaseError(f"Ошибка базы данных: {str(e)}")
+
     async def get_all(self, skip: int = 0, limit: int = 100, filters: Dict[str, Any] = None) -> List[T]:
         """Получить все сущности с пагинацией и фильтрацией"""
         try:
