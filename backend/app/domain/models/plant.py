@@ -1,7 +1,7 @@
 import enum
 from typing import List, Optional
 
-from sqlalchemy import Enum, Float, String, Text, Index
+from sqlalchemy import Boolean, Enum, Float, String, Text, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.domain.models.base import BaseModel, TimestampedModel
@@ -10,62 +10,159 @@ from app.domain.models.plant_category import PlantCategory, plant_to_category
 from app.domain.models.plant_image import PlantImage
 
 
-
 # Перечисление типов растений
 class PlantType(str, enum.Enum):
-   TREE = "tree"              # Дерево
-   SHRUB = "shrub"            # Кустарник
-   FLOWER = "flower"          # Цветок
-   VEGETABLE = "vegetable"    # Овощ
-   FRUIT = "fruit"            # Фрукт
-   HERB = "herb"              # Трава/зелень
-   SUCCULENT = "succulent"    # Суккулент
-   VINE = "vine"              # Лиана/вьющееся
-   AQUATIC = "aquatic"        # Водное растение
-   FERN = "fern"              # Папоротник
+    TREE = "tree"              # Дерево
+    SHRUB = "shrub"            # Кустарник
+    FLOWER = "flower"          # Цветок
+    VEGETABLE = "vegetable"    # Овощ
+    FRUIT = "fruit"            # Фрукт
+    HERB = "herb"              # Трава/зелень
+    SUCCULENT = "succulent"    # Суккулент
+    VINE = "vine"              # Лиана/вьющееся
+    AQUATIC = "aquatic"        # Водное растение
+    FERN = "fern"              # Папоротник
+
+
+# Перечисление жизненных циклов
+class LifeCycle(str, enum.Enum):
+    ANNUAL = "annual"          # Однолетнее
+    BIENNIAL = "biennial"      # Двулетнее
+    PERENNIAL = "perennial"    # Многолетнее
+
+
+# Перечисление частоты полива
+class WateringFrequency(str, enum.Enum):
+    DAILY = "daily"
+    TWICE_A_WEEK = "twice_a_week"
+    WEEKLY = "weekly"
+    BI_WEEKLY = "bi_weekly"
+    MONTHLY = "monthly"
+    RARELY = "rarely"
+
+
+# Перечисление уровней освещения
+class LightLevel(str, enum.Enum):
+    FULL_SUN = "full_sun"
+    PARTIAL_SUN = "partial_sun"
+    SHADE = "shade"
+    LOW_LIGHT = "low_light"
+
+
+# Перечисление уровней влажности
+class HumidityLevel(str, enum.Enum):
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
+# Перечисление сложности ухода
+class CareDifficulty(str, enum.Enum):
+    VERY_EASY = "very_easy"
+    EASY = "easy"
+    MODERATE = "moderate"
+    DIFFICULT = "difficult"
+    EXPERT = "expert"
+
+
+# Перечисление частоты подкормки
+class FertilizingFrequency(str, enum.Enum):
+    WEEKLY = "weekly"
+    BI_WEEKLY = "bi_weekly"
+    MONTHLY = "monthly"
+    QUARTERLY = "quarterly"
+    ANNUALLY = "annually"
+    NONE = "none"
+
+
+# Перечисление частоты пересадки
+class RepottingFrequency(str, enum.Enum):
+    ANNUALLY = "annually"
+    BI_ANNUALLY = "bi_annually"
+    THREE_YEARS = "three_years"
+    RARELY = "rarely"
+
+
+# Перечисление скорости роста
+class GrowthRate(str, enum.Enum):
+    FAST = "fast"
+    MODERATE = "moderate"
+    SLOW = "slow"
+
 
 class Plant(BaseModel, TimestampedModel):
-   """Модель растения"""
-   __tablename__ = "plants"
+    """Модель растения"""
+    __tablename__ = "plants"
 
-   # Основная информация
-   name: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-   scientific_name: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
-   description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-   
-   # Характеристики роста
-   growth_height_min: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-   growth_height_max: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-   growth_rate: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-   
-   # Тип растения и популярность
-   plant_type: Mapped[Optional[PlantType]] = mapped_column(Enum(PlantType), nullable=True, index=True)
-   popularity_score: Mapped[int] = mapped_column(default=0, index=True)
-   
-   # Дополнительная информация
-   bloom_season: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-   bloom_color: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-   hardiness_zone_min: Mapped[Optional[int]] = mapped_column(nullable=True)
-   hardiness_zone_max: Mapped[Optional[int]] = mapped_column(nullable=True)
-   
-   # Рекомендации по уходу
-   care_instructions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-   planting_tips: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-   pruning_tips: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-   
-   # Отношения
-   categories: Mapped[List["PlantCategory"]] = relationship(
-       "PlantCategory", secondary=plant_to_category, back_populates="plants"
-   )
-   climate_zones: Mapped[List["ClimateZone"]] = relationship(
-       "ClimateZone", secondary=plant_to_climate_zone, back_populates="plants"
-   )
-   images: Mapped[List["PlantImage"]] = relationship(
-       "PlantImage", back_populates="plant", cascade="all, delete-orphan"
-   )
-   questions: Mapped[List["Question"]] = relationship("Question", back_populates="plant")
-   
-   # Индексы
-   __table_args__ = (
-       Index('idx_plant_type_popularity', 'plant_type', 'popularity_score'),
-   )
+    # Основная информация
+    name: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    latin_name: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)  # было scientific_name
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
+    # Характеристики роста
+    height_min: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # было growth_height_min
+    height_max: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # было growth_height_max
+    growth_rate: Mapped[Optional[GrowthRate]] = mapped_column(Enum(GrowthRate), nullable=True)
+    
+    # Тип растения и жизненный цикл
+    plant_type: Mapped[Optional[PlantType]] = mapped_column(Enum(PlantType), nullable=True, index=True)
+    life_cycle: Mapped[Optional[LifeCycle]] = mapped_column(Enum(LifeCycle), nullable=True)
+    
+    # Популярность
+    popularity_score: Mapped[int] = mapped_column(default=0, index=True)
+    
+    # Цветение
+    flowering_period: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # было bloom_season
+    bloom_color: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    
+    # Зоны морозостойкости
+    hardiness_zone_min: Mapped[Optional[int]] = mapped_column(nullable=True)
+    hardiness_zone_max: Mapped[Optional[int]] = mapped_column(nullable=True)
+    
+    # Условия выращивания
+    watering_frequency: Mapped[Optional[WateringFrequency]] = mapped_column(Enum(WateringFrequency), nullable=True)
+    light_level: Mapped[Optional[LightLevel]] = mapped_column(Enum(LightLevel), nullable=True)
+    temperature_min: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    temperature_max: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    humidity_level: Mapped[Optional[HumidityLevel]] = mapped_column(Enum(HumidityLevel), nullable=True)
+    
+    # Уход
+    care_difficulty: Mapped[Optional[CareDifficulty]] = mapped_column(Enum(CareDifficulty), nullable=True)
+    fertilizing_frequency: Mapped[Optional[FertilizingFrequency]] = mapped_column(Enum(FertilizingFrequency), nullable=True)
+    repotting_frequency: Mapped[Optional[RepottingFrequency]] = mapped_column(Enum(RepottingFrequency), nullable=True)
+    
+    # Безопасность
+    is_toxic: Mapped[bool] = mapped_column(Boolean, default=False)
+    
+    # Инструкции и советы (подробные текстовые поля)
+    care_instructions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    planting_instructions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # было planting_tips
+    pruning_tips: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
+    # JSON поля для сложных структур (будут обработаны в сервисном слое)
+    care_tips: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON массив строк
+    common_problems: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON массив объектов
+    propagation_methods: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON массив объектов
+    
+    # Отношения
+    categories: Mapped[List["PlantCategory"]] = relationship(
+        "PlantCategory", secondary=plant_to_category, back_populates="plants"
+    )
+    climate_zones: Mapped[List["ClimateZone"]] = relationship(
+        "ClimateZone", secondary=plant_to_climate_zone, back_populates="plants"
+    )
+    images: Mapped[List["PlantImage"]] = relationship(
+        "PlantImage", back_populates="plant", cascade="all, delete-orphan"
+    )
+    tags: Mapped[List["Tag"]] = relationship(
+        "Tag", secondary="plant_tag", back_populates="plants"
+    )
+    questions: Mapped[List["Question"]] = relationship("Question", back_populates="plant")
+    
+    # Индексы
+    __table_args__ = (
+        Index('idx_plant_type_popularity', 'plant_type', 'popularity_score'),
+        Index('idx_plant_care_difficulty', 'care_difficulty'),
+        Index('idx_plant_watering_light', 'watering_frequency', 'light_level'),
+    )

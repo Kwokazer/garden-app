@@ -1,25 +1,9 @@
 from typing import List, Optional
 
-from sqlalchemy import Boolean, ForeignKey, Integer, String, Text, Index
+from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.domain.models.base import Base, BaseModel, TimestampedModel
-
-# Определение для использования во внешних импортах
-question_to_tag = "question_tag"
-
-class QuestionToTag(Base):
-    """Модель связи между вопросами и тегами (many-to-many)"""
-    __tablename__ = "question_tag"
-    
-    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id"), primary_key=True)
-    tag_id: Mapped[int] = mapped_column(ForeignKey("tags.id"), primary_key=True)
-    
-    # Индексы для оптимизации запросов
-    __table_args__ = (
-        Index("ix_question_tag_question", "question_id"),
-        Index("ix_question_tag_tag", "tag_id"),
-    )
+from app.domain.models.base import BaseModel, TimestampedModel
 
 class Question(BaseModel, TimestampedModel):
     """Модель вопроса пользователя"""
@@ -39,7 +23,4 @@ class Question(BaseModel, TimestampedModel):
     answers: Mapped[List["Answer"]] = relationship(
         "Answer", back_populates="question", cascade="all, delete-orphan"
     )
-    tags: Mapped[List["Tag"]] = relationship(
-        "Tag", secondary=question_to_tag, back_populates="questions"
-    )
-    plant: Mapped[Optional["Plant"]] = relationship("Plant", back_populates="questions") 
+    plant: Mapped[Optional["Plant"]] = relationship("Plant", back_populates="questions")

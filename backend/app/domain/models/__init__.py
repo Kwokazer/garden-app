@@ -5,9 +5,9 @@ from app.domain.models.plant import Plant, PlantType
 from app.domain.models.plant_category import PlantCategory, PlantToCategory
 from app.domain.models.plant_image import PlantImage
 from app.domain.models.climate_zone import ClimateZone, PlantToClimateZone
-from app.domain.models.question import Question, QuestionToTag
+from app.domain.models.question import Question
 from app.domain.models.answer import Answer
-from app.domain.models.tag import Tag
+from app.domain.models.tag import Tag, plant_tag
 from app.domain.models.vote import QuestionVote, AnswerVote, VoteType
 from app.domain.models.role import Role, RolePermission
 from app.domain.models.user import PrivacyLevel, User, UserRole
@@ -40,8 +40,8 @@ __all__ = [
     "Question",
     "Answer",
     "Tag",
+    "plant_tag",
     "QuestionVote",
     "AnswerVote",
     "VoteType",
-    "QuestionToTag"
 ]

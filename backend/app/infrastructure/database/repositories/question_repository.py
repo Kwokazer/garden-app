@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.domain.models.question import Question, QuestionToTag, question_to_tag
+from app.domain.models.question import Question
 from app.domain.models.tag import Tag
 from app.domain.models.vote import QuestionVote, AnswerVote
 from app.domain.models.answer import Answer
@@ -17,21 +17,19 @@ class QuestionRepository(BaseRepository[Question]):
     
     def __init__(self, session: AsyncSession):
         super().__init__(session=session, model_class=Question)
-    
-    async def create_with_tags(self, obj_in: Dict[str, Any], author_id: int, tags: List[str] = None) -> Question:
+
+    async def create_question(self, obj_in: Dict[str, Any], author_id: int) -> Question:
         """
-        Создать вопрос с тегами
+        Создать вопрос
         
         Args:
             obj_in: Данные вопроса
             author_id: ID автора
-            tags: Список имен тегов
             
         Returns:
             Question: Созданный вопрос
         """
         try:
-            # Создаем вопрос
             db_obj = Question(
                 title=obj_in["title"],
                 body=obj_in["body"],
@@ -40,43 +38,26 @@ class QuestionRepository(BaseRepository[Question]):
             )
             self.session.add(db_obj)
             await self.session.flush()
-            
-            # Добавляем теги, если они есть
-            if tags:
-                await self._add_tags_to_question(db_obj.id, tags)
-            
             return db_obj
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise DatabaseError(f"Ошибка при создании вопроса: {str(e)}")
-    
-    async def update_with_tags(self, db_obj: Question, obj_in: Dict[str, Any], tags: List[str] = None) -> Question:
+
+    async def update_question(self, db_obj: Question, obj_in: Dict[str, Any]) -> Question:
         """
-        Обновить вопрос с тегами
+        Обновить вопрос
         
         Args:
             db_obj: Объект вопроса для обновления
             obj_in: Новые данные
-            tags: Новый список имен тегов
             
         Returns:
             Question: Обновленный вопрос
         """
         try:
-            # Обновляем поля вопроса
             for field in ["title", "body", "is_solved", "plant_id"]:
                 if field in obj_in and obj_in[field] is not None:
                     setattr(db_obj, field, obj_in[field])
-            
-            # Если переданы теги, обновляем их
-            if tags is not None:
-                # Очищаем текущие теги
-                db_obj.tags = []
-                await self.session.flush()
-                
-                # Добавляем новые теги
-                if tags:
-                    await self._add_tags_to_question(db_obj.id, tags)
             
             self.session.add(db_obj)
             await self.session.flush()
@@ -155,7 +136,6 @@ class QuestionRepository(BaseRepository[Question]):
         skip: int = 0, 
         limit: int = 100,
         search: Optional[str] = None,
-        tag: Optional[str] = None,
         plant_id: Optional[int] = None,
         author_id: Optional[int] = None,
         is_solved: Optional[bool] = None,
@@ -200,10 +180,7 @@ class QuestionRepository(BaseRepository[Question]):
                         Question.body.ilike(f"%{search}%")
                     )
                 )
-            
-            if tag:
-                query = query.join(Question.tags).where(Tag.name == tag)
-            
+
             if plant_id:
                 query = query.where(Question.plant_id == plant_id)
             
@@ -253,48 +230,6 @@ class QuestionRepository(BaseRepository[Question]):
             return questions_list, total
         except SQLAlchemyError as e:
             raise DatabaseError(f"Ошибка при получении списка вопросов: {str(e)}")
-    
-    async def _add_tags_to_question(self, question_id: int, tag_names: List[str]) -> None:
-        """
-        Добавить теги к вопросу
-        
-        Args:
-            question_id: ID вопроса
-            tag_names: Список имен тегов
-        """
-        try:
-            # Получаем или создаем теги
-            for tag_name in tag_names:
-                # Проверяем, существует ли тег
-                stmt = select(Tag).where(func.lower(Tag.name) == func.lower(tag_name))
-                result = await self.session.execute(stmt)
-                tag = result.scalars().first()
-                
-                # Если тег не существует, создаем его
-                if not tag:
-                    tag = Tag(name=tag_name)
-                    self.session.add(tag)
-                    await self.session.flush()
-                
-                # Проверяем существует ли связь
-                stmt = select(QuestionToTag).where(
-                    and_(
-                        QuestionToTag.question_id == question_id,
-                        QuestionToTag.tag_id == tag.id
-                    )
-                )
-                result = await self.session.execute(stmt)
-                
-                # Если связи нет, создаем ее
-                if not result.scalars().first():
-                    new_relation = QuestionToTag(
-                        question_id=question_id,
-                        tag_id=tag.id
-                    )
-                    self.session.add(new_relation)
-        except SQLAlchemyError as e:
-            await self.session.rollback()
-            raise DatabaseError(f"Ошибка при добавлении тегов к вопросу: {str(e)}")
     
     async def _get_user_vote(self, question_id: int, user_id: int) -> Optional[str]:
         """
@@ -359,9 +294,6 @@ class QuestionRepository(BaseRepository[Question]):
                 "username": entity.author.username,
                 "avatar_url": entity.author.avatar_url
             }
-        
-        if hasattr(entity, "tags") and entity.tags:
-            result["tags"] = [{"id": tag.id, "name": tag.name} for tag in entity.tags]
         
         if hasattr(entity, "plant") and entity.plant:
             result["plant"] = {

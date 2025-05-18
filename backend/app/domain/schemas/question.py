@@ -1,9 +1,7 @@
 from typing import List, Optional, Dict, Any
 
 from pydantic import Field
-
 from app.domain.schemas.base import BaseSchema, IDSchema, TimestampedSchema
-from app.domain.schemas.tag import TagRef
 
 
 class QuestionBase(BaseSchema):
@@ -12,11 +10,8 @@ class QuestionBase(BaseSchema):
     body: str = Field(..., description="Содержание вопроса", min_length=10)
     plant_id: Optional[int] = Field(None, description="ID растения, связанного с вопросом")
 
-
 class QuestionCreate(QuestionBase):
     """Схема для создания вопроса"""
-    tags: Optional[List[str]] = Field(default_factory=list, description="Список названий тегов")
-
 
 class QuestionUpdate(BaseSchema):
     """Схема для обновления вопроса"""
@@ -24,8 +19,6 @@ class QuestionUpdate(BaseSchema):
     body: Optional[str] = Field(None, description="Содержание вопроса", min_length=10)
     is_solved: Optional[bool] = Field(None, description="Отметка о решении вопроса")
     plant_id: Optional[int] = Field(None, description="ID растения, связанного с вопросом")
-    tags: Optional[List[str]] = Field(None, description="Список названий тегов")
-
 
 class QuestionResponse(QuestionBase, IDSchema, TimestampedSchema):
     """Базовая схема ответа для вопроса"""
@@ -34,8 +27,6 @@ class QuestionResponse(QuestionBase, IDSchema, TimestampedSchema):
     view_count: int = Field(..., description="Количество просмотров")
     votes_up: int = Field(..., description="Количество голосов за")
     votes_down: int = Field(..., description="Количество голосов против")
-    tags: List[TagRef] = Field(default_factory=list, description="Список тегов")
-
 
 class QuestionDetailResponse(QuestionResponse):
     """Детальная схема ответа для вопроса с дополнительной информацией"""
@@ -45,11 +36,10 @@ class QuestionDetailResponse(QuestionResponse):
     answers: List[Dict[str, Any]] = Field(default_factory=list, description="Список ответов")
     user_vote: Optional[str] = Field(None, description="Тип голоса текущего пользователя")
 
-
 class QuestionListResponse(BaseSchema):
     """Схема для списка вопросов с пагинацией"""
     items: List[QuestionResponse]
     total: int
     page: int
     size: int
-    pages: int 
+    pages: int

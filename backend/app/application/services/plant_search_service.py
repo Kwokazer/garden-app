@@ -65,14 +65,15 @@ class PlantSearchService(BaseService):
         
         # Расчет количества страниц
         pages = (total + limit - 1) // limit if limit > 0 else 0
+        current_page = (skip // limit) + 1 if limit > 0 else 1
         
         # Формируем ответ с пагинацией
         result = PlantListResponse(
             items=items,
-            total=total,
-            page=(skip // limit) + 1 if limit > 0 else 1,
-            size=limit,
-            pages=pages
+            total_items=total,  # Изменено с total на total_items
+            total_pages=pages,  # Изменено с pages на total_pages
+            page=current_page,
+            per_page=limit     # Изменено с size на per_page
         )
         
         # Если кэширование включено и нет поискового запроса, сохраняем результат в кэш
@@ -156,7 +157,7 @@ class PlantSearchService(BaseService):
             
             # Фильтр по типу растения
             if filters.plant_type:
-                filter_conditions.append(Plant.plant_type == filters.plant_type.value)
+                filter_conditions.append(Plant.plant_type == filters.plant_type)
             
             # Фильтр по минимальной популярности
             if filters.min_popularity is not None:
@@ -179,8 +180,31 @@ class PlantSearchService(BaseService):
         count_result = await self.session.execute(count_query)
         total = count_result.scalar() or 0
         
-        # Применяем сортировку и пагинацию
-        base_query = base_query.order_by(Plant.popularity_score.desc(), Plant.name)
+        # Применяем сортировку
+        if filters and filters.sort_by:
+            sort_column = None
+            if filters.sort_by == "name":
+                sort_column = Plant.name
+            elif filters.sort_by == "created_at":
+                sort_column = Plant.created_at
+            elif filters.sort_by == "popularity":
+                sort_column = Plant.popularity_score
+            else:
+                # По умолчанию сортируем по популярности и имени
+                sort_column = Plant.popularity_score
+            
+            # Определяем направление сортировки
+            if filters.sort_direction == "desc":
+                sort_column = sort_column.desc()
+            else:
+                sort_column = sort_column.asc()
+                
+            base_query = base_query.order_by(sort_column, Plant.name)
+        else:
+            # По умолчанию сортируем по популярности (по убыванию) и имени
+            base_query = base_query.order_by(Plant.popularity_score.desc(), Plant.name)
+        
+        # Применяем пагинацию
         base_query = base_query.offset(skip).limit(limit)
         
         # Выполняем запрос для получения растений
@@ -248,4 +272,4 @@ class PlantSearchService(BaseService):
         result = await self.session.execute(base_query)
         categories = result.scalars().all()
         
-        return categories, total 
+        return categories, total

@@ -32,7 +32,8 @@ async def get_questions(
     page: int = Query(1, ge=1, description="Номер страницы"),
     per_page: int = Query(20, ge=1, le=100, description="Количество записей на странице"),
     search: Optional[str] = Query(None, description="Поиск по вопросам"),
-    tag: Optional[str] = Query(None, description="Фильтр по тегу"),
+    # Убрать эту строку:
+    # tag: Optional[str] = Query(None, description="Фильтр по тегу"),
     plant_id: Optional[int] = Query(None, description="Фильтр по ID растения"),
     author_id: Optional[int] = Query(None, description="Фильтр по ID автора"),
     is_solved: Optional[bool] = Query(None, description="Фильтр по статусу решения"),
@@ -51,7 +52,8 @@ async def get_questions(
         skip=skip,
         limit=per_page,
         search=search,
-        tag=tag,
+        # Убрать эту строку:
+        # tag=tag,
         plant_id=plant_id,
         author_id=author_id,
         is_solved=is_solved,

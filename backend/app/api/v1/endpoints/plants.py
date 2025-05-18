@@ -52,6 +52,8 @@ async def get_plants_search(
     min_popularity: Optional[int] = Query(None, ge=0, description="Фильтр по минимальной популярности"),
     min_hardiness_zone: Optional[int] = Query(None, ge=1, le=13, description="Минимальная зона морозостойкости"),
     max_hardiness_zone: Optional[int] = Query(None, ge=1, le=13, description="Максимальная зона морозостойкости"),
+    sort_by: Optional[str] = Query("name", description="Поле для сортировки"),
+    sort_direction: Optional[str] = Query("asc", description="Направление сортировки (asc, desc)"),
     use_cache: bool = Query(True, description="Использовать ли кэширование результатов"),
     search_service: PlantSearchService = Depends(get_search_service)
 ) -> PlantListResponse:
@@ -73,7 +75,9 @@ async def get_plants_search(
         plant_type=plant_type,
         min_popularity=min_popularity,
         min_hardiness_zone=min_hardiness_zone,
-        max_hardiness_zone=max_hardiness_zone
+        max_hardiness_zone=max_hardiness_zone,
+        sort_by=sort_by,
+        sort_direction=sort_direction
     )
     
     try:
@@ -99,10 +103,13 @@ async def get_plants(
     category_id: Optional[int] = Query(None, description="Фильтр по ID категории"),
     plant_type: Optional[str] = Query(None, description="Фильтр по типу растения"),
     min_popularity: Optional[int] = Query(None, ge=0, description="Фильтр по популярности"),
-    min_climate_zone: Optional[int] = Query(None, ge=1, description="Фильтр по климатической зоне"),
-    max_climate_zone: Optional[int] = Query(None, description="Фильтр по климатической зоне"),
+    climate_zone_id: Optional[int] = Query(None, description="Фильтр по ID климатической зоны"),
+    min_climate_zone: Optional[int] = Query(None, ge=1, description="Фильтр по минимальной климатической зоне"),
+    max_climate_zone: Optional[int] = Query(None, description="Фильтр по максимальной климатической зоне"),
     min_hardiness_zone: Optional[int] = Query(None, ge=1, le=13, description="Минимальная зона морозостойкости"),
     max_hardiness_zone: Optional[int] = Query(None, ge=1, le=13, description="Максимальная зона морозостойкости"),
+    sort_by: Optional[str] = Query("name", description="Поле для сортировки (name, created_at, popularity)"),
+    sort_direction: Optional[str] = Query("asc", description="Направление сортировки (asc, desc)"),
     plant_service: PlantService = Depends(get_plant_service)
 ) -> PlantListResponse:
     """
@@ -113,7 +120,7 @@ async def get_plants(
     
     # Преобразуем plant_type в нижний регистр, если он указан
     if plant_type:
-            plant_type = plant_type.lower()
+        plant_type = plant_type.lower()
 
     # Создаем объект с параметрами фильтрации
     filters = PlantFilterParams(
@@ -121,10 +128,13 @@ async def get_plants(
         category_id=category_id,
         plant_type=plant_type,
         min_popularity=min_popularity,
+        climate_zone_id=climate_zone_id,
         min_climate_zone=min_climate_zone,
         max_climate_zone=max_climate_zone,
         min_hardiness_zone=min_hardiness_zone,
-        max_hardiness_zone=max_hardiness_zone
+        max_hardiness_zone=max_hardiness_zone,
+        sort_by=sort_by,
+        sort_direction=sort_direction
     )
     
     return await plant_service.get_plants(skip=skip, limit=per_page, filters=filters)
@@ -245,4 +255,4 @@ async def delete_plant_image(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
-        ) 
+        )

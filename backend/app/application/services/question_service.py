@@ -7,7 +7,7 @@ from app.domain.schemas.question import (
     QuestionListResponse, QuestionDetailResponse
 )
 from app.domain.schemas.vote import VoteTypeEnum as QuestionVoteSchema
-from app.infrastructure.database.repositories import QuestionRepository, TagRepository, UserRepository
+from app.infrastructure.database.repositories import QuestionRepository, UserRepository
 from app.infrastructure.cache.qa_cache import QACache
 
 from .base import BaseService, NotFoundError, ValidationError, AuthorizationError
@@ -28,20 +28,12 @@ class QuestionService(BaseService):
     async def create_question(self, data: QuestionCreate, author_id: int) -> Dict[str, Any]:
         """
         Создать новый вопрос
-        
-        Args:
-            data: Данные вопроса
-            author_id: ID автора
-            
-        Returns:
-            Dict[str, Any]: Созданный вопрос
         """
         try:
-            # Создаем вопрос в БД
-            question = await self.question_repository.create_with_tags(
+            # Заменить create_with_tags на create_question
+            question = await self.question_repository.create_question(
                 obj_in=data.dict(),
-                author_id=author_id,
-                tags=data.tags
+                author_id=author_id
             )
             
             # Инвалидируем кеш
@@ -53,22 +45,10 @@ class QuestionService(BaseService):
         except Exception as e:
             self._log_error("Ошибка при создании вопроса", e)
             raise
-    
+
     async def update_question(self, question_id: int, data: QuestionUpdate, user_id: int) -> Dict[str, Any]:
         """
         Обновить вопрос
-        
-        Args:
-            question_id: ID вопроса
-            data: Новые данные
-            user_id: ID пользователя, который выполняет обновление
-            
-        Returns:
-            Dict[str, Any]: Обновленный вопрос
-            
-        Raises:
-            NotFoundError: Если вопрос не найден
-            AuthorizationError: Если пользователь не имеет прав на обновление
         """
         try:
             # Получаем вопрос
@@ -78,14 +58,12 @@ class QuestionService(BaseService):
             
             # Проверяем права
             if question.author_id != user_id:
-                # TODO: Добавить проверку администратора
                 raise AuthorizationError("Редактирование вопроса")
             
-            # Обновляем вопрос
-            updated_question = await self.question_repository.update_with_tags(
+            # Заменить update_with_tags на update_question
+            updated_question = await self.question_repository.update_question(
                 db_obj=question,
-                obj_in=data.dict(exclude_unset=True),
-                tags=data.tags if data.tags is not None else None
+                obj_in=data.dict(exclude_unset=True)
             )
             
             # Инвалидируем кеш
@@ -184,7 +162,6 @@ class QuestionService(BaseService):
         skip: int = 0,
         limit: int = 20,
         search: Optional[str] = None,
-        tag: Optional[str] = None,
         plant_id: Optional[int] = None,
         author_id: Optional[int] = None,
         is_solved: Optional[bool] = None,
@@ -199,7 +176,6 @@ class QuestionService(BaseService):
             skip: Смещение для пагинации
             limit: Лимит для пагинации
             search: Строка поиска
-            tag: Фильтр по тегу
             plant_id: Фильтр по ID растения
             author_id: Фильтр по ID автора
             is_solved: Фильтр по статусу решения
@@ -212,7 +188,7 @@ class QuestionService(BaseService):
         """
         try:
             # Пробуем получить из кеша
-            cache_key = f"questions_{skip}_{limit}_{search}_{tag}_{plant_id}_{author_id}_{is_solved}_{sort_by}_{sort_order}"
+            cache_key = f"questions_{skip}_{limit}_{search}_{plant_id}_{author_id}_{is_solved}_{sort_by}_{sort_order}"
             cached_result = await self.qa_cache.get_questions_list(cache_key)
             if cached_result:
                 return cached_result
@@ -222,7 +198,6 @@ class QuestionService(BaseService):
                 skip=skip,
                 limit=limit,
                 search=search,
-                tag=tag,
                 plant_id=plant_id,
                 author_id=author_id,
                 is_solved=is_solved,

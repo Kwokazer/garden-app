@@ -1,115 +1,66 @@
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional
+
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql import text
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import selectinload
 
 from app.domain.models.tag import Tag
-from app.infrastructure.database.repositories.base import BaseRepository, DatabaseError
+from app.infrastructure.database.repositories.base import BaseRepository, EntityNotFoundError
 
 class TagRepository(BaseRepository[Tag]):
     """Репозиторий для работы с тегами"""
     
     def __init__(self, session: AsyncSession):
-        super().__init__(session=session, model_class=Tag)
+        super().__init__(session, Tag)
     
-    async def get_all_tags(self) -> List[Dict[str, Any]]:
+    async def get_tags(self, skip: int = 0, limit: int = 100) -> List[Tag]:
         """
-        Получить все теги
-        
-        Returns:
-            List[Dict[str, Any]]: Список тегов
+        Получить список тегов с пагинацией
         """
-        try:
-            # Используем чистый SQL запрос для обхода проблем совместимости SQLAlchemy 2.0
-            result = await self.session.execute(text("SELECT id, name, description, created_at FROM tags ORDER BY name"))
-            tags = []
-            
-            for row in result:
-                tags.append({
-                    "id": row[0],
-                    "name": row[1],
-                    "description": row[2],
-                    "created_at": row[3]
-                })
-            
-            return tags
-        except SQLAlchemyError as e:
-            raise DatabaseError(f"Ошибка при получении всех тегов: {str(e)}")
+        query = select(Tag).offset(skip).limit(limit).order_by(Tag.name)
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
     
-    async def search_tags(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    async def get_tag(self, tag_id: int) -> Tag:
         """
-        Поиск тегов по части имени
+        Получить тег по ID
+        """
+        query = select(Tag).filter(Tag.id == tag_id)
+        result = await self.session.execute(query)
+        tag = result.scalars().first()
         
-        Args:
-            query: Строка поиска
-            limit: Максимальное количество результатов
-            
-        Returns:
-            List[Dict[str, Any]]: Список найденных тегов
-        """
-        try:
-            # Используем чистый SQL запрос с параметрами
-            sql = text("SELECT id, name, description, created_at FROM tags WHERE name ILIKE :query ORDER BY name LIMIT :limit")
-            result = await self.session.execute(sql, {"query": f"%{query}%", "limit": limit})
-            
-            tags = []
-            for row in result:
-                tags.append({
-                    "id": row[0],
-                    "name": row[1],
-                    "description": row[2],
-                    "created_at": row[3]
-                })
-            
-            return tags
-        except SQLAlchemyError as e:
-            raise DatabaseError(f"Ошибка при поиске тегов: {str(e)}")
+        if not tag:
+            raise EntityNotFoundError("Tag", tag_id)
+        
+        return tag
     
-    async def create_tag(self, name: str, description: Optional[str] = None) -> Dict[str, Any]:
+    async def get_tag_by_name(self, name: str) -> Optional[Tag]:
         """
-        Создать новый тег
-        
-        Args:
-            name: Имя тега
-            description: Описание тега
-            
-        Returns:
-            Dict[str, Any]: Созданный тег
+        Получить тег по имени
         """
-        try:
-            # Проверяем, существует ли тег с таким именем
-            result = await self.session.execute(
-                text("SELECT id FROM tags WHERE LOWER(name) = LOWER(:name)"), 
-                {"name": name}
-            )
-            existing_tag = result.first()
-            
-            if existing_tag:
-                # Если тег существует, получаем его
-                result = await self.session.execute(
-                    text("SELECT id, name, description, created_at FROM tags WHERE id = :id"),
-                    {"id": existing_tag[0]}
-                )
-                row = result.first()
-                return {
-                    "id": row[0],
-                    "name": row[1],
-                    "description": row[2],
-                    "created_at": row[3]
-                }
-            
-            # Создаем новый тег
-            tag = Tag(name=name, description=description)
-            self.session.add(tag)
-            await self.session.flush()
-            
-            return {
-                "id": tag.id,
-                "name": tag.name,
-                "description": tag.description,
-                "created_at": tag.created_at
-            }
-        except SQLAlchemyError as e:
-            await self.session.rollback()
-            raise DatabaseError(f"Ошибка при создании тега: {str(e)}") 
+        query = select(Tag).filter(Tag.name == name)
+        result = await self.session.execute(query)
+        return result.scalars().first()
+    
+    async def search_tags(self, query_text: str, skip: int = 0, limit: int = 20) -> List[Tag]:
+        """
+        Поиск тегов по названию
+        """
+        search_query = f"%{query_text.lower()}%"
+        query = (
+            select(Tag)
+            .filter(func.lower(Tag.name).like(search_query))
+            .offset(skip)
+            .limit(limit)
+            .order_by(Tag.name)
+        )
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+    
+    async def count_tags(self) -> int:
+        """
+        Получить общее количество тегов
+        """
+        query = select(func.count()).select_from(Tag)
+        result = await self.session.execute(query)
+        return result.scalar() or 0
