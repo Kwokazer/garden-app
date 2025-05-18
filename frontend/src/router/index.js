@@ -1,58 +1,64 @@
-// src/router/index.js (обновленный)
+// src/router/index.js (updated with question routes)
 
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../features/auth/store/authStore';
 
-// Импорт аутентификационных компонентов
+// Import authentication components
 import LoginPage from '../features/auth/views/LoginPage.vue';
 import RegisterPage from '../features/auth/views/RegisterPage.vue';
 import DashboardPage from '../features/auth/views/DashboardPage.vue';
 
-// Импорт компонентов растений
+// Import plant components
 import PlantsListPage from '../features/plants/views/PlantsListPage.vue';
 import PlantDetailsPage from '../features/plants/views/PlantDetailsPage.vue';
 
+// Import question components
+import QuestionsListPage from '../features/questions/views/QuestionsListPage.vue';
+import QuestionDetailsPage from '../features/questions/views/QuestionDetailsPage.vue';
+import CreateQuestionPage from '../features/questions/views/CreateQuestionPage.vue';
+import EditQuestionPage from '../features/questions/views/EditQuestionPage.vue';
+
 /**
- * Функция проверки аутентификации для защищенных маршрутов
+ * Auth guard function for protected routes
  */
 const authGuard = (to, from, next) => {
-  // Проверяем наличие токена в localStorage
+  // Check for token in localStorage
   const accessToken = localStorage.getItem('accessToken');
   
-  // Пытаемся получить состояние аутентификации из хранилища
+  // Try to get authentication state from store
   let isAuthenticated = !!accessToken;
   
-  // Если хранилище инициализировано, используем его
+  // If store is initialized, use it
   if (window.hasOwnProperty('__pinia')) {
     try {
       const authStore = useAuthStore();
       isAuthenticated = authStore.isLoggedIn;
     } catch (error) {
-      console.warn('Ошибка доступа к хранилищу аутентификации:', error);
-      // Продолжаем использовать результат проверки localStorage
+      console.warn('Error accessing auth store:', error);
+      // Continue using localStorage check result
     }
   }
 
-  // Проверяем тип маршрута и состояние аутентификации
+  // Check route type and auth state
   if (to.meta.requiresAuth && !isAuthenticated) {
-    // Если маршрут требует аутентификации, но пользователь не авторизован
+    // Route requires auth but user is not authenticated
     next({ 
       path: '/login', 
-      query: { redirect: to.fullPath } // Сохраняем адрес для редиректа после входа
+      query: { redirect: to.fullPath } // Save address for redirect after login
     });
   } else if (to.meta.requiresGuest && isAuthenticated) {
-    // Если маршрут только для гостей (login, register), но пользователь уже авторизован
+    // Route for guests only (login, register) but user is already authenticated
     next({ path: '/dashboard' });
   } else {
-    // В остальных случаях разрешаем переход
+    // In other cases allow navigation
     next();
   }
 };
 
-// Импорт компонента домашней страницы
+// Import home page component
 import HomePage from '../views/HomePage.vue';
 
-// Определение маршрутов
+// Define routes
 const routes = [
   {
     path: '/',
@@ -62,7 +68,7 @@ const routes = [
       title: 'Garden - приложение для садоводов'
     }
   },
-  // Аутентификационные маршруты
+  // Auth routes
   {
     path: '/login',
     name: 'Login',
@@ -90,7 +96,7 @@ const routes = [
       title: 'Личный кабинет - Garden' 
     }
   },
-  // Маршруты растений
+  // Plant routes
   {
     path: '/plants',
     name: 'PlantsList',
@@ -106,9 +112,9 @@ const routes = [
     meta: { 
       title: 'Информация о растении - Garden' 
     },
-    // Динамическое название страницы на основе имени растения
+    // Dynamic page title based on plant name
     beforeEnter: (to, from, next) => {
-      // Загружаем название растения для заголовка страницы
+      // Load plant name for page title
       const plantsStore = window.hasOwnProperty('__pinia') ? 
         window.__pinia.state.value.plants?.currentPlant?.name : null;
       
@@ -119,27 +125,74 @@ const routes = [
       next();
     }
   },
-  // Маршрут для всех остальных адресов (404)
+  // Question routes
+  {
+    path: '/questions',
+    name: 'QuestionsList',
+    component: QuestionsListPage,
+    meta: { 
+      title: 'Вопросы и ответы - Garden' 
+    }
+  },
+  {
+    path: '/questions/:id',
+    name: 'QuestionDetails',
+    component: QuestionDetailsPage,
+    meta: { 
+      title: 'Вопрос - Garden' 
+    },
+    // Dynamic page title based on question title
+    beforeEnter: (to, from, next) => {
+      // Attempt to load question title for page title
+      const questionsStore = window.hasOwnProperty('__pinia') ? 
+        window.__pinia.state.value.questions?.currentQuestion?.title : null;
+      
+      if (questionsStore) {
+        to.meta.title = `${questionsStore} - Garden`;
+      }
+      
+      next();
+    }
+  },
+  {
+    path: '/questions/ask',
+    name: 'CreateQuestion',
+    component: CreateQuestionPage,
+    meta: { 
+      requiresAuth: true,
+      title: 'Задать вопрос - Garden' 
+    }
+  },
+  {
+    path: '/questions/:id/edit',
+    name: 'EditQuestion',
+    component: EditQuestionPage,
+    meta: { 
+      requiresAuth: true,
+      title: 'Редактирование вопроса - Garden' 
+    }
+  },
+  // 404 route for all other addresses
   {
     path: '/:pathMatch(.*)*',
     redirect: '/'
   }
 ];
 
-// Создание экземпляра маршрутизатора
+// Create router instance
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  // Плавная прокрутка при переходе между маршрутами
+  // Smooth scrolling on route navigation
   scrollBehavior() {
     return { top: 0, behavior: 'smooth' };
   }
 });
 
-// Регистрация навигационного guard
+// Register navigation guard
 router.beforeEach(authGuard);
 
-// Изменение заголовка страницы при навигации
+// Change page title on navigation
 router.afterEach((to) => {
   document.title = to.meta.title || 'Garden - приложение для садоводов';
 });
