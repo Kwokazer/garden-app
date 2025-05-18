@@ -47,13 +47,13 @@
           <div class="question-meta d-flex flex-wrap align-items-center">
             <!-- Связанное растение -->
             <router-link
-              v-if="question.plant"
+              v-if="question.plant && question.plant.id"
               :to="{ name: 'PlantDetails', params: { id: question.plant.id } }"
               class="plant-link me-3 mb-2"
             >
               <span class="badge bg-primary">
                 <i class="bi bi-flower1 me-1"></i>
-                {{ question.plant.name }}
+                {{ question.plant.name || 'Растение' }}
               </span>
             </router-link>
             
@@ -174,306 +174,175 @@
   }
   
   function getRelativeTime(dateString) {
-  if (!dateString) return '';
-  
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInMs = now - date;
-  const diffInSeconds = Math.floor(diffInMs / 1000);
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  const diffInDays = Math.floor(diffInHours / 24);
-  
-  if (diffInDays > 7) {
-    return date.toLocaleDateString('ru-RU');
-  } else if (diffInDays > 0) {
-    return `${diffInDays} ${diffInDays === 1 ? 'день' : diffInDays <= 4 ? 'дня' : 'дней'} назад`;
-  } else if (diffInHours > 0) {
-    return `${diffInHours} ${diffInHours === 1 ? 'час' : diffInHours <= 4 ? 'часа' : 'часов'} назад`;
-  } else if (diffInMinutes > 0) {
-    return `${diffInMinutes} ${diffInMinutes === 1 ? 'минуту' : diffInMinutes <= 4 ? 'минуты' : 'минут'} назад`;
-  } else {
-    return 'только что';
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now - date;
+    const diffInSeconds = Math.floor(diffInMs / 1000);
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+    
+    if (diffInDays > 7) {
+      return date.toLocaleDateString('ru-RU');
+    } else if (diffInDays > 0) {
+      return `${diffInDays} ${diffInDays === 1 ? 'день' : diffInDays <= 4 ? 'дня' : 'дней'} назад`;
+    } else if (diffInHours > 0) {
+      return `${diffInHours} ${diffInHours === 1 ? 'час' : diffInHours <= 4 ? 'часа' : 'часов'} назад`;
+    } else if (diffInMinutes > 0) {
+      return `${diffInMinutes} ${diffInMinutes === 1 ? 'минуту' : diffInMinutes <= 4 ? 'минуты' : 'минут'} назад`;
+    } else {
+      return 'только что';
+    }
   }
-}
-
-function getFullDate(dateString) {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleString('ru-RU');
-}
-
-async function handleVote(voteData) {
-  isVoting.value = true;
   
-  try {
-    await questionsStore.voteForAnswer(voteData.itemId, voteData.voteType);
-    emit('vote', voteData);
-  } catch (error) {
-    console.error('Error voting for answer:', error);
-    alert('Ошибка при голосовании: ' + error.message);
-  } finally {
-    isVoting.value = false;
+  function getFullDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleString('ru-RU');
   }
-}
-
-async function handleAccept() {
-  if (isAccepting.value) return;
   
-  isAccepting.value = true;
-  
-  try {
-    await questionsStore.acceptAnswer(props.answer.id);
-    emit('accept', props.answer.id);
-  } catch (error) {
-    console.error('Error accepting answer:', error);
-    alert('Ошибка при принятии ответа: ' + error.message);
-  } finally {
-    isAccepting.value = false;
+  // Обработка голосования для ВОПРОСОВ
+  async function handleVote(voteData) {
+    isVoting.value = true;
+    
+    try {
+      await questionsStore.voteForQuestion(voteData.itemId, voteData.voteType);
+      emit('vote', voteData);
+    } catch (error) {
+      console.error('Error voting for question:', error);
+      alert('Ошибка при голосовании: ' + error.message);
+    } finally {
+      isVoting.value = false;
+    }
   }
-}
-
-async function handleUnaccept() {
-  if (isAccepting.value) return;
   
-  const confirmed = confirm('Вы уверены, что хотите отменить принятие этого ответа?');
-  if (!confirmed) return;
+  async function handleDelete() {
+    if (isDeleting.value) return;
+    
+    const confirmed = confirm('Вы уверены, что хотите удалить этот вопрос? Это действие нельзя отменить.');
+    if (!confirmed) return;
+    
+    isDeleting.value = true;
+    
+    try {
+      await questionsStore.deleteQuestion(props.question.id);
+      emit('delete', props.question.id);
+    } catch (error) {
+      console.error('Error deleting question:', error);
+      alert('Ошибка при удалении вопроса: ' + error.message);
+    } finally {
+      isDeleting.value = false;
+    }
+  }
+  </script>
   
-  isAccepting.value = true;
+  <style scoped>
+  .question-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 8px;
+    overflow: hidden;
+  }
   
-  try {
-    await questionsStore.unacceptAnswer(props.answer.id);
-    emit('unaccept', props.answer.id);
-  } catch (error) {
-    console.error('Error unaccepting answer:', error);
-    alert('Ошибка при отмене принятия ответа: ' + error.message);
-  } finally {
-    isAccepting.value = false;
-  }
-}
-
-function startEdit() {
-  isEditing.value = true;
-}
-
-function cancelEdit() {
-  isEditing.value = false;
-}
-
-async function handleUpdate(formData) {
-  isUpdating.value = true;
-  
-  try {
-    await questionsStore.updateAnswer(props.answer.id, formData);
-    emit('update', { id: props.answer.id, data: formData });
-    isEditing.value = false;
-  } catch (error) {
-    console.error('Error updating answer:', error);
-    alert('Ошибка при обновлении ответа: ' + error.message);
-  } finally {
-    isUpdating.value = false;
-  }
-}
-
-async function handleDelete() {
-  if (isDeleting.value) return;
-  
-  const confirmed = confirm('Вы уверены, что хотите удалить этот ответ? Это действие нельзя отменить.');
-  if (!confirmed) return;
-  
-  isDeleting.value = true;
-  
-  try {
-    await questionsStore.deleteAnswer(props.answer.id);
-    emit('delete', props.answer.id);
-  } catch (error) {
-    console.error('Error deleting answer:', error);
-    alert('Ошибка при удалении ответа: ' + error.message);
-  }
-}
-</script>
-
-<style scoped>
-.answer-card {
-  margin-bottom: 1.5rem;
-}
-
-.answer-card .card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border-radius: 8px;
-  position: relative;
-  overflow: hidden;
-}
-
-.answer-card .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
-}
-
-/* Стилизация принятого ответа */
-.accepted-answer {
-  border-left: 4px solid #28a745 !important;
-  background: linear-gradient(to right, rgba(40, 167, 69, 0.05), transparent);
-}
-
-.accepted-badge {
-  animation: fadeInScale 0.5s ease;
-}
-
-.voting-section {
-  flex-shrink: 0;
-}
-
-.answer-content {
-  min-width: 0; /* Для корректного переноса текста */
-}
-
-.answer-text {
-  line-height: 1.6;
-  font-size: 0.95rem;
-}
-
-.answer-text p {
-  margin-bottom: 1rem;
-}
-
-.answer-text p:last-child {
-  margin-bottom: 0;
-}
-
-.answer-meta {
-  font-size: 0.875rem;
-  border-top: 1px solid #f0f0f0;
-  padding-top: 0.75rem;
-}
-
-.author-name {
-  font-weight: 500;
-  color: var(--bs-primary);
-}
-
-.answer-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.author-actions {
-  border-left: 1px solid #e9ecef;
-  padding-left: 0.75rem;
-  margin-left: 0.5rem;
-}
-
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(255, 255, 255, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-}
-
-/* Анимации */
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.answer-card {
-  animation: fadeInUp 0.5s ease;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Мобильная адаптивность */
-@media (max-width: 576px) {
-  .answer-card .card-body .d-flex {
-    flex-direction: column;
+  .question-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
   }
   
   .voting-section {
-    align-self: stretch;
-    margin-bottom: 1rem;
-    margin-right: 0;
+    flex-shrink: 0;
   }
   
-  .voting-section .voting-buttons {
-    flex-direction: row;
+  .question-content {
+    min-width: 0;
+  }
+  
+  .question-title {
+    color: var(--bs-dark);
+    margin-bottom: 0;
+  }
+  
+  .question-title-link {
+    text-decoration: none;
+  }
+  
+  .question-title-link:hover .question-title {
+    color: var(--bs-primary);
+  }
+  
+  .question-preview {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+  
+  .question-meta {
+    font-size: 0.875rem;
+  }
+  
+  .plant-link {
+    text-decoration: none;
+  }
+  
+  .plant-link:hover .badge {
+    background-color: var(--bs-success) !important;
+  }
+  
+  .author-name {
+    font-weight: 500;
+    color: var(--bs-primary);
+  }
+  
+  .question-actions .btn {
+    font-size: 0.875rem;
+  }
+  
+  .loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
     justify-content: center;
-    width: 100%;
+    z-index: 10;
   }
   
-  .voting-section .voting-buttons > * {
-    margin: 0 0.5rem;
+  /* Мобильная адаптивность */
+  @media (max-width: 768px) {
+    .card-body .d-flex {
+      flex-direction: column;
+    }
+    
+    .voting-section {
+      align-self: stretch;
+      margin-bottom: 1rem;
+      margin-right: 0;
+    }
+    
+    .voting-section .voting-buttons {
+      flex-direction: row;
+      justify-content: center;
+      width: 100%;
+    }
+    
+    .question-meta {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .question-actions {
+      align-self: stretch;
+    }
+    
+    .question-actions .btn-group {
+      width: 100%;
+    }
+    
+    .question-actions .btn {
+      flex: 1;
+    }
   }
-  
-  .answer-meta {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .answer-actions {
-    justify-content: flex-start;
-  }
-  
-  .author-actions {
-    border-left: none;
-    padding-left: 0;
-    margin-left: 0;
-    border-top: 1px solid #e9ecef;
-    padding-top: 0.5rem;
-    margin-top: 0.5rem;
-  }
-}
-
-/* Стилизация кнопок действий */
-.answer-actions .btn {
-  font-size: 0.875rem;
-  padding: 0.25rem 0.5rem;
-}
-
-.answer-actions .btn:hover {
-  transform: translateY(-1px);
-}
-
-/* Принятый ответ - особая стилизация */
-.accepted-answer .accepted-badge .badge {
-  font-size: 0.875rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
-}
-
-/* Темная тема (если потребуется) */
-@media (prefers-color-scheme: dark) {
-  .answer-meta {
-    border-top-color: #495057;
-  }
-  
-  .author-actions {
-    border-left-color: #495057;
-  }
-  
-  .accepted-answer {
-    background: linear-gradient(to right, rgba(40, 167, 69, 0.1), transparent);
-  }
-}
-</style>
+  </style>

@@ -4,7 +4,10 @@
       <!-- Кнопка за (up) -->
       <button
         class="btn btn-voting btn-vote-up"
-        :class="{ 'active': userVote === 'up', 'disabled': !canVote }"
+        :class="{ 
+          'active': userVote === 'up',
+          'disabled': !canVote || isLoading
+        }"
         @click="handleVote('up')"
         :disabled="isLoading || !canVote"
         :title="userVote === 'up' ? 'Отменить голос' : 'Голосовать за'"
@@ -14,13 +17,16 @@
       
       <!-- Счетчик голосов -->
       <div class="vote-count">
-        <span class="votes-display">{{ totalVotes }}</span>
+        <span class="votes-display" :key="`${votesUp}-${votesDown}`">{{ totalVotes }}</span>
       </div>
       
       <!-- Кнопка против (down) -->
       <button
         class="btn btn-voting btn-vote-down"
-        :class="{ 'active': userVote === 'down', 'disabled': !canVote }"
+        :class="{ 
+          'active': userVote === 'down',
+          'disabled': !canVote || isLoading
+        }"
         @click="handleVote('down')"
         :disabled="isLoading || !canVote"
         :title="userVote === 'down' ? 'Отменить голос' : 'Голосовать против'"
@@ -38,7 +44,7 @@
   </template>
   
   <script setup>
-  import { ref, computed } from 'vue';
+  import { computed, watch } from 'vue';
   import { useAuthStore } from '../../auth/store/authStore';
   
   const props = defineProps({
@@ -65,7 +71,7 @@
     },
     // Текущий голос пользователя
     userVote: {
-      type: String,
+      type: [String, null],
       default: null
     },
     // Состояние загрузки
@@ -83,6 +89,13 @@
   const emit = defineEmits(['vote']);
   
   const authStore = useAuthStore();
+  
+  // Следим за изменениями userVote для отладки
+  watch(() => props.userVote, (newVote, oldVote) => {
+    if (newVote !== oldVote) {
+      console.log(`VotingButtons: userVote changed for ${props.type} ${props.itemId}: ${oldVote} -> ${newVote}`);
+    }
+  }, { immediate: true });
   
   // Вычисляемые свойства
   const totalVotes = computed(() => {
@@ -111,7 +124,6 @@
     
     // Если пользователь не авторизован, показываем сообщение
     if (!authStore.isLoggedIn) {
-      // TODO: показать модальное окно с предложением авторизоваться
       alert('Для голосования необходимо войти в систему');
       return;
     }
@@ -173,9 +185,11 @@
   
   /* Стилизация кнопки голосования "за" */
   .btn-vote-up.active {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: white;
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+    color: white !important;
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
   }
   
   .btn-vote-up:hover:not(.disabled):not(:disabled):not(.active) {
@@ -186,9 +200,11 @@
   
   /* Стилизация кнопки голосования "против" */
   .btn-vote-down.active {
-    background-color: #dc3545;
-    border-color: #dc3545;
-    color: white;
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: white !important;
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
   }
   
   .btn-vote-down:hover:not(.disabled):not(:disabled):not(.active) {
@@ -209,11 +225,12 @@
     color: #333;
     display: block;
     line-height: 1;
+    transition: all 0.3s ease;
   }
   
-  /* Анимация для изменения счетчика */
+  /* Анимация изменения счетчика */
   .votes-display {
-    transition: all 0.3s ease;
+    position: relative;
   }
   
   /* Индикатор загрузки */

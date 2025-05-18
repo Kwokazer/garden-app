@@ -266,7 +266,8 @@ export const questionsApi = {
   async voteForQuestion(questionId, voteType) {
     try {
       const url = `${BASE_API_URL}/questions/${questionId}/vote`;
-      console.log('Voting for question URL:', url);
+      console.log('API: Voting for question URL:', url);
+      console.log('API: Vote data:', { vote_type: voteType });
       
       const response = await fetch(url, {
         method: 'POST',
@@ -274,10 +275,15 @@ export const questionsApi = {
         body: JSON.stringify({ vote_type: voteType })
       });
       
+      console.log('API: Vote response status:', response.status);
+      console.log('API: Vote response headers:', Object.fromEntries(response.headers.entries()));
+      
       const result = await handleResponse(response);
+      console.log('API: Vote result:', result.data);
+      
       return result.data;
     } catch (error) {
-      console.error(`Error voting for question ${questionId}:`, error);
+      console.error(`API: Error voting for question ${questionId}:`, error);
       throw error;
     }
   }

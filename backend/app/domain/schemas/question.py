@@ -12,6 +12,7 @@ class QuestionBase(BaseSchema):
 
 class QuestionCreate(QuestionBase):
     """Схема для создания вопроса"""
+    pass
 
 class QuestionUpdate(BaseSchema):
     """Схема для обновления вопроса"""
@@ -27,14 +28,16 @@ class QuestionResponse(QuestionBase, IDSchema, TimestampedSchema):
     view_count: int = Field(..., description="Количество просмотров")
     votes_up: int = Field(..., description="Количество голосов за")
     votes_down: int = Field(..., description="Количество голосов против")
+    
+    # Связанные данные - используем Any для совместимости со словарями
+    author: Optional[Dict[str, Any]] = Field(None, description="Информация об авторе")
+    plant: Optional[Dict[str, Any]] = Field(None, description="Информация о связанном растении")
+    answers_count: int = Field(0, description="Количество ответов")
+    user_vote: Optional[str] = Field(None, description="Тип голоса текущего пользователя")
 
 class QuestionDetailResponse(QuestionResponse):
     """Детальная схема ответа для вопроса с дополнительной информацией"""
-    author: Dict[str, Any] = Field(..., description="Информация об авторе")
-    answers_count: int = Field(0, description="Количество ответов")
-    plant: Optional[Dict[str, Any]] = Field(None, description="Информация о связанном растении")
     answers: List[Dict[str, Any]] = Field(default_factory=list, description="Список ответов")
-    user_vote: Optional[str] = Field(None, description="Тип голоса текущего пользователя")
 
 class QuestionListResponse(BaseSchema):
     """Схема для списка вопросов с пагинацией"""

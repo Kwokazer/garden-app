@@ -193,16 +193,28 @@
   }
   
   async function handleVote(voteData) {
-    isVoting.value = true;
+  console.log('QuestionCard: handleVote called with:', voteData);
+  
+  isVoting.value = true;
+  
+  try {
+    // Правильно вызываем метод для голосования за ВОПРОС
+    console.log('QuestionCard: Calling store.voteForQuestion');
+    const updatedQuestion = await questionsStore.voteForQuestion(voteData.itemId, voteData.voteType);
     
-    try {
-      emit('vote', voteData);
-    } catch (error) {
-      console.error('Error voting for answer:', error);
-    } finally {
-      isVoting.value = false;
-    }
+    console.log('QuestionCard: Received updated question:', updatedQuestion);
+    
+    // Эмитим событие для родительского компонента (если нужно)
+    emit('vote', voteData);
+    
+    console.log('QuestionCard: Vote completed successfully');
+  } catch (error) {
+    console.error('QuestionCard: Error voting for question:', error);
+    alert('Ошибка при голосовании: ' + error.message);
+  } finally {
+    isVoting.value = false;
   }
+}
   
   async function handleAccept() {
     if (isAccepting.value) return;

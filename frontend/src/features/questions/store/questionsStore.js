@@ -40,6 +40,9 @@ export const useQuestionsStore = defineStore('questions', () => {
   /**
    * Загрузить список вопросов с фильтрацией и пагинацией
    */
+  /**
+   * Загрузить список вопросов с фильтрацией и пагинацией
+   */
   async function loadQuestions(page = 1, per_page = 20, resetFilters = false) {
     isLoading.value = true;
     error.value = null;
@@ -62,7 +65,17 @@ export const useQuestionsStore = defineStore('questions', () => {
         activeFilters.value
       );
       
+      console.log('Store: Received response from API:', response);
+      console.log('Store: Items count:', response.items?.length || 0);
+      
       questions.value = response.items || [];
+      
+      // Проверяем первые несколько вопросов
+      questions.value.slice(0, 3).forEach((q, i) => {
+        console.log(`Store: Question ${i}: id=${q.id}, has_author=${!!q.author}, has_plant=${!!q.plant}`);
+        if (q.author) console.log(`  Author: ${q.author.username}`);
+        if (q.plant) console.log(`  Plant: ${q.plant.name}`);
+      });
       
       pagination.value = {
         page: response.page || page,
@@ -81,7 +94,6 @@ export const useQuestionsStore = defineStore('questions', () => {
       isLoading.value = false;
     }
   }
-
   /**
    * Загрузить вопросы по конкретному растению
    */
@@ -226,28 +238,75 @@ export const useQuestionsStore = defineStore('questions', () => {
     }
   }
 
-  /**
+ /**
    * Проголосовать за вопрос
    */
-  async function voteForQuestion(questionId, voteType) {
+ async function voteForQuestion(questionId, voteType) {
     try {
+      console.log(`Store: Voting for question ${questionId} with type ${voteType}`);
+      
       const updatedQuestion = await questionsApi.voteForQuestion(questionId, voteType);
       
-      // Обновляем текущий вопрос
+      console.log('Store: Received updated question:', updatedQuestion);
+      
+      // Обновляем текущий вопрос, если это он
       if (currentQuestion.value && currentQuestion.value.id === questionId) {
-        currentQuestion.value = updatedQuestion;
+        // Полное обновление текущего вопроса
+        currentQuestion.value = {
+          ...currentQuestion.value,
+          ...updatedQuestion,
+          // Обеспечиваем, что критически важные поля обновлены
+          votes_up: updatedQuestion.votes_up,
+          votes_down: updatedQuestion.votes_down,
+          user_vote: updatedQuestion.user_vote,
+          // Сохраняем связанные данные если они есть
+          author: updatedQuestion.author || currentQuestion.value.author,
+          plant: updatedQuestion.plant || currentQuestion.value.plant,
+          answers: updatedQuestion.answers || currentQuestion.value.answers
+        };
+        
+        console.log('Store: Updated current question votes:', {
+          votes_up: currentQuestion.value.votes_up,
+          votes_down: currentQuestion.value.votes_down,
+          user_vote: currentQuestion.value.user_vote
+        });
       }
       
-      // Обновляем в списке вопросов
+      // Обновляем в списке вопросов - ВАЖНО: используем реактивный способ
       const index = questions.value.findIndex(q => q.id === questionId);
       if (index !== -1) {
-        questions.value[index] = updatedQuestion;
+        // Создаем новый объект вопроса для обеспечения реактивности
+        const existingQuestion = questions.value[index];
+        const newQuestion = {
+          ...existingQuestion,
+          ...updatedQuestion,
+          // Обеспечиваем, что критически важные поля обновлены
+          votes_up: updatedQuestion.votes_up,
+          votes_down: updatedQuestion.votes_down,
+          user_vote: updatedQuestion.user_vote,
+          // Сохраняем связанные данные
+          author: updatedQuestion.author || existingQuestion.author,
+          plant: updatedQuestion.plant || existingQuestion.plant,
+          answers_count: updatedQuestion.answers_count !== undefined 
+            ? updatedQuestion.answers_count 
+            : existingQuestion.answers_count
+        };
+        
+        // Заменяем элемент в массиве для обеспечения реактивности
+        questions.value.splice(index, 1, newQuestion);
+        
+        console.log('Store: Updated question in list:', {
+          id: newQuestion.id,
+          votes_up: newQuestion.votes_up,
+          votes_down: newQuestion.votes_down,
+          user_vote: newQuestion.user_vote
+        });
       }
       
       return updatedQuestion;
     } catch (e) {
+      console.error('Store: Error voting for question:', e);
       error.value = e.message || `Ошибка при голосовании за вопрос ${questionId}`;
-      console.error(`Error voting for question ${questionId}:`, e);
       throw e;
     }
   }

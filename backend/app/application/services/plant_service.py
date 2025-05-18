@@ -22,6 +22,7 @@ class PlantService(BaseService):
     """
     
     def __init__(self, session: AsyncSession, plant_cache: Optional[PlantCacheService] = None):
+        
         super().__init__()
         self.session = session
         self.plant_repository = PlantRepository(session)
