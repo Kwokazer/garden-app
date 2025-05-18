@@ -1,12 +1,16 @@
-// src/router/index.js
+// src/router/index.js (обновленный)
 
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../features/auth/store/authStore';
 
-// Импорт компонентов для маршрутов
+// Импорт аутентификационных компонентов
 import LoginPage from '../features/auth/views/LoginPage.vue';
 import RegisterPage from '../features/auth/views/RegisterPage.vue';
 import DashboardPage from '../features/auth/views/DashboardPage.vue';
+
+// Импорт компонентов растений
+import PlantsListPage from '../features/plants/views/PlantsListPage.vue';
+import PlantDetailsPage from '../features/plants/views/PlantDetailsPage.vue';
 
 /**
  * Функция проверки аутентификации для защищенных маршрутов
@@ -45,15 +49,20 @@ const authGuard = (to, from, next) => {
   }
 };
 
+// Импорт компонента домашней страницы
+import HomePage from '../views/HomePage.vue';
+
 // Определение маршрутов
 const routes = [
   {
     path: '/',
-    redirect: () => {
-      // Если есть токен, перенаправляем на дашборд, иначе на страницу входа
-      return localStorage.getItem('accessToken') ? '/dashboard' : '/login';
+    name: 'Home',
+    component: HomePage,
+    meta: {
+      title: 'Garden - приложение для садоводов'
     }
   },
+  // Аутентификационные маршруты
   {
     path: '/login',
     name: 'Login',
@@ -79,6 +88,35 @@ const routes = [
     meta: { 
       requiresAuth: true,
       title: 'Личный кабинет - Garden' 
+    }
+  },
+  // Маршруты растений
+  {
+    path: '/plants',
+    name: 'PlantsList',
+    component: PlantsListPage,
+    meta: { 
+      title: 'База знаний растений - Garden' 
+    }
+  },
+  {
+    path: '/plants/:id',
+    name: 'PlantDetails',
+    component: PlantDetailsPage,
+    meta: { 
+      title: 'Информация о растении - Garden' 
+    },
+    // Динамическое название страницы на основе имени растения
+    beforeEnter: (to, from, next) => {
+      // Загружаем название растения для заголовка страницы
+      const plantsStore = window.hasOwnProperty('__pinia') ? 
+        window.__pinia.state.value.plants?.currentPlant?.name : null;
+      
+      if (plantsStore) {
+        to.meta.title = `${plantsStore} - Garden`;
+      }
+      
+      next();
     }
   },
   // Маршрут для всех остальных адресов (404)

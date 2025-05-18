@@ -1,4 +1,4 @@
-<!-- src/App.vue -->
+<!-- src/App.vue (обновленный) -->
 <template>
     <div class="app-container d-flex flex-column min-vh-100">
       <!-- Верхнее меню -->
@@ -33,9 +33,9 @@
                   </router-link>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="#plants">
+                  <router-link class="nav-link" to="/plants">
                     <i class="bi bi-flower3 me-1"></i> Растения
-                  </a>
+                  </router-link>
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" href="#questions">
