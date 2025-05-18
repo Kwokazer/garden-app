@@ -36,7 +36,7 @@
                 <select 
                   class="form-select" 
                   id="categoryFilter" 
-                  v-model="filters.category"
+                  v-model="filters.category_id"
                   :disabled="isLoading || !categories.length"
                 >
                   <option :value="null">Все категории</option>
@@ -56,7 +56,7 @@
                 <select 
                   class="form-select" 
                   id="climateZoneFilter" 
-                  v-model="filters.climateZone"
+                  v-model="filters.climate_zone_id"
                   :disabled="isLoading || !climateZones.length"
                 >
                   <option :value="null">Все зоны</option>
@@ -71,11 +71,53 @@
               </div>
             </div>
             
+            <!-- Дополнительные фильтры -->
+            <div class="row">
+              <!-- Тип растения -->
+              <div class="col-md-6 mb-3">
+                <label for="plantTypeFilter" class="form-label">Тип растения</label>
+                <select 
+                  class="form-select" 
+                  id="plantTypeFilter" 
+                  v-model="filters.plant_type"
+                >
+                  <option :value="null">Все типы</option>
+                  <option value="tree">Дерево</option>
+                  <option value="shrub">Кустарник</option>
+                  <option value="flower">Цветок</option>
+                  <option value="vegetable">Овощ</option>
+                  <option value="fruit">Фрукт</option>
+                  <option value="herb">Трава/зелень</option>
+                  <option value="succulent">Суккулент</option>
+                  <option value="vine">Лиана/вьющееся</option>
+                  <option value="aquatic">Водное растение</option>
+                  <option value="fern">Папоротник</option>
+                </select>
+              </div>
+              
+              <!-- Сложность ухода -->
+              <div class="col-md-6 mb-3">
+                <label for="careDifficultyFilter" class="form-label">Сложность ухода</label>
+                <select 
+                  class="form-select" 
+                  id="careDifficultyFilter" 
+                  v-model="filters.care_difficulty"
+                >
+                  <option :value="null">Любая</option>
+                  <option value="very_easy">Очень легкая</option>
+                  <option value="easy">Легкая</option>
+                  <option value="moderate">Средняя</option>
+                  <option value="difficult">Сложная</option>
+                  <option value="expert">Для экспертов</option>
+                </select>
+              </div>
+            </div>
+            
             <!-- Сортировка -->
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label for="sortBy" class="form-label">Сортировать по</label>
-                <select class="form-select" id="sortBy" v-model="filters.sortBy">
+                <select class="form-select" id="sortBy" v-model="filters.sort_by">
                   <option value="name">Названию</option>
                   <option value="created_at">Дате добавления</option>
                   <option value="popularity">Популярности</option>
@@ -84,7 +126,7 @@
               
               <div class="col-md-6 mb-3">
                 <label for="sortDirection" class="form-label">Порядок</label>
-                <select class="form-select" id="sortDirection" v-model="filters.sortDirection">
+                <select class="form-select" id="sortDirection" v-model="filters.sort_direction">
                   <option value="asc">По возрастанию</option>
                   <option value="desc">По убыванию</option>
                 </select>
@@ -155,13 +197,15 @@
   const categories = ref([]);
   const climateZones = ref([]);
   
-  // Фильтры по умолчанию
+  // Фильтры по умолчанию (в формате бэкенда)
   const defaultFilters = {
     searchQuery: '',
-    category: null,
-    climateZone: null,
-    sortBy: 'name',
-    sortDirection: 'asc'
+    category_id: null,
+    climate_zone_id: null,
+    plant_type: null,
+    care_difficulty: null,
+    sort_by: 'name',
+    sort_direction: 'asc'
   };
   
   // Состояние фильтров
@@ -215,8 +259,19 @@
   
   // Применение фильтров
   function applyFilters() {
-    emit('update:filters', { ...filters });
-    emit('apply', { ...filters });
+    // Преобразуем фильтры в формат, ожидаемый бэкендом
+    const backendFilters = {
+      searchQuery: filters.searchQuery,
+      category_id: filters.category_id,
+      climate_zone_id: filters.climate_zone_id,
+      plant_type: filters.plant_type,
+      care_difficulty: filters.care_difficulty,
+      sort_by: filters.sort_by,
+      sort_direction: filters.sort_direction
+    };
+    
+    emit('update:filters', backendFilters);
+    emit('apply', backendFilters);
   }
   
   // Сброс фильтров

@@ -1,9 +1,13 @@
+
+# backend/app/infrastructure/database/connection.py
+
 import logging
 import os
 from typing import AsyncGenerator, Optional
 
 from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
                                     create_async_engine)
+from sqlalchemy import text
 from sqlalchemy.pool import QueuePool
 
 from app.core.config import settings
@@ -46,7 +50,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         # Убеждаемся, что сессия валидна
         try:
             # Выполняем простой запрос для проверки подключения
-            await session.execute("SELECT 1")
+            await session.execute(text("SELECT 1"))
         except Exception as e:
             logger.warning(f"Ошибка при проверке соединения с БД: {str(e)}")
             # Закрываем невалидную сессию и создаем новую
@@ -83,4 +87,4 @@ async def get_test_db() -> AsyncGenerator[AsyncSession, None]:
     finally:
         await session.close()
         await transaction.rollback()
-        await connection.close() 
+        await connection.close()

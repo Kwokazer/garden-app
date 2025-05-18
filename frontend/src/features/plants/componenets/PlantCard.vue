@@ -5,7 +5,7 @@
       <div class="card-img-top-wrapper">
         <img v-if="plant.images && plant.images.length > 0" 
              :src="plant.images[0].url" 
-             :alt="plant.name"
+             :alt="plant.images[0].alt || plant.name"
              class="card-img-top"
              @error="handleImageError">
         <div v-else class="card-img-placeholder d-flex align-items-center justify-content-center bg-light text-muted">
@@ -13,8 +13,8 @@
         </div>
         
         <!-- Бейдж категории -->
-        <span v-if="plant.category" class="position-absolute top-0 end-0 m-2 badge bg-success">
-          {{ plant.category.name }}
+        <span v-if="primaryCategory" class="position-absolute top-0 end-0 m-2 badge bg-success">
+          {{ primaryCategory.name }}
         </span>
       </div>
       
@@ -65,7 +65,7 @@
   </template>
   
   <script setup>
-  import { ref } from 'vue';
+  import { computed } from 'vue';
   
   // Определение входных параметров
   const props = defineProps({
@@ -75,11 +75,21 @@
     }
   });
   
+  // Получаем основную категорию растения
+  const primaryCategory = computed(() => {
+    if (plant.category) {
+      return plant.category;
+    }
+    if (plant.categories && plant.categories.length > 0) {
+      return plant.categories[0];
+    }
+    return null;
+  });
+  
   // Обработка ошибок загрузки изображения
   function handleImageError(event) {
     // Заменяем битое изображение на placeholder
-    event.target.src = '/placeholder-plant.jpg'; // Предполагаем, что у нас есть такое изображение
-    // Или можно использовать класс для отображения placeholder'а
+    event.target.src = '/placeholder-plant.jpg';
     event.target.classList.add('img-error');
   }
   
@@ -93,9 +103,11 @@
   
   // Получаем текстовую метку для диапазона температур
   function getTemperatureLabel(min, max) {
-    if (min === undefined || max === undefined) return 'Не указано';
-    
-    return `${min}°C - ${max}°C`;
+    if (min === undefined && max === undefined) return 'Не указано';
+    if (min !== undefined && max !== undefined) return `${min}°C - ${max}°C`;
+    if (min !== undefined) return `от ${min}°C`;
+    if (max !== undefined) return `до ${max}°C`;
+    return 'Не указано';
   }
   
   // Получаем текстовую метку для частоты полива
@@ -180,14 +192,12 @@
     gap: 0.5rem;
   }
   
-  /* Стили для различных уровней полива и освещения */
   .badge {
     font-weight: normal;
     padding: 0.35em 0.65em;
   }
   
   .img-error {
-    /* Стили для изображений, которые не загрузились */
     background-color: #f8f9fa;
     border: 1px solid #dee2e6;
   }
