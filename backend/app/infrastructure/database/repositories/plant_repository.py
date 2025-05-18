@@ -71,11 +71,10 @@ class PlantRepository(BaseRepository[Plant]):
             ).filter(plant_to_category.c.category_id == category_id)
         
         if climate_zone_id is not None:
-            # Фильтрация по климатической зоне через связующую таблицу
             query = query.join(
-                plant_to_climate_zone,
-                Plant.id == plant_to_climate_zone.c.plant_id
-            ).filter(plant_to_climate_zone.c.climate_zone_id == climate_zone_id)
+                PlantToClimateZone,
+                Plant.id == PlantToClimateZone.plant_id
+            ).filter(PlantToClimateZone.climate_zone_id == climate_zone_id)
         
         if tag_id is not None:
             # Фильтрация по тегу через связующую таблицу
@@ -174,9 +173,9 @@ class PlantRepository(BaseRepository[Plant]):
         
         if climate_zone_id is not None:
             query = query.join(
-                plant_to_climate_zone,
-                Plant.id == plant_to_climate_zone.c.plant_id
-            ).filter(plant_to_climate_zone.c.climate_zone_id == climate_zone_id)
+                PlantToClimateZone,
+                Plant.id == PlantToClimateZone.plant_id
+            ).filter(PlantToClimateZone.climate_zone_id == climate_zone_id)
         
         if tag_id is not None:
             query = query.join(

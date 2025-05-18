@@ -4,7 +4,7 @@ from app.domain.models.permission import Permission
 from app.domain.models.plant import Plant, PlantType
 from app.domain.models.plant_category import PlantCategory, PlantToCategory
 from app.domain.models.plant_image import PlantImage
-from app.domain.models.climate_zone import ClimateZone, PlantToClimateZone
+from app.domain.models.climate_zone import ClimateZone
 from app.domain.models.question import Question
 from app.domain.models.answer import Answer
 from app.domain.models.tag import Tag, plant_tag
@@ -34,7 +34,7 @@ __all__ = [
     "PlantType",
     "ClimateZone",
     "PlantToCategory",
-    "PlantToClimateZone",
+    # "PlantToClimateZone",
     
     # Q&A related
     "Question",

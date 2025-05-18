@@ -25,7 +25,7 @@
             </div>
             <div class="col-lg-6">
               <div class="hero-image-container text-center">
-                <img src="/hero-plants.jpg" alt="Коллекция комнатных растений" class="img-fluid rounded shadow-lg">
+                <img src="https://placehold.co/600x400?text=Garden+Plants" alt="Коллекция комнатных растений" class="img-fluid rounded shadow-lg">
               </div>
             </div>
           </div>
@@ -124,7 +124,7 @@
           <div class="row align-items-center">
             <div class="col-md-6 order-md-2 mb-4 mb-md-0">
               <div class="app-image text-center">
-                <img src="/mobile-app.png" alt="Мобильное приложение Garden" class="img-fluid">
+                <img src="https://placehold.co/300x500?text=Mobile+App" alt="Мобильное приложение Garden" class="img-fluid">
               </div>
             </div>
             <div class="col-md-6 order-md-1">
@@ -132,10 +132,10 @@
               <p class="mb-4">Устанавливайте наше мобильное приложение и получите доступ к базе знаний даже без интернета. Создавайте заметки, получайте напоминания о поливе и многое другое.</p>
               <div class="d-flex flex-wrap">
                 <a href="#" class="app-store-badge me-2 mb-2">
-                  <img src="/app-store-badge.png" alt="Скачать в App Store" width="140">
+                    <img src="https://placehold.co/140x40?text=App+Store" alt="Скачать в App Store" width="140">
                 </a>
                 <a href="#" class="google-play-badge mb-2">
-                  <img src="/google-play-badge.png" alt="Скачать в Google Play" width="140">
+                    <img src="https://placehold.co/140x40?text=Google+Play" alt="Скачать в Google Play" width="140">
                 </a>
               </div>
             </div>
@@ -156,7 +156,8 @@
               <div class="testimonial-card h-100 p-4 bg-white rounded shadow-sm">
                 <div class="d-flex align-items-center mb-3">
                   <div class="testimonial-avatar me-3">
-                    <img src="/avatar-1.jpg" alt="Аватар пользователя" class="rounded-circle" width="60" height="60">
+                    <img src="https://placehold.co/60x60?text=User+1" alt="Аватар пользователя" class="rounded-circle" width="60" height="60">
+
                   </div>
                   <div>
                     <h5 class="mb-0">Анна Семенова</h5>
@@ -178,7 +179,8 @@
               <div class="testimonial-card h-100 p-4 bg-white rounded shadow-sm">
                 <div class="d-flex align-items-center mb-3">
                   <div class="testimonial-avatar me-3">
-                    <img src="/avatar-2.jpg" alt="Аватар пользователя" class="rounded-circle" width="60" height="60">
+                    <img src="https://placehold.co/60x60?text=User+2" alt="Аватар пользователя" class="rounded-circle" width="60" height="60">
+
                   </div>
                   <div>
                     <h5 class="mb-0">Михаил Петров</h5>
@@ -200,7 +202,8 @@
               <div class="testimonial-card h-100 p-4 bg-white rounded shadow-sm">
                 <div class="d-flex align-items-center mb-3">
                   <div class="testimonial-avatar me-3">
-                    <img src="/avatar-3.jpg" alt="Аватар пользователя" class="rounded-circle" width="60" height="60">
+                    <img src="https://placehold.co/60x60?text=User+3" alt="Аватар пользователя" class="rounded-circle" width="60" height="60">
+
                   </div>
                   <div>
                     <h5 class="mb-0">Елена Иванова</h5>

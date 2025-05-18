@@ -122,8 +122,8 @@ async def get_plants(
     skip = (page - 1) * per_page
     
     # Преобразуем plant_type в нижний регистр, если он указан
-    if plant_type:
-        plant_type = plant_type.lower()
+    # if plant_type:
+    #     plant_type = plant_type.lower()
 
     # Создаем объект с параметрами фильтрации
     filters = PlantFilterParams(
