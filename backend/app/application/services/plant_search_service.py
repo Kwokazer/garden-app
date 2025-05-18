@@ -10,7 +10,7 @@ from app.domain.models.plant import Plant
 from app.domain.models.plant_category import PlantCategory, plant_to_category as plant_category
 from app.domain.models.climate_zone import ClimateZone, plant_to_climate_zone as plant_climate_zone
 from app.domain.schemas.plant import PlantFilterParams, PlantResponse, PlantListResponse
-from app.infrastructure.cache.plant_cache import PlantCache
+from app.infrastructure.cache.plant_cache import PlantCacheService  # Изменено с PlantCache
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class PlantSearchService(BaseService):
     Сервис для поиска и фильтрации растений
     """
     
-    def __init__(self, session: AsyncSession, plant_cache: Optional[PlantCache] = None):
+    def __init__(self, session: AsyncSession, plant_cache: Optional[PlantCacheService] = None):
         super().__init__()
         self.session = session
         self.plant_cache = plant_cache
@@ -67,13 +67,13 @@ class PlantSearchService(BaseService):
         pages = (total + limit - 1) // limit if limit > 0 else 0
         current_page = (skip // limit) + 1 if limit > 0 else 1
         
-        # Формируем ответ с пагинацией
+        # Формируем ответ с пагинацией - ИСПРАВЛЕННЫЕ ПОЛЯ
         result = PlantListResponse(
             items=items,
-            total_items=total,  # Изменено с total на total_items
-            total_pages=pages,  # Изменено с pages на total_pages
+            total_items=total,  # Изменено с total
+            total_pages=pages,  # Изменено с pages
             page=current_page,
-            per_page=limit     # Изменено с size на per_page
+            per_page=limit     # Изменено с size
         )
         
         # Если кэширование включено и нет поискового запроса, сохраняем результат в кэш
@@ -117,7 +117,7 @@ class PlantSearchService(BaseService):
             search_query = f"%{query.lower()}%"
             search_condition = or_(
                 func.lower(Plant.name).like(search_query),
-                func.lower(Plant.scientific_name).like(search_query),
+                func.lower(Plant.latin_name).like(search_query),  # Изменено с scientific_name
                 func.lower(Plant.description).like(search_query)
             )
             filter_conditions.append(search_condition)

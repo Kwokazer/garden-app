@@ -10,33 +10,36 @@ from app.domain.schemas.plant import (PlantCreate, PlantFilterParams,
                                      PlantListResponse, PlantResponse, PlantUpdate)
 from app.domain.schemas.plant_image import PlantImageCreate, PlantImageResponse
 from app.infrastructure.database import get_db
-from app.infrastructure.cache.plant_cache import PlantCache
-from app.infrastructure.cache.redis_service import RedisService
+from app.infrastructure.cache.plant_cache import PlantCacheService
+from app.infrastructure.cache.redis_service import get_redis_service as get_redis_service_factory
 
 router = APIRouter()
 
 # Зависимости для сервисов
-async def get_redis_service() -> RedisService:
-    redis_service = RedisService()
-    await redis_service.connect()
+async def get_redis_service():
+    """Получение Redis сервиса"""
+    redis_service = await get_redis_service_factory()
     try:
         yield redis_service
     finally:
         await redis_service.close()
 
-async def get_plant_cache(redis_service: RedisService = Depends(get_redis_service)) -> PlantCache:
-    return PlantCache(redis_service)
+async def get_plant_cache(redis_service = Depends(get_redis_service)) -> PlantCacheService:
+    """Получение кэша растений"""
+    return PlantCacheService(redis_service)
 
 async def get_plant_service(
     session: AsyncSession = Depends(get_db),
-    plant_cache: Optional[PlantCache] = Depends(get_plant_cache)
+    plant_cache: Optional[PlantCacheService] = Depends(get_plant_cache)
 ) -> PlantService:
+    """Получение сервиса растений"""
     return PlantService(session, plant_cache)
 
 async def get_search_service(
     session: AsyncSession = Depends(get_db),
-    plant_cache: Optional[PlantCache] = Depends(get_plant_cache)
+    plant_cache: Optional[PlantCacheService] = Depends(get_plant_cache)
 ) -> PlantSearchService:
+    """Получение сервиса поиска растений"""
     return PlantSearchService(session, plant_cache)
 
 # Эндпоинты для поиска растений

@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,15 +14,14 @@ from app.domain.schemas.plant import (PlantCreate, PlantFilterParams,
 from app.domain.schemas.plant_image import PlantImageCreate, PlantImageResponse
 from app.infrastructure.database.repositories import (
     PlantRepository, PlantCategoryRepository, ClimateZoneRepository)
-from app.infrastructure.cache.plant_cache import PlantCache
-
+from app.infrastructure.cache.plant_cache import PlantCacheService
 
 class PlantService(BaseService):
     """
     Сервис для работы с растениями
     """
     
-    def __init__(self, session: AsyncSession, plant_cache: Optional[PlantCache] = None):
+    def __init__(self, session: AsyncSession, plant_cache: Optional[PlantCacheService] = None):
         super().__init__()
         self.session = session
         self.plant_repository = PlantRepository(session)
@@ -59,18 +59,72 @@ class PlantService(BaseService):
             )
             
             # Преобразуем результаты в схему ответа
-            items = [PlantResponse.model_validate(plant) for plant in plants]
+            items = []
+            for plant in plants:
+                # Обрабатываем JSON поля для каждого растения
+                json_fields = self._process_plant_json_fields(plant)
+                
+                # Создаем словарь для PlantResponse
+                plant_dict = {}
+                
+                # Копируем все простые поля из модели
+                for field_name in PlantResponse.model_fields.keys():
+                    if hasattr(plant, field_name) and field_name not in json_fields:
+                        plant_dict[field_name] = getattr(plant, field_name)
+                
+                # Добавляем обработанные JSON поля
+                plant_dict.update(json_fields)
+                
+                # Обрабатываем связанные объекты
+                if plant.categories:
+                    plant_dict['categories'] = [
+                        {'id': cat.id, 'name': cat.name} for cat in plant.categories
+                    ]
+                else:
+                    plant_dict['categories'] = []
+                
+                if plant.climate_zones:
+                    plant_dict['climate_zones'] = [
+                        {'id': zone.id, 'name': zone.name, 'zone_number': zone.zone_number} 
+                        for zone in plant.climate_zones
+                    ]
+                else:
+                    plant_dict['climate_zones'] = []
+                
+                if plant.images:
+                    plant_dict['images'] = [
+                        {
+                            'id': img.id,
+                            'url': img.url,
+                            'alt': img.alt,
+                            'title': img.title,
+                            'description': img.description,
+                            'thumbnail_url': img.thumbnail_url,
+                            'is_primary': img.is_primary
+                        } for img in plant.images
+                    ]
+                else:
+                    plant_dict['images'] = []
+                
+                if plant.tags:
+                    plant_dict['tags'] = [
+                        {'id': tag.id, 'name': tag.name} for tag in plant.tags
+                    ]
+                else:
+                    plant_dict['tags'] = []
+                
+                items.append(PlantResponse.model_validate(plant_dict))
             
             # Расчет количества страниц
             pages = (total + limit - 1) // limit if limit > 0 else 0
             
-            # Формируем ответ с пагинацией
+            # Формируем ответ с пагинацией - ИСПРАВЛЕННЫЕ ПОЛЯ
             result = PlantListResponse(
                 items=items,
-                total=total,
+                total_items=total,  # Изменено с total
+                total_pages=pages,  # Изменено с pages
                 page=(skip // limit) + 1 if limit > 0 else 1,
-                size=limit,
-                pages=pages
+                per_page=limit     # Изменено с size
             )
             
             # Кэшируем результат, если кэш доступен
@@ -101,7 +155,60 @@ class PlantService(BaseService):
             if not plant:
                 raise NotFoundError("Plant", plant_id)
             
-            result = PlantResponse.model_validate(plant)
+            # Обрабатываем JSON поля
+            json_fields = self._process_plant_json_fields(plant)
+            
+            # Создаем словарь для PlantResponse, объединяя данные модели и обработанные JSON поля
+            plant_dict = {}
+            
+            # Копируем все простые поля из модели
+            for field_name in PlantResponse.model_fields.keys():
+                if hasattr(plant, field_name) and field_name not in json_fields:
+                    plant_dict[field_name] = getattr(plant, field_name)
+            
+            # Добавляем обработанные JSON поля
+            plant_dict.update(json_fields)
+            
+            # Обрабатываем связанные объекты
+            if plant.categories:
+                plant_dict['categories'] = [
+                    {'id': cat.id, 'name': cat.name} for cat in plant.categories
+                ]
+            else:
+                plant_dict['categories'] = []
+            
+            if plant.climate_zones:
+                plant_dict['climate_zones'] = [
+                    {'id': zone.id, 'name': zone.name, 'zone_number': zone.zone_number} 
+                    for zone in plant.climate_zones
+                ]
+            else:
+                plant_dict['climate_zones'] = []
+            
+            if plant.images:
+                plant_dict['images'] = [
+                    {
+                        'id': img.id,
+                        'url': img.url,
+                        'alt': img.alt,
+                        'title': img.title,
+                        'description': img.description,
+                        'thumbnail_url': img.thumbnail_url,
+                        'is_primary': img.is_primary
+                    } for img in plant.images
+                ]
+            else:
+                plant_dict['images'] = []
+            
+            if plant.tags:
+                plant_dict['tags'] = [
+                    {'id': tag.id, 'name': tag.name} for tag in plant.tags
+                ]
+            else:
+                plant_dict['tags'] = []
+            
+            # Создаем объект PlantResponse
+            result = PlantResponse.model_validate(plant_dict)
             
             # Кэшируем результат, если кэш доступен
             if self.plant_cache:
@@ -109,6 +216,7 @@ class PlantService(BaseService):
                 self._log_info(f"Сохранено растение в кэш с ID {plant_id}")
             
             return result
+            
         except NotFoundError:
             raise
         except Exception as e:
@@ -327,3 +435,37 @@ class PlantService(BaseService):
             self._log_error(f"Ошибка при удалении изображения с ID {image_id}: {str(e)}", e)
             await self.session.rollback()
             raise ValidationError(f"Не удалось удалить изображение: {str(e)}")
+        
+    
+    def _process_plant_json_fields(self, plant: Plant) -> Dict[str, Any]:
+        """Обрабатывает JSON поля растения для ответа API"""
+        result = {}
+        
+        # Обработка care_tips
+        if plant.care_tips:
+            try:
+                result['care_tips'] = json.loads(plant.care_tips) if isinstance(plant.care_tips, str) else plant.care_tips
+            except (json.JSONDecodeError, TypeError):
+                result['care_tips'] = []
+        else:
+            result['care_tips'] = []
+        
+        # Обработка common_problems  
+        if plant.common_problems:
+            try:
+                result['common_problems'] = json.loads(plant.common_problems) if isinstance(plant.common_problems, str) else plant.common_problems
+            except (json.JSONDecodeError, TypeError):
+                result['common_problems'] = []
+        else:
+            result['common_problems'] = []
+            
+        # Обработка propagation_methods
+        if plant.propagation_methods:
+            try:
+                result['propagation_methods'] = json.loads(plant.propagation_methods) if isinstance(plant.propagation_methods, str) else plant.propagation_methods
+            except (json.JSONDecodeError, TypeError):
+                result['propagation_methods'] = []
+        else:
+            result['propagation_methods'] = []
+        
+        return result

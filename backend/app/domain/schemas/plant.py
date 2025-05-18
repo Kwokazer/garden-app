@@ -257,9 +257,13 @@ class PlantResponse(PlantBase, IDSchema, TimestampedSchema):
         return v
 
 
-class PlantListResponse(PaginatedResponse[PlantResponse]):
-    """Пагинированный список растений"""
-    pass
+class PlantListResponse(BaseSchema):
+    """Схема ответа для списка растений с пагинацией"""
+    items: List[PlantResponse] = Field(..., description="Список растений")
+    total_items: int = Field(..., description="Общее количество элементов")  # Изменено с total
+    total_pages: int = Field(..., description="Общее количество страниц")    # Изменено с pages
+    page: int = Field(..., description="Текущая страница")
+    per_page: int = Field(..., description="Количество элементов на странице")  # Изменено с size
 
 
 class PlantFilterParams(BaseSchema):

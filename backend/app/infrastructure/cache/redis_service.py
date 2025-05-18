@@ -1,3 +1,5 @@
+# backend/app/infrastructure/cache/redis_service.py (добавляем недостающие методы)
+
 import json
 import logging
 from typing import Any, Dict, List, Optional, Union
@@ -45,11 +47,18 @@ class RedisService:
             logger.error(f"Ошибка при проверке соединения с Redis: {str(e)}")
             return False
     
-    async def get(self, key: str) -> Optional[str]:
+    async def get(self, key: str) -> Optional[Union[str, Dict, List]]:
         """Получить значение по ключу"""
         try:
             if self.redis:
-                return await self.redis.get(key)
+                value = await self.redis.get(key)
+                if value:
+                    # Пытаемся десериализовать JSON, если это не удается, возвращаем строку
+                    try:
+                        return json.loads(value)
+                    except (json.JSONDecodeError, TypeError):
+                        return value
+                return None
             return None
         except Exception as e:
             logger.error(f"Ошибка при получении значения из Redis: {str(e)}")
@@ -97,6 +106,100 @@ class RedisService:
             return False
         except Exception as e:
             logger.error(f"Ошибка при удалении значения из Redis: {str(e)}")
+            return False
+    
+    async def exists(self, key: str) -> bool:
+        """Проверить существование ключа"""
+        try:
+            if self.redis:
+                return await self.redis.exists(key) > 0
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка при проверке существования ключа в Redis: {str(e)}")
+            return False
+    
+    async def keys(self, pattern: str) -> List[str]:
+        """Получить список ключей по паттерну"""
+        try:
+            if self.redis:
+                return await self.redis.keys(pattern)
+            return []
+        except Exception as e:
+            logger.error(f"Ошибка при получении ключей из Redis: {str(e)}")
+            return []
+    
+    async def get_many(self, keys: List[str]) -> Dict[str, Optional[Any]]:
+        """Получить несколько значений по ключам"""
+        try:
+            if not self.redis or not keys:
+                return {}
+            
+            values = await self.redis.mget(keys)
+            result = {}
+            
+            for i, key in enumerate(keys):
+                value = values[i] if i < len(values) else None
+                if value:
+                    try:
+                        result[key] = json.loads(value)
+                    except (json.JSONDecodeError, TypeError):
+                        result[key] = value
+                else:
+                    result[key] = None
+            
+            return result
+        except Exception as e:
+            logger.error(f"Ошибка при получении множественных значений из Redis: {str(e)}")
+            return {}
+    
+    async def set_many(self, items: Dict[str, Any], ttl: Optional[int] = None) -> bool:
+        """Установить несколько значений"""
+        try:
+            if not self.redis or not items:
+                return False
+            
+            # Подготавливаем данные для mset
+            serialized_items = {}
+            for key, value in items.items():
+                if not isinstance(value, str):
+                    serialized_items[key] = json.dumps(value)
+                else:
+                    serialized_items[key] = value
+            
+            # Устанавливаем значения
+            success = await self.redis.mset(serialized_items)
+            
+            # Если указан TTL, устанавливаем его для каждого ключа
+            if success and ttl:
+                for key in items.keys():
+                    await self.redis.expire(key, ttl)
+            
+            return success
+        except Exception as e:
+            logger.error(f"Ошибка при установке множественных значений в Redis: {str(e)}")
+            return False
+    
+    async def delete_many(self, keys: List[str]) -> bool:
+        """Удалить несколько ключей"""
+        try:
+            if not self.redis or not keys:
+                return False
+            
+            deleted_count = await self.redis.delete(*keys)
+            return deleted_count > 0
+        except Exception as e:
+            logger.error(f"Ошибка при удалении множественных ключей из Redis: {str(e)}")
+            return False
+    
+    async def clear_all(self) -> bool:
+        """Очистить всю базу данных Redis"""
+        try:
+            if self.redis:
+                await self.redis.flushdb()
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка при очистке Redis: {str(e)}")
             return False
     
     async def add_token_to_blacklist(self, token: str, ttl: int) -> bool:
