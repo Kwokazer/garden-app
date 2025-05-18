@@ -198,7 +198,6 @@ watch(() => formData.body, () => {
   }
 });
 </script>
-
 <style scoped>
 .question-form {
   background-color: #f8f9fa;
