@@ -1,7 +1,7 @@
 <!-- src/features/plants/components/PlantCard.vue -->
 <template>
     <div class="card plant-card h-100 border-0 shadow-sm">
-      <!-- Изображение растения -->
+      <!-- Plant image -->
       <div class="card-img-top-wrapper">
         <img v-if="plant.images && plant.images.length > 0" 
              :src="plant.images[0].url" 
@@ -12,18 +12,18 @@
           <i class="bi bi-flower1 display-3"></i>
         </div>
         
-        <!-- Бейдж категории -->
+        <!-- Category badge -->
         <span v-if="primaryCategory" class="position-absolute top-0 end-0 m-2 badge bg-success">
           {{ primaryCategory.name }}
         </span>
       </div>
       
-      <!-- Содержимое карточки -->
+      <!-- Card content -->
       <div class="card-body d-flex flex-column">
         <h5 class="card-title fw-bold text-primary mb-1">{{ plant.name }}</h5>
         <p class="card-text text-muted small mb-1">{{ plant.latin_name }}</p>
         
-        <!-- Характеристики растения -->
+        <!-- Plant characteristics -->
         <div class="plant-features mb-3">
           <div class="d-flex align-items-center mb-1 small">
             <span class="badge bg-light text-dark me-2">
@@ -41,24 +41,24 @@
           </div>
         </div>
         
-        <!-- Краткое описание -->
+        <!-- Short description -->
         <p class="card-text plant-description mb-3">
           {{ truncateDescription(plant.description, 100) }}
         </p>
         
-        <!-- Климатические зоны -->
+        <!-- Climate zones -->
         <div v-if="plant.climate_zones && plant.climate_zones.length > 0" class="small mb-3">
-          <span class="text-muted me-2">Климатические зоны:</span>
-          <span v-for="(zone, index) in plant.climate_zones" :key="zone.id" class="badge bg-info text-white me-1">
+          <span class="text-muted me-2">Climate zones:</span>
+          <span v-for="zone in plant.climate_zones" :key="zone.id" class="badge bg-info text-white me-1">
             {{ zone.name }}
           </span>
         </div>
         
-        <!-- Кнопка подробнее -->
+        <!-- Details button -->
         <router-link 
           :to="{ name: 'PlantDetails', params: { id: plant.id } }" 
           class="btn btn-outline-primary mt-auto">
-          Подробнее
+          Details
         </router-link>
       </div>
     </div>
@@ -67,7 +67,7 @@
   <script setup>
   import { computed } from 'vue';
   
-  // Определение входных параметров
+  // Props definition
   const props = defineProps({
     plant: {
       type: Object,
@@ -75,25 +75,25 @@
     }
   });
   
-  // Получаем основную категорию растения
+  // Get primary plant category
   const primaryCategory = computed(() => {
-    if (plant.category) {
-      return plant.category;
+    if (props.plant.category) {
+      return props.plant.category;
     }
-    if (plant.categories && plant.categories.length > 0) {
-      return plant.categories[0];
+    if (props.plant.categories && props.plant.categories.length > 0) {
+      return props.plant.categories[0];
     }
     return null;
   });
   
-  // Обработка ошибок загрузки изображения
+  // Handle image load errors
   function handleImageError(event) {
-    // Заменяем битое изображение на placeholder
+    // Replace broken image with placeholder
     event.target.src = '/placeholder-plant.jpg';
     event.target.classList.add('img-error');
   }
   
-  // Обрезаем описание до указанной длины
+  // Truncate description to specified length
   function truncateDescription(text, maxLength) {
     if (!text) return '';
     if (text.length <= maxLength) return text;
@@ -101,40 +101,40 @@
     return text.substring(0, maxLength) + '...';
   }
   
-  // Получаем текстовую метку для диапазона температур
+  // Get text label for temperature range
   function getTemperatureLabel(min, max) {
-    if (min === undefined && max === undefined) return 'Не указано';
+    if (min === undefined && max === undefined) return 'Not specified';
     if (min !== undefined && max !== undefined) return `${min}°C - ${max}°C`;
-    if (min !== undefined) return `от ${min}°C`;
-    if (max !== undefined) return `до ${max}°C`;
-    return 'Не указано';
+    if (min !== undefined) return `from ${min}°C`;
+    if (max !== undefined) return `up to ${max}°C`;
+    return 'Not specified';
   }
   
-  // Получаем текстовую метку для частоты полива
+  // Get text label for watering frequency
   function getWateringLabel(frequency) {
-    if (!frequency) return 'Не указано';
+    if (!frequency) return 'Not specified';
     
     const wateringLabels = {
-      'daily': 'Ежедневно',
-      'twice_a_week': '2 раза в неделю',
-      'weekly': 'Еженедельно',
-      'bi_weekly': 'Раз в 2 недели',
-      'monthly': 'Ежемесячно',
-      'rarely': 'Редко'
+      'daily': 'Daily',
+      'twice_a_week': 'Twice a week',
+      'weekly': 'Weekly',
+      'bi_weekly': 'Every 2 weeks',
+      'monthly': 'Monthly',
+      'rarely': 'Rarely'
     };
     
     return wateringLabels[frequency] || frequency;
   }
   
-  // Получаем текстовую метку для уровня освещения
+  // Get text label for light level
   function getLightLabel(level) {
-    if (!level) return 'Не указано';
+    if (!level) return 'Not specified';
     
     const lightLabels = {
-      'full_sun': 'Прямой свет',
-      'partial_sun': 'Полутень',
-      'shade': 'Тень',
-      'low_light': 'Малое освещение'
+      'full_sun': 'Full sun',
+      'partial_sun': 'Partial sun',
+      'shade': 'Shade',
+      'low_light': 'Low light'
     };
     
     return lightLabels[level] || level;

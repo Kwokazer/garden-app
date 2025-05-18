@@ -5,19 +5,19 @@
         <div class="card-header bg-light py-3">
           <h5 class="mb-0">
             <i class="bi bi-water me-2 text-primary"></i>
-            Информация по уходу
+            Care Information
           </h5>
         </div>
         <div class="card-body p-4">
-          <!-- Основные параметры ухода -->
+          <!-- Main care parameters -->
           <div class="row gx-4 gy-3 mb-4">
-            <!-- Полив -->
+            <!-- Watering -->
             <div class="col-md-4">
               <div class="care-item">
                 <div class="care-icon-wrapper mb-2">
                   <i class="bi bi-droplet-fill care-icon"></i>
                 </div>
-                <h6 class="fw-bold mb-1">Полив</h6>
+                <h6 class="fw-bold mb-1">Watering</h6>
                 <div class="care-value mb-1">
                   {{ getWateringLabel(plant.watering_frequency) }}
                 </div>
@@ -30,13 +30,13 @@
               </div>
             </div>
             
-            <!-- Освещение -->
+            <!-- Light -->
             <div class="col-md-4">
               <div class="care-item">
                 <div class="care-icon-wrapper mb-2">
                   <i class="bi bi-brightness-high-fill care-icon"></i>
                 </div>
-                <h6 class="fw-bold mb-1">Освещение</h6>
+                <h6 class="fw-bold mb-1">Light</h6>
                 <div class="care-value mb-1">
                   {{ getLightLabel(plant.light_level) }}
                 </div>
@@ -49,13 +49,13 @@
               </div>
             </div>
             
-            <!-- Температура -->
+            <!-- Temperature -->
             <div class="col-md-4">
               <div class="care-item">
                 <div class="care-icon-wrapper mb-2">
                   <i class="bi bi-thermometer-half care-icon"></i>
                 </div>
-                <h6 class="fw-bold mb-1">Температура</h6>
+                <h6 class="fw-bold mb-1">Temperature</h6>
                 <div class="care-value mb-1">
                   {{ getTemperatureRange(plant.temperature_min, plant.temperature_max) }}
                 </div>
@@ -63,54 +63,54 @@
                   <div class="progress-bar bg-danger" style="width: 100%"></div>
                 </div>
                 <small class="text-muted d-block mt-2">
-                  Оптимальная температура для роста и развития растения.
+                  Optimal temperature range for plant growth and development.
                 </small>
               </div>
             </div>
           </div>
           
-          <!-- Дополнительные параметры -->
+          <!-- Additional parameters -->
           <div class="additional-care mt-4">
             <div class="row gx-4 gy-3">
-              <!-- Влажность -->
+              <!-- Humidity -->
               <div class="col-md-4">
                 <div class="care-item-sm">
                   <div class="d-flex align-items-center mb-2">
                     <i class="bi bi-cloud-drizzle me-2 text-primary"></i>
-                    <h6 class="fw-bold mb-0">Влажность</h6>
+                    <h6 class="fw-bold mb-0">Humidity</h6>
                   </div>
                   <p class="mb-0">{{ getHumidityLabel(plant.humidity_level) }}</p>
                 </div>
               </div>
               
-              <!-- Подкормка -->
+              <!-- Fertilizing -->
               <div class="col-md-4">
                 <div class="care-item-sm">
                   <div class="d-flex align-items-center mb-2">
                     <i class="bi bi-flower3 me-2 text-primary"></i>
-                    <h6 class="fw-bold mb-0">Подкормка</h6>
+                    <h6 class="fw-bold mb-0">Fertilizing</h6>
                   </div>
                   <p class="mb-0">{{ getFertilizingLabel(plant.fertilizing_frequency) }}</p>
                 </div>
               </div>
               
-              <!-- Пересадка -->
+              <!-- Repotting -->
               <div class="col-md-4">
                 <div class="care-item-sm">
                   <div class="d-flex align-items-center mb-2">
                     <i class="bi bi-arrow-repeat me-2 text-primary"></i>
-                    <h6 class="fw-bold mb-0">Пересадка</h6>
+                    <h6 class="fw-bold mb-0">Repotting</h6>
                   </div>
                   <p class="mb-0">{{ getRepottingLabel(plant.repotting_frequency) }}</p>
                 </div>
               </div>
               
-              <!-- Сложность ухода -->
+              <!-- Care difficulty -->
               <div class="col-md-4">
                 <div class="care-item-sm">
                   <div class="d-flex align-items-center mb-2">
                     <i class="bi bi-clipboard-check me-2 text-primary"></i>
-                    <h6 class="fw-bold mb-0">Сложность ухода</h6>
+                    <h6 class="fw-bold mb-0">Care Difficulty</h6>
                   </div>
                   <div class="d-flex align-items-center">
                     <div class="difficulty-stars">
@@ -128,30 +128,30 @@
                 </div>
               </div>
               
-              <!-- Токсичность -->
+              <!-- Toxicity -->
               <div class="col-md-4">
                 <div class="care-item-sm">
                   <div class="d-flex align-items-center mb-2">
                     <i class="bi bi-exclamation-triangle me-2 text-primary"></i>
-                    <h6 class="fw-bold mb-0">Токсичность</h6>
+                    <h6 class="fw-bold mb-0">Toxicity</h6>
                   </div>
                   <p v-if="plant.is_toxic" class="text-danger mb-0">
                     <i class="bi bi-exclamation-circle me-1"></i>
-                    Токсично для людей и/или животных
+                    Toxic to humans and/or animals
                   </p>
                   <p v-else class="text-success mb-0">
                     <i class="bi bi-check-circle me-1"></i>
-                    Не токсично
+                    Non-toxic
                   </p>
                 </div>
               </div>
               
-              <!-- Рост -->
+              <!-- Growth rate -->
               <div class="col-md-4">
                 <div class="care-item-sm">
                   <div class="d-flex align-items-center mb-2">
                     <i class="bi bi-graph-up-arrow me-2 text-primary"></i>
-                    <h6 class="fw-bold mb-0">Рост</h6>
+                    <h6 class="fw-bold mb-0">Growth Rate</h6>
                   </div>
                   <p class="mb-0">{{ getGrowthRateLabel(plant.growth_rate) }}</p>
                 </div>
@@ -159,23 +159,23 @@
             </div>
           </div>
           
-          <!-- Инструкции по уходу -->
+          <!-- Care instructions -->
           <div class="care-instructions mt-4" v-if="plant.care_instructions">
             <div class="care-section">
               <h6 class="section-title">
                 <i class="bi bi-book me-2"></i>
-                Инструкции по уходу
+                Care Instructions
               </h6>
               <div class="care-content" v-html="formattedCareInstructions"></div>
             </div>
           </div>
           
-          <!-- Советы и рекомендации -->
+          <!-- Care tips -->
           <div class="care-tips mt-4" v-if="plant.care_tips && plant.care_tips.length > 0">
             <div class="care-section">
               <h6 class="section-title">
                 <i class="bi bi-lightbulb me-2"></i>
-                Советы и рекомендации
+                Tips and Recommendations
               </h6>
               <ul class="care-tips-list">
                 <li v-for="(tip, index) in plant.care_tips" :key="index">
@@ -185,12 +185,12 @@
             </div>
           </div>
           
-          <!-- Частые проблемы -->
+          <!-- Common problems -->
           <div class="care-problems mt-4" v-if="plant.common_problems && plant.common_problems.length > 0">
             <div class="care-section">
               <h6 class="section-title">
                 <i class="bi bi-patch-exclamation me-2"></i>
-                Частые проблемы
+                Common Problems
               </h6>
               <div class="accordion" id="problemsAccordion">
                 <div 
@@ -219,7 +219,7 @@
                     <div class="accordion-body">
                       <p>{{ problem.description }}</p>
                       <div v-if="problem.solution" class="solution-block">
-                        <strong>Решение:</strong> {{ problem.solution }}
+                        <strong>Solution:</strong> {{ problem.solution }}
                       </div>
                     </div>
                   </div>
@@ -242,7 +242,7 @@
     }
   });
   
-  // Форматирование инструкций по уходу с поддержкой переносов строк
+  // Format care instructions with support for line breaks
   const formattedCareInstructions = computed(() => {
     if (!props.plant.care_instructions) return '';
     
@@ -251,17 +251,17 @@
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   });
   
-  // Функции для получения метки полива
+  // Functions for watering labels
   function getWateringLabel(frequency) {
-    if (!frequency) return 'Не указано';
+    if (!frequency) return 'Not specified';
     
     const labels = {
-      'daily': 'Ежедневно',
-      'twice_a_week': '2 раза в неделю',
-      'weekly': 'Еженедельно',
-      'bi_weekly': 'Раз в 2 недели',
-      'monthly': 'Ежемесячно',
-      'rarely': 'Редко'
+      'daily': 'Daily',
+      'twice_a_week': 'Twice a week',
+      'weekly': 'Weekly',
+      'bi_weekly': 'Every 2 weeks',
+      'monthly': 'Monthly',
+      'rarely': 'Rarely'
     };
     
     return labels[frequency] || frequency;
@@ -283,29 +283,29 @@
   }
   
   function getWateringDescription(frequency) {
-    if (!frequency) return 'Режим полива не указан.';
+    if (!frequency) return 'Watering regime not specified.';
     
     const descriptions = {
-      'daily': 'Поливайте растение каждый день, поддерживая почву слегка влажной.',
-      'twice_a_week': 'Поливайте растение 2-3 раза в неделю, давая почве слегка подсохнуть между поливами.',
-      'weekly': 'Поливайте растение раз в неделю, давая почве подсохнуть между поливами.',
-      'bi_weekly': 'Поливайте растение раз в две недели, позволяя почве хорошо просохнуть между поливами.',
-      'monthly': 'Поливайте растение примерно раз в месяц, дожидаясь полного высыхания почвы.',
-      'rarely': 'Растение очень устойчиво к засухе, поливайте только когда почва полностью высохнет.'
+      'daily': 'Water the plant daily, keeping the soil slightly moist.',
+      'twice_a_week': 'Water the plant 2-3 times a week, allowing the soil to dry slightly between waterings.',
+      'weekly': 'Water the plant once a week, allowing the soil to dry between waterings.',
+      'bi_weekly': 'Water the plant once every two weeks, allowing the soil to dry well between waterings.',
+      'monthly': 'Water the plant approximately once a month, waiting for the soil to completely dry out.',
+      'rarely': 'The plant is very drought-tolerant, water only when the soil is completely dry.'
     };
     
-    return descriptions[frequency] || 'Режим полива не указан.';
+    return descriptions[frequency] || 'Watering regime not specified.';
   }
   
-  // Функции для получения информации об освещении
+  // Functions for light information
   function getLightLabel(level) {
-    if (!level) return 'Не указано';
+    if (!level) return 'Not specified';
     
     const labels = {
-      'full_sun': 'Прямой солнечный свет',
-      'partial_sun': 'Полутень',
-      'shade': 'Тень',
-      'low_light': 'Слабое освещение'
+      'full_sun': 'Full sun',
+      'partial_sun': 'Partial sun',
+      'shade': 'Shade',
+      'low_light': 'Low light'
     };
     
     return labels[level] || level;
@@ -325,78 +325,78 @@
   }
   
   function getLightDescription(level) {
-    if (!level) return 'Уровень освещения не указан.';
+    if (!level) return 'Light level not specified.';
     
     const descriptions = {
-      'full_sun': 'Растение нуждается в минимум 6 часах прямого солнечного света ежедневно.',
-      'partial_sun': 'Растение предпочитает 3-6 часов фильтрованного света или утреннее солнце.',
-      'shade': 'Растению комфортно в тени, без прямых солнечных лучей.',
-      'low_light': 'Растение хорошо растет в условиях слабого освещения, вдали от окон.'
+      'full_sun': 'The plant needs at least 6 hours of direct sunlight daily.',
+      'partial_sun': 'The plant prefers 3-6 hours of filtered light or morning sun.',
+      'shade': 'The plant thrives in shade without direct sunlight.',
+      'low_light': 'The plant grows well in low light conditions, away from windows.'
     };
     
-    return descriptions[level] || 'Уровень освещения не указан.';
+    return descriptions[level] || 'Light level not specified.';
   }
   
-  // Функции для получения информации о температуре
+  // Functions for temperature information
   function getTemperatureRange(min, max) {
-    if (min === undefined || max === undefined) return 'Не указано';
+    if (min === undefined || max === undefined) return 'Not specified';
     
     return `${min}°C - ${max}°C`;
   }
   
-  // Функции для получения информации о влажности
+  // Functions for humidity information
   function getHumidityLabel(level) {
-    if (!level) return 'Обычная (40-60%)';
+    if (!level) return 'Average (40-60%)';
     
     const labels = {
-      'high': 'Высокая (60-80%)',
-      'medium': 'Средняя (40-60%)',
-      'low': 'Низкая (20-40%)'
+      'high': 'High (60-80%)',
+      'medium': 'Medium (40-60%)',
+      'low': 'Low (20-40%)'
     };
     
     return labels[level] || level;
   }
   
-  // Функции для получения информации о подкормке
+  // Functions for fertilizing information
   function getFertilizingLabel(frequency) {
-    if (!frequency) return 'По стандартной схеме';
+    if (!frequency) return 'Standard schedule';
     
     const labels = {
-      'weekly': 'Еженедельно',
-      'bi_weekly': 'Раз в 2 недели',
-      'monthly': 'Ежемесячно',
-      'quarterly': 'Раз в 3 месяца',
-      'annually': 'Раз в год',
-      'none': 'Не требуется'
+      'weekly': 'Weekly',
+      'bi_weekly': 'Every 2 weeks',
+      'monthly': 'Monthly',
+      'quarterly': 'Every 3 months',
+      'annually': 'Annually',
+      'none': 'Not required'
     };
     
     return labels[frequency] || frequency;
   }
   
-  // Функции для получения информации о пересадке
+  // Functions for repotting information
   function getRepottingLabel(frequency) {
-    if (!frequency) return 'Каждые 1-2 года';
+    if (!frequency) return 'Every 1-2 years';
     
     const labels = {
-      'annually': 'Ежегодно',
-      'bi_annually': 'Раз в 2 года',
-      'three_years': 'Раз в 3 года',
-      'rarely': 'Редко (более 3 лет)'
+      'annually': 'Annually',
+      'bi_annually': 'Every 2 years',
+      'three_years': 'Every 3 years',
+      'rarely': 'Rarely (more than 3 years)'
     };
     
     return labels[frequency] || frequency;
   }
   
-  // Функции для получения информации о сложности ухода
+  // Functions for care difficulty information
   function getDifficultyLabel(difficulty) {
-    if (!difficulty) return 'Средняя';
+    if (!difficulty) return 'Moderate';
     
     const labels = {
-      'very_easy': 'Очень легкая',
-      'easy': 'Легкая',
-      'moderate': 'Средняя',
-      'difficult': 'Сложная',
-      'expert': 'Для экспертов'
+      'very_easy': 'Very Easy',
+      'easy': 'Easy',
+      'moderate': 'Moderate',
+      'difficult': 'Difficult',
+      'expert': 'Expert'
     };
     
     return labels[difficulty] || difficulty;
@@ -416,14 +416,14 @@
     return levels[difficulty] || 3;
   }
   
-  // Функции для получения информации о скорости роста
+  // Functions for growth rate information
   function getGrowthRateLabel(rate) {
-    if (!rate) return 'Средний';
+    if (!rate) return 'Moderate';
     
     const labels = {
-      'fast': 'Быстрый',
-      'moderate': 'Средний',
-      'slow': 'Медленный'
+      'fast': 'Fast',
+      'moderate': 'Moderate',
+      'slow': 'Slow'
     };
     
     return labels[rate] || rate;

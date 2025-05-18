@@ -1,24 +1,24 @@
-<!-- src/features/plants/components/PlantFilters.vue -->
+<!-- src/features/plants/components/PlantFilter.vue -->
 <template>
     <div class="plant-filters mb-4">
       <div class="card shadow-sm border-0">
         <div class="card-header bg-light py-3">
           <h5 class="mb-0">
             <i class="bi bi-funnel me-2 text-primary"></i>
-            Фильтры и поиск
+            Filters and Search
           </h5>
         </div>
         <div class="card-body p-3">
-          <!-- Поиск -->
+          <!-- Search -->
           <div class="mb-3">
-            <label for="searchQuery" class="form-label">Поиск растений</label>
+            <label for="searchQuery" class="form-label">Search Plants</label>
             <div class="input-group">
               <input 
                 type="text" 
                 class="form-control" 
                 id="searchQuery" 
                 v-model="filters.searchQuery" 
-                placeholder="Введите название растения..."
+                placeholder="Enter plant name..."
                 @input="onSearchDebounced"
               >
               <button class="btn btn-primary" type="button" @click="applyFilters">
@@ -27,19 +27,19 @@
             </div>
           </div>
           
-          <!-- Разворачиваемый блок с дополнительными фильтрами -->
+          <!-- Collapsible advanced filters -->
           <div class="collapse" :class="{ show: showAdvancedFilters }" id="advancedFilters">
             <div class="row">
-              <!-- Категория -->
+              <!-- Category -->
               <div class="col-md-6 mb-3">
-                <label for="categoryFilter" class="form-label">Категория</label>
+                <label for="categoryFilter" class="form-label">Category</label>
                 <select 
                   class="form-select" 
                   id="categoryFilter" 
                   v-model="filters.category_id"
                   :disabled="isLoading || !categories.length"
                 >
-                  <option :value="null">Все категории</option>
+                  <option :value="null">All categories</option>
                   <option 
                     v-for="category in categories" 
                     :key="category.id" 
@@ -50,16 +50,16 @@
                 </select>
               </div>
               
-              <!-- Климатическая зона -->
+              <!-- Climate zone -->
               <div class="col-md-6 mb-3">
-                <label for="climateZoneFilter" class="form-label">Климатическая зона</label>
+                <label for="climateZoneFilter" class="form-label">Climate Zone</label>
                 <select 
                   class="form-select" 
                   id="climateZoneFilter" 
                   v-model="filters.climate_zone_id"
                   :disabled="isLoading || !climateZones.length"
                 >
-                  <option :value="null">Все зоны</option>
+                  <option :value="null">All zones</option>
                   <option 
                     v-for="zone in climateZones" 
                     :key="zone.id" 
@@ -71,70 +71,70 @@
               </div>
             </div>
             
-            <!-- Дополнительные фильтры -->
+            <!-- Additional filters -->
             <div class="row">
-              <!-- Тип растения -->
+              <!-- Plant type -->
               <div class="col-md-6 mb-3">
-                <label for="plantTypeFilter" class="form-label">Тип растения</label>
+                <label for="plantTypeFilter" class="form-label">Plant Type</label>
                 <select 
                   class="form-select" 
                   id="plantTypeFilter" 
                   v-model="filters.plant_type"
                 >
-                  <option :value="null">Все типы</option>
-                  <option value="tree">Дерево</option>
-                  <option value="shrub">Кустарник</option>
-                  <option value="flower">Цветок</option>
-                  <option value="vegetable">Овощ</option>
-                  <option value="fruit">Фрукт</option>
-                  <option value="herb">Трава/зелень</option>
-                  <option value="succulent">Суккулент</option>
-                  <option value="vine">Лиана/вьющееся</option>
-                  <option value="aquatic">Водное растение</option>
-                  <option value="fern">Папоротник</option>
+                  <option :value="null">All types</option>
+                  <option value="tree">Tree</option>
+                  <option value="shrub">Shrub</option>
+                  <option value="flower">Flower</option>
+                  <option value="vegetable">Vegetable</option>
+                  <option value="fruit">Fruit</option>
+                  <option value="herb">Herb</option>
+                  <option value="succulent">Succulent</option>
+                  <option value="vine">Vine/Climbing</option>
+                  <option value="aquatic">Aquatic</option>
+                  <option value="fern">Fern</option>
                 </select>
               </div>
               
-              <!-- Сложность ухода -->
+              <!-- Care difficulty -->
               <div class="col-md-6 mb-3">
-                <label for="careDifficultyFilter" class="form-label">Сложность ухода</label>
+                <label for="careDifficultyFilter" class="form-label">Care Difficulty</label>
                 <select 
                   class="form-select" 
                   id="careDifficultyFilter" 
                   v-model="filters.care_difficulty"
                 >
-                  <option :value="null">Любая</option>
-                  <option value="very_easy">Очень легкая</option>
-                  <option value="easy">Легкая</option>
-                  <option value="moderate">Средняя</option>
-                  <option value="difficult">Сложная</option>
-                  <option value="expert">Для экспертов</option>
+                  <option :value="null">Any</option>
+                  <option value="very_easy">Very Easy</option>
+                  <option value="easy">Easy</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="difficult">Difficult</option>
+                  <option value="expert">Expert</option>
                 </select>
               </div>
             </div>
             
-            <!-- Сортировка -->
+            <!-- Sort options -->
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label for="sortBy" class="form-label">Сортировать по</label>
+                <label for="sortBy" class="form-label">Sort by</label>
                 <select class="form-select" id="sortBy" v-model="filters.sort_by">
-                  <option value="name">Названию</option>
-                  <option value="created_at">Дате добавления</option>
-                  <option value="popularity">Популярности</option>
+                  <option value="name">Name</option>
+                  <option value="created_at">Date Added</option>
+                  <option value="popularity">Popularity</option>
                 </select>
               </div>
               
               <div class="col-md-6 mb-3">
-                <label for="sortDirection" class="form-label">Порядок</label>
+                <label for="sortDirection" class="form-label">Direction</label>
                 <select class="form-select" id="sortDirection" v-model="filters.sort_direction">
-                  <option value="asc">По возрастанию</option>
-                  <option value="desc">По убыванию</option>
+                  <option value="asc">Ascending</option>
+                  <option value="desc">Descending</option>
                 </select>
               </div>
             </div>
           </div>
           
-          <!-- Кнопки управления фильтрами -->
+          <!-- Filter controls -->
           <div class="d-flex justify-content-between">
             <button 
               class="btn btn-link text-decoration-none p-0" 
@@ -146,7 +146,7 @@
               @click="toggleAdvancedFilters"
             >
               <i class="bi" :class="showAdvancedFilters ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-              {{ showAdvancedFilters ? 'Скрыть фильтры' : 'Показать дополнительные фильтры' }}
+              {{ showAdvancedFilters ? 'Hide filters' : 'Show advanced filters' }}
             </button>
             
             <div>
@@ -156,7 +156,7 @@
                 @click="resetFilters"
                 :disabled="isLoading"
               >
-                Сбросить
+                Reset
               </button>
               <button 
                 class="btn btn-primary" 
@@ -165,7 +165,7 @@
                 :disabled="isLoading"
               >
                 <i class="bi bi-funnel me-1"></i>
-                Применить
+                Apply
               </button>
             </div>
           </div>
@@ -191,13 +191,13 @@
   
   const emit = defineEmits(['update:filters', 'apply']);
   
-  // Состояние компонента
+  // Component state
   const showAdvancedFilters = ref(false);
   const plantsStore = usePlantsStore();
   const categories = ref([]);
   const climateZones = ref([]);
   
-  // Фильтры по умолчанию (в формате бэкенда)
+  // Default filters (in backend format)
   const defaultFilters = {
     searchQuery: '',
     category_id: null,
@@ -208,45 +208,45 @@
     sort_direction: 'asc'
   };
   
-  // Состояние фильтров
+  // Filters state
   const filters = reactive({
     ...defaultFilters,
     ...props.initialFilters
   });
   
-  // Таймер для debounce поиска
+  // Debounce timer for search
   let searchTimeout = null;
   
-  // Инициализация при создании компонента
+  // Initialize when component is created
   onMounted(async () => {
     await loadFilterData();
   });
   
-  // Загрузка данных для фильтров
+  // Load data for filters
   async function loadFilterData() {
     try {
-      // Загружаем категории, если их еще нет в хранилище
+      // Load categories if not already in store
       if (!plantsStore.categories.length) {
         await plantsStore.loadCategories();
       }
       categories.value = plantsStore.categories;
       
-      // Загружаем климатические зоны, если их еще нет в хранилище
+      // Load climate zones if not already in store
       if (!plantsStore.climateZones.length) {
         await plantsStore.loadClimateZones();
       }
       climateZones.value = plantsStore.climateZones;
     } catch (error) {
-      console.error('Ошибка при загрузке данных для фильтров:', error);
+      console.error('Error loading filter data:', error);
     }
   }
   
-  // Включение/выключение расширенных фильтров
+  // Toggle advanced filters
   function toggleAdvancedFilters() {
     showAdvancedFilters.value = !showAdvancedFilters.value;
   }
   
-  // Debounce для поиска
+  // Debounce for search
   function onSearchDebounced() {
     if (searchTimeout) {
       clearTimeout(searchTimeout);
@@ -254,12 +254,12 @@
     
     searchTimeout = setTimeout(() => {
       applyFilters();
-    }, 500); // Ждем 500 мс после окончания ввода
+    }, 500); // Wait 500 ms after typing stops
   }
   
-  // Применение фильтров
+  // Apply filters
   function applyFilters() {
-    // Преобразуем фильтры в формат, ожидаемый бэкендом
+    // Create filters in the format expected by backend
     const backendFilters = {
       searchQuery: filters.searchQuery,
       category_id: filters.category_id,
@@ -274,7 +274,7 @@
     emit('apply', backendFilters);
   }
   
-  // Сброс фильтров
+  // Reset filters
   function resetFilters() {
     Object.keys(defaultFilters).forEach(key => {
       filters[key] = defaultFilters[key];
@@ -282,7 +282,7 @@
     applyFilters();
   }
   
-  // Обновление фильтров при изменении входных параметров
+  // Update filters when input props change
   watch(() => props.initialFilters, (newFilters) => {
     Object.keys(newFilters).forEach(key => {
       if (key in filters) {

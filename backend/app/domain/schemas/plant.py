@@ -13,83 +13,68 @@ from app.domain.schemas.common import PaginatedResponse
 
 
 class PlantTypeEnum(str, enum.Enum):
-    """Типы растений"""
-    TREE = "tree"
-    SHRUB = "shrub"
-    FLOWER = "flower"
-    VEGETABLE = "vegetable"
-    FRUIT = "fruit"
-    HERB = "herb"
-    SUCCULENT = "succulent"
-    VINE = "vine"
-    AQUATIC = "aquatic"
-    FERN = "fern"
-
+    TREE = "TREE"
+    SHRUB = "SHRUB"
+    FLOWER = "FLOWER"
+    VEGETABLE = "VEGETABLE"
+    FRUIT = "FRUIT"
+    HERB = "HERB"
+    SUCCULENT = "SUCCULENT"
+    VINE = "VINE"
+    AQUATIC = "AQUATIC"
+    FERN = "FERN"
 
 class LifeCycleEnum(str, enum.Enum):
-    """Жизненные циклы растений"""
-    ANNUAL = "annual"
-    BIENNIAL = "biennial"
-    PERENNIAL = "perennial"
-
+    ANNUAL = "ANNUAL"
+    BIENNIAL = "BIENNIAL"
+    PERENNIAL = "PERENNIAL"
 
 class WateringFrequencyEnum(str, enum.Enum):
-    """Частота полива"""
-    DAILY = "daily"
-    TWICE_A_WEEK = "twice_a_week"
-    WEEKLY = "weekly"
-    BI_WEEKLY = "bi_weekly"
-    MONTHLY = "monthly"
-    RARELY = "rarely"
-
+    DAILY = "DAILY"
+    TWICE_A_WEEK = "TWICE_A_WEEK"
+    WEEKLY = "WEEKLY"
+    BI_WEEKLY = "BI_WEEKLY"
+    MONTHLY = "MONTHLY"
+    RARELY = "RARELY"
 
 class LightLevelEnum(str, enum.Enum):
-    """Уровни освещения"""
-    FULL_SUN = "full_sun"
-    PARTIAL_SUN = "partial_sun"
-    SHADE = "shade"
-    LOW_LIGHT = "low_light"
-
+    FULL_SUN = "FULL_SUN"
+    PARTIAL_SUN = "PARTIAL_SUN"
+    SHADE = "SHADE"
+    LOW_LIGHT = "LOW_LIGHT"
 
 class HumidityLevelEnum(str, enum.Enum):
-    """Уровни влажности"""
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
 
 class CareDifficultyEnum(str, enum.Enum):
-    """Сложность ухода"""
-    VERY_EASY = "very_easy"
-    EASY = "easy"
-    MODERATE = "moderate"
-    DIFFICULT = "difficult"
-    EXPERT = "expert"
-
+    VERY_EASY = "VERY_EASY"
+    EASY = "EASY"
+    MODERATE = "MODERATE"
+    DIFFICULT = "DIFFICULT"
+    EXPERT = "EXPERT"
 
 class FertilizingFrequencyEnum(str, enum.Enum):
-    """Частота подкормки"""
-    WEEKLY = "weekly"
-    BI_WEEKLY = "bi_weekly"
-    MONTHLY = "monthly"
-    QUARTERLY = "quarterly"
-    ANNUALLY = "annually"
-    NONE = "none"
-
+    WEEKLY = "WEEKLY"
+    BI_WEEKLY = "BI_WEEKLY"
+    MONTHLY = "MONTHLY"
+    QUARTERLY = "QUARTERLY"
+    ANNUALLY = "ANNUALLY"
+    NONE = "NONE"
 
 class RepottingFrequencyEnum(str, enum.Enum):
-    """Частота пересадки"""
-    ANNUALLY = "annually"
-    BI_ANNUALLY = "bi_annually"
-    THREE_YEARS = "three_years"
-    RARELY = "rarely"
+    ANNUALLY = "ANNUALLY"
+    BI_ANNUALLY = "BI_ANNUALLY"
+    THREE_YEARS = "THREE_YEARS"
+    RARELY = "RARELY"
 
-
+# ВАЖНО: Если в БД enum создан с заглавными буквами, нужно исправить значения
 class GrowthRateEnum(str, enum.Enum):
-    """Скорость роста"""
-    FAST = "fast"
-    MODERATE = "moderate"
-    SLOW = "slow"
+    # Если в PostgreSQL enum growthrate создан как ('FAST','MODERATE','SLOW')
+    FAST = "FAST"         # Соответствует БД enum
+    MODERATE = "MODERATE" # Соответствует БД enum  
+    SLOW = "SLOW"   
 
 
 class PlantBase(BaseSchema):

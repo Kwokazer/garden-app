@@ -1,5 +1,3 @@
-# backend/seed_plants_safe.py
-
 import asyncio
 import json
 import sys
@@ -112,18 +110,18 @@ async def seed_basic_plants_data():
                     "description": "Популярное комнатное растение с характерными разрезными листьями.",
                     "height_min": 150.0,
                     "height_max": 300.0,
-                    "growth_rate": "fast",
-                    "plant_type": "vine",
-                    "life_cycle": "perennial",
+                    "growth_rate": "FAST",  # Изменено на верхний регистр
+                    "plant_type": "VINE",   # Изменено на верхний регистр
+                    "life_cycle": "PERENNIAL",  # Изменено на верхний регистр
                     "popularity_score": 95,
-                    "watering_frequency": "weekly",
-                    "light_level": "partial_sun",
+                    "watering_frequency": "WEEKLY",  # Изменено на верхний регистр
+                    "light_level": "PARTIAL_SUN",  # Изменено на верхний регистр
                     "temperature_min": 18.0,
                     "temperature_max": 30.0,
-                    "humidity_level": "high",
-                    "care_difficulty": "easy",
-                    "fertilizing_frequency": "monthly",
-                    "repotting_frequency": "bi_annually",
+                    "humidity_level": "HIGH",  # Изменено на верхний регистр
+                    "care_difficulty": "EASY",  # Изменено на верхний регистр
+                    "fertilizing_frequency": "MONTHLY",  # Изменено на верхний регистр
+                    "repotting_frequency": "BI_ANNUALLY",  # Изменено на верхний регистр
                     "is_toxic": True,
                     "care_instructions": "Монстера любит яркий рассеянный свет, но может переносить полутень. Поливайте, когда верхний слой почвы подсохнет.",
                     "category_ids": [0],  # Лиственные
@@ -136,18 +134,18 @@ async def seed_basic_plants_data():
                     "description": "Неприхотливое растение, известное как 'Тещин язык'.",
                     "height_min": 40.0,
                     "height_max": 120.0,
-                    "growth_rate": "slow",
-                    "plant_type": "succulent",
-                    "life_cycle": "perennial",
+                    "growth_rate": "SLOW",  # Изменено на верхний регистр
+                    "plant_type": "SUCCULENT",  # Изменено на верхний регистр
+                    "life_cycle": "PERENNIAL",  # Изменено на верхний регистр
                     "popularity_score": 92,
-                    "watering_frequency": "bi_weekly",
-                    "light_level": "shade",
+                    "watering_frequency": "BI_WEEKLY",  # Изменено на верхний регистр
+                    "light_level": "SHADE",  # Изменено на верхний регистр
                     "temperature_min": 10.0,
                     "temperature_max": 30.0,
-                    "humidity_level": "low",
-                    "care_difficulty": "very_easy",
-                    "fertilizing_frequency": "quarterly",
-                    "repotting_frequency": "rarely",
+                    "humidity_level": "LOW",  # Изменено на верхний регистр
+                    "care_difficulty": "VERY_EASY",  # Изменено на верхний регистр
+                    "fertilizing_frequency": "QUARTERLY",  # Изменено на верхний регистр
+                    "repotting_frequency": "RARELY",  # Изменено на верхний регистр
                     "is_toxic": True,
                     "care_instructions": "Поливайте только когда почва полностью высохнет. Может расти в условиях низкой освещенности.",
                     "category_ids": [1],  # Суккуленты
@@ -160,18 +158,18 @@ async def seed_basic_plants_data():
                     "description": "Неприхотливое растение, известное как 'долларовое дерево'.",
                     "height_min": 45.0,
                     "height_max": 90.0,
-                    "growth_rate": "slow",
-                    "plant_type": "herb",
-                    "life_cycle": "perennial",
+                    "growth_rate": "SLOW",  # Изменено на верхний регистр
+                    "plant_type": "HERB",  # Изменено на верхний регистр
+                    "life_cycle": "PERENNIAL",  # Изменено на верхний регистр
                     "popularity_score": 85,
-                    "watering_frequency": "monthly",
-                    "light_level": "low_light",
+                    "watering_frequency": "MONTHLY",  # Изменено на верхний регистр
+                    "light_level": "LOW_LIGHT",  # Изменено на верхний регистр
                     "temperature_min": 15.0,
                     "temperature_max": 30.0,
-                    "humidity_level": "low",
-                    "care_difficulty": "very_easy",
-                    "fertilizing_frequency": "quarterly",
-                    "repotting_frequency": "bi_annually",
+                    "humidity_level": "LOW",  # Изменено на верхний регистр
+                    "care_difficulty": "VERY_EASY",  # Изменено на верхний регистр
+                    "fertilizing_frequency": "QUARTERLY",  # Изменено на верхний регистр
+                    "repotting_frequency": "BI_ANNUALLY",  # Изменено на верхний регистр
                     "is_toxic": True,
                     "care_instructions": "Замиокулькас отлично подходит для забывчивых садоводов.",
                     "category_ids": [0],  # Лиственные
@@ -184,20 +182,20 @@ async def seed_basic_plants_data():
                     "description": "Изящное цветущее растение, известное как 'Женское счастье'.",
                     "height_min": 40.0,
                     "height_max": 80.0,
-                    "growth_rate": "moderate",
-                    "plant_type": "flower",
-                    "life_cycle": "perennial",
+                    "growth_rate": "MODERATE",  # Изменено на верхний регистр
+                    "plant_type": "FLOWER",  # Изменено на верхний регистр
+                    "life_cycle": "PERENNIAL",  # Изменено на верхний регистр
                     "popularity_score": 85,
                     "flowering_period": "Может цвести круглый год при хорошем уходе",
                     "bloom_color": "Белый",
-                    "watering_frequency": "weekly",
-                    "light_level": "shade",
+                    "watering_frequency": "WEEKLY",  # Изменено на верхний регистр
+                    "light_level": "SHADE",  # Изменено на верхний регистр
                     "temperature_min": 18.0,
                     "temperature_max": 27.0,
-                    "humidity_level": "high",
-                    "care_difficulty": "easy",
-                    "fertilizing_frequency": "monthly",
-                    "repotting_frequency": "annually",
+                    "humidity_level": "HIGH",  # Изменено на верхний регистр
+                    "care_difficulty": "EASY",  # Изменено на верхний регистр
+                    "fertilizing_frequency": "MONTHLY",  # Изменено на верхний регистр
+                    "repotting_frequency": "ANNUALLY",  # Изменено на верхний регистр
                     "is_toxic": True,
                     "care_instructions": "Спатифиллум предпочитает яркий рассеянный свет и высокую влажность.",
                     "category_ids": [2],  # Цветущие
@@ -210,18 +208,18 @@ async def seed_basic_plants_data():
                     "description": "Лекарственное суккулентное растение с мясистыми листьями.",
                     "height_min": 30.0,
                     "height_max": 60.0,
-                    "growth_rate": "moderate",
-                    "plant_type": "succulent",
-                    "life_cycle": "perennial",
+                    "growth_rate": "MODERATE",  # Изменено на верхний регистр
+                    "plant_type": "SUCCULENT",  # Изменено на верхний регистр
+                    "life_cycle": "PERENNIAL",  # Изменено на верхний регистр
                     "popularity_score": 90,
-                    "watering_frequency": "bi_weekly",
-                    "light_level": "full_sun",
+                    "watering_frequency": "BI_WEEKLY",  # Изменено на верхний регистр
+                    "light_level": "FULL_SUN",  # Изменено на верхний регистр
                     "temperature_min": 10.0,
                     "temperature_max": 32.0,
-                    "humidity_level": "low",
-                    "care_difficulty": "very_easy",
-                    "fertilizing_frequency": "quarterly",
-                    "repotting_frequency": "bi_annually",
+                    "humidity_level": "LOW",  # Изменено на верхний регистр
+                    "care_difficulty": "VERY_EASY",  # Изменено на верхний регистр
+                    "fertilizing_frequency": "QUARTERLY",  # Изменено на верхний регистр
+                    "repotting_frequency": "BI_ANNUALLY",  # Изменено на верхний регистр
                     "is_toxic": False,
                     "care_instructions": "Алоэ вера предпочитает яркий свет и хорошо дренированную почву.",
                     "category_ids": [1],  # Суккуленты

@@ -1,28 +1,28 @@
 <!-- src/features/plants/components/PlantGallery.vue -->
 <template>
     <div class="plant-gallery">
-      <!-- Основное изображение -->
+      <!-- Main image -->
       <div class="main-image-container mb-3 position-relative shadow rounded overflow-hidden">
         <img 
           v-if="mainImage" 
           :src="mainImage.url" 
-          :alt="mainImage.alt || 'Изображение растения'" 
+          :alt="mainImage.alt || 'Plant image'" 
           class="main-image w-100 h-100 object-fit-cover"
           @error="handleImageError"
         >
         <div v-else class="no-image d-flex align-items-center justify-content-center bg-light text-muted">
           <div class="text-center">
-            <i class="bi bi-image display-1"></i>
-            <p class="mt-2">Изображение отсутствует</p>
+            <i class="bi bi-image display-3"></i>
+            <p class="mt-2">No image available</p>
           </div>
         </div>
         
-        <!-- Навигационные стрелки -->
+        <!-- Navigation arrows -->
         <button 
           v-if="images.length > 1" 
           class="gallery-nav gallery-nav-prev" 
           @click="prevImage"
-          aria-label="Предыдущее изображение"
+          aria-label="Previous image"
         >
           <i class="bi bi-chevron-left"></i>
         </button>
@@ -30,12 +30,12 @@
           v-if="images.length > 1" 
           class="gallery-nav gallery-nav-next" 
           @click="nextImage"
-          aria-label="Следующее изображение"
+          aria-label="Next image"
         >
           <i class="bi bi-chevron-right"></i>
         </button>
         
-        <!-- Индикаторы (точки) -->
+        <!-- Indicators (dots) -->
         <div v-if="images.length > 1" class="gallery-indicators">
           <button 
             v-for="(image, index) in images" 
@@ -43,12 +43,12 @@
             class="indicator" 
             :class="{ active: index === currentIndex }"
             @click="setCurrentImage(index)"
-            :aria-label="`Изображение ${index + 1}`"
+            :aria-label="`Image ${index + 1}`"
           ></button>
         </div>
       </div>
       
-      <!-- Превью изображений -->
+      <!-- Thumbnails -->
       <div v-if="images.length > 1" class="thumbnails-container">
         <div class="row g-2">
           <div 
@@ -63,7 +63,7 @@
             >
               <img 
                 :src="image.thumbnail_url || image.url" 
-                :alt="`Превью ${index + 1}`" 
+                :alt="`Thumbnail ${index + 1}`" 
                 class="thumbnail w-100 h-100 object-fit-cover"
                 @error="handleThumbnailError($event, index)"
               >
@@ -72,7 +72,7 @@
         </div>
       </div>
       
-      <!-- Модальное окно для полноэкранного просмотра -->
+      <!-- Fullscreen image modal -->
       <div 
         class="modal fade" 
         id="imageModal" 
@@ -85,13 +85,13 @@
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title" id="imageModalLabel">
-                {{ currentImage && currentImage.title ? currentImage.title : 'Просмотр изображения' }}
+                {{ currentImage && currentImage.title ? currentImage.title : 'Image Preview' }}
               </h5>
               <button 
                 type="button" 
                 class="btn-close" 
                 data-bs-dismiss="modal" 
-                aria-label="Закрыть"
+                aria-label="Close"
               ></button>
             </div>
             <div class="modal-body p-0 position-relative">
@@ -99,15 +99,15 @@
                 v-if="currentImage" 
                 :src="currentImage.url" 
                 class="modal-image w-100" 
-                alt="Увеличенное изображение"
+                alt="Enlarged image"
               >
               
-              <!-- Навигационные стрелки в модальном окне -->
+              <!-- Navigation arrows in modal -->
               <button 
                 v-if="images.length > 1" 
                 class="gallery-nav gallery-nav-prev" 
                 @click.stop="prevImage"
-                aria-label="Предыдущее изображение"
+                aria-label="Previous image"
               >
                 <i class="bi bi-chevron-left"></i>
               </button>
@@ -115,7 +115,7 @@
                 v-if="images.length > 1" 
                 class="gallery-nav gallery-nav-next" 
                 @click.stop="nextImage"
-                aria-label="Следующее изображение"
+                aria-label="Next image"
               >
                 <i class="bi bi-chevron-right"></i>
               </button>
@@ -150,25 +150,25 @@
   
   const emit = defineEmits(['image-change']);
   
-  // Ссылка на модальное окно
+  // Modal reference
   const imageModal = ref(null);
   let modalInstance = null;
   
-  // Текущий индекс изображения
+  // Current image index
   const currentIndex = ref(props.initialIndex);
   
-  // Вычисляемое основное изображение
+  // Computed main image
   const mainImage = computed(() => {
     if (props.images.length === 0) return null;
     return props.images[currentIndex.value] || props.images[0];
   });
   
-  // Вычисляемое текущее изображение (для модального окна)
+  // Computed current image (for modal)
   const currentImage = computed(() => {
     return mainImage.value;
   });
   
-  // Устанавливает текущее изображение по индексу
+  // Set current image by index
   function setCurrentImage(index) {
     if (index >= 0 && index < props.images.length) {
       currentIndex.value = index;
@@ -176,33 +176,33 @@
     }
   }
   
-  // Переход к предыдущему изображению
+  // Go to previous image
   function prevImage() {
     const newIndex = currentIndex.value - 1;
     setCurrentImage(newIndex < 0 ? props.images.length - 1 : newIndex);
   }
   
-  // Переход к следующему изображению
+  // Go to next image
   function nextImage() {
     const newIndex = currentIndex.value + 1;
     setCurrentImage(newIndex >= props.images.length ? 0 : newIndex);
   }
   
-  // Обработка ошибки загрузки основного изображения
+  // Handle main image loading error
   function handleImageError(event) {
-    event.target.src = '/placeholder-plant.jpg'; // Заменяем на placeholder
+    event.target.src = '/placeholder-plant.jpg'; // Replace with placeholder
   }
   
-  // Обработка ошибки загрузки превью
+  // Handle thumbnail loading error
   function handleThumbnailError(event, index) {
-    event.target.src = '/placeholder-plant-thumbnail.jpg'; // Заменяем на placeholder для превью
+    event.target.src = '/placeholder-plant-thumbnail.jpg'; // Replace with placeholder for thumbnails
   }
   
-  // Обработка нажатия клавиш для навигации
+  // Handle keyboard navigation
   function handleKeyDown(event) {
     if (props.images.length <= 1) return;
     
-    // Проверяем, открыто ли модальное окно
+    // Check if modal is open
     const isModalOpen = document.body.classList.contains('modal-open');
     
     if (isModalOpen || document.activeElement === document.body) {
@@ -214,16 +214,16 @@
     }
   }
   
-  // Инициализация модального окна при монтировании
+  // Initialize modal on mount
   onMounted(() => {
-    // Добавляем обработчик клавиш
+    // Add keyboard listener
     window.addEventListener('keydown', handleKeyDown);
     
-    // Инициализация Bootstrap модального окна
+    // Initialize Bootstrap modal
     if (typeof bootstrap !== 'undefined' && imageModal.value) {
       modalInstance = new bootstrap.Modal(imageModal.value);
       
-      // Добавляем обработчик для отображения модального окна по клику на основное изображение
+      // Add click handler to main image to open modal
       const mainImageElement = document.querySelector('.main-image-container');
       if (mainImageElement) {
         mainImageElement.addEventListener('click', () => {
@@ -235,22 +235,22 @@
     }
   });
   
-  // Очистка при размонтировании
+  // Cleanup on unmount
   onUnmounted(() => {
     window.removeEventListener('keydown', handleKeyDown);
     
-    // Уничтожение Bootstrap модального окна
+    // Dispose Bootstrap modal
     if (modalInstance) {
       modalInstance.dispose();
     }
   });
   
-  // Отслеживание изменений в props.initialIndex
+  // Watch initialIndex changes
   watch(() => props.initialIndex, (newIndex) => {
     setCurrentImage(newIndex);
   });
   
-  // Отслеживание изменений в props.images
+  // Watch images changes
   watch(() => props.images, (newImages) => {
     if (newImages.length === 0) {
       currentIndex.value = 0;
@@ -384,7 +384,7 @@
     cursor: pointer;
   }
   
-  /* Адаптивность для мобильных устройств */
+  /* Mobile responsiveness */
   @media (max-width: 768px) {
     .main-image-container {
       height: 300px;
@@ -394,7 +394,7 @@
       width: 32px;
       height: 32px;
       font-size: 1.25rem;
-      opacity: 0.8; /* На мобильных кнопки всегда видны */
+      opacity: 0.8; /* Always visible on mobile */
     }
     
     .indicator {

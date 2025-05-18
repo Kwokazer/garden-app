@@ -1,19 +1,19 @@
 <!-- src/features/plants/views/PlantDetailsPage.vue -->
 <template>
     <div class="plant-details-page">
-      <!-- Хлебные крошки -->
+      <!-- Breadcrumbs -->
       <div class="bg-light py-2">
         <div class="container">
           <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
               <li class="breadcrumb-item">
-                <router-link to="/">Главная</router-link>
+                <router-link to="/">Home</router-link>
               </li>
               <li class="breadcrumb-item">
-                <router-link :to="{ name: 'PlantsList' }">Растения</router-link>
+                <router-link :to="{ name: 'PlantsList' }">Plants</router-link>
               </li>
               <li class="breadcrumb-item active" aria-current="page">
-                {{ plant ? plant.name : 'Загрузка...' }}
+                {{ plant ? plant.name : 'Loading...' }}
               </li>
             </ol>
           </nav>
@@ -21,64 +21,64 @@
       </div>
       
       <div class="container py-4">
-        <!-- Загрузка -->
+        <!-- Loading -->
         <div v-if="isLoading" class="text-center py-5">
           <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Загрузка...</span>
+            <span class="visually-hidden">Loading...</span>
           </div>
-          <p class="mt-3 text-muted">Загрузка информации о растении...</p>
+          <p class="mt-3 text-muted">Loading plant information...</p>
         </div>
         
-        <!-- Ошибка -->
+        <!-- Error -->
         <div v-else-if="error" class="alert alert-danger mt-4">
           <div class="d-flex align-items-center">
             <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
             <div>
-              <h5 class="alert-heading">Ошибка при загрузке</h5>
+              <h5 class="alert-heading">Error loading data</h5>
               <p class="mb-2">{{ error }}</p>
               <div class="mt-3">
                 <button class="btn btn-outline-danger me-2" @click="loadPlant">
-                  Попробовать снова
+                  Try again
                 </button>
                 <router-link :to="{ name: 'PlantsList' }" class="btn btn-outline-secondary">
-                  Вернуться к списку
+                  Return to list
                 </router-link>
               </div>
             </div>
           </div>
         </div>
         
-        <!-- Растение не найдено -->
+        <!-- Plant not found -->
         <div v-else-if="!plant" class="text-center py-5">
           <div class="empty-state">
             <i class="bi bi-question-circle display-1 text-muted mb-3"></i>
-            <h3>Растение не найдено</h3>
-            <p class="text-muted">Запрашиваемое растение не найдено или было удалено.</p>
+            <h3>Plant not found</h3>
+            <p class="text-muted">The requested plant was not found or has been deleted.</p>
             <router-link :to="{ name: 'PlantsList' }" class="btn btn-primary mt-3">
-              Вернуться к списку растений
+              Return to plants list
             </router-link>
           </div>
         </div>
         
-        <!-- Содержимое страницы -->
+        <!-- Page content -->
         <template v-else>
-          <!-- Основная информация о растении -->
+          <!-- Main plant information -->
           <div class="row gx-5">
-            <!-- Галерея изображений (левая колонка) -->
+            <!-- Image gallery (left column) -->
             <div class="col-lg-6 mb-4 mb-lg-0">
               <PlantGallery 
                 :images="plant.images || []" 
                 @image-change="onImageChange"
               />
               
-              <!-- Поделиться и избранное -->
+              <!-- Share and favorite -->
               <div class="d-flex justify-content-between mt-3">
                 <div class="share-buttons">
                   <button class="btn btn-outline-secondary btn-sm me-2">
-                    <i class="bi bi-share me-1"></i> Поделиться
+                    <i class="bi bi-share me-1"></i> Share
                   </button>
                   <button class="btn btn-outline-secondary btn-sm me-2">
-                    <i class="bi bi-printer me-1"></i> Распечатать
+                    <i class="bi bi-printer me-1"></i> Print
                   </button>
                 </div>
                 <div>
@@ -88,21 +88,21 @@
                     @click="toggleFavorite"
                   >
                     <i class="bi" :class="isFavorite ? 'bi-heart-fill' : 'bi-heart'"></i>
-                    {{ isFavorite ? 'В избранном' : 'В избранное' }}
+                    {{ isFavorite ? 'In favorites' : 'Add to favorites' }}
                   </button>
                 </div>
               </div>
             </div>
             
-            <!-- Информация о растении (правая колонка) -->
+            <!-- Plant information (right column) -->
             <div class="col-lg-6">
               <div class="plant-details">
-                <!-- Заголовок и основная информация -->
+                <!-- Title and main info -->
                 <div class="mb-4">
                   <h1 class="plant-title">{{ plant.name }}</h1>
                   <p class="text-muted latin-name">{{ plant.latin_name }}</p>
                   
-                  <!-- Категории и теги -->
+                  <!-- Categories and tags -->
                   <div class="d-flex flex-wrap align-items-center mt-3">
                     <span 
                       v-if="plant.category" 
@@ -123,70 +123,70 @@
                   </div>
                 </div>
                 
-                <!-- Краткое описание -->
+                <!-- Short description -->
                 <div class="card bg-light mb-4 border-0">
                   <div class="card-body">
                     <p v-if="plant.description" class="m-0">{{ plant.description }}</p>
-                    <p v-else class="text-muted m-0">Описание отсутствует</p>
+                    <p v-else class="text-muted m-0">No description available</p>
                   </div>
                 </div>
                 
-                <!-- Основные характеристики -->
+                <!-- Main characteristics -->
                 <div class="plant-characteristics mb-4">
                   <h5 class="section-title">
                     <i class="bi bi-info-circle me-2"></i>
-                    Основные характеристики
+                    Main Characteristics
                   </h5>
                   
                   <div class="row">
-                    <!-- Тип растения -->
+                    <!-- Plant type -->
                     <div class="col-md-6 mb-3">
                       <div class="characteristic-item">
-                        <span class="characteristic-label">Тип растения:</span>
+                        <span class="characteristic-label">Plant type:</span>
                         <span class="characteristic-value">{{ getPlantTypeLabel(plant.plant_type) }}</span>
                       </div>
                     </div>
                     
-                    <!-- Жизненный цикл -->
+                    <!-- Life cycle -->
                     <div class="col-md-6 mb-3">
                       <div class="characteristic-item">
-                        <span class="characteristic-label">Жизненный цикл:</span>
+                        <span class="characteristic-label">Life cycle:</span>
                         <span class="characteristic-value">{{ getLifeCycleLabel(plant.life_cycle) }}</span>
                       </div>
                     </div>
                     
-                    <!-- Высота растения -->
+                    <!-- Plant height -->
                     <div class="col-md-6 mb-3">
                       <div class="characteristic-item">
-                        <span class="characteristic-label">Высота:</span>
+                        <span class="characteristic-label">Height:</span>
                         <span class="characteristic-value">
-                          {{ plant.height_min && plant.height_max ? `${plant.height_min}-${plant.height_max} см` : 'Не указано' }}
+                          {{ plant.height_min && plant.height_max ? `${plant.height_min}-${plant.height_max} cm` : 'Not specified' }}
                         </span>
                       </div>
                     </div>
                     
-                    <!-- Скорость роста -->
+                    <!-- Growth rate -->
                     <div class="col-md-6 mb-3">
                       <div class="characteristic-item">
-                        <span class="characteristic-label">Скорость роста:</span>
+                        <span class="characteristic-label">Growth rate:</span>
                         <span class="characteristic-value">{{ getGrowthRateLabel(plant.growth_rate) }}</span>
                       </div>
                     </div>
                     
-                    <!-- Период цветения -->
+                    <!-- Flowering period -->
                     <div class="col-md-6 mb-3">
                       <div class="characteristic-item">
-                        <span class="characteristic-label">Период цветения:</span>
+                        <span class="characteristic-label">Flowering period:</span>
                         <span class="characteristic-value">
-                          {{ plant.flowering_period ? plant.flowering_period : 'Не указано' }}
+                          {{ plant.flowering_period ? plant.flowering_period : 'Not specified' }}
                         </span>
                       </div>
                     </div>
                     
-                    <!-- Токсичность -->
+                    <!-- Toxicity -->
                     <div class="col-md-6 mb-3">
                       <div class="characteristic-item">
-                        <span class="characteristic-label">Токсичность:</span>
+                        <span class="characteristic-label">Toxicity:</span>
                         <span 
                           class="characteristic-value" 
                           :class="{ 'text-danger': plant.is_toxic, 'text-success': !plant.is_toxic }"
@@ -194,18 +194,18 @@
                           <i 
                             class="bi" 
                             :class="plant.is_toxic ? 'bi-exclamation-circle' : 'bi-check-circle'"
-                            :title="plant.is_toxic ? 'Токсично' : 'Не токсично'"
+                            :title="plant.is_toxic ? 'Toxic' : 'Non-toxic'"
                           ></i>
-                          {{ plant.is_toxic ? 'Токсично' : 'Не токсично' }}
+                          {{ plant.is_toxic ? 'Toxic' : 'Non-toxic' }}
                         </span>
                       </div>
                     </div>
                   </div>
                   
-                  <!-- Климатические зоны -->
+                  <!-- Climate zones -->
                   <div class="mb-3">
                     <div class="characteristic-item">
-                      <span class="characteristic-label">Климатические зоны:</span>
+                      <span class="characteristic-label">Climate zones:</span>
                       <div class="mt-2">
                         <div v-if="plant.climate_zones && plant.climate_zones.length > 0" class="d-flex flex-wrap">
                           <span 
@@ -216,25 +216,25 @@
                             {{ zone.name }}
                           </span>
                         </div>
-                        <span v-else class="text-muted">Не указаны</span>
+                        <span v-else class="text-muted">Not specified</span>
                       </div>
                     </div>
                   </div>
                   
-                  <!-- Примечания (если есть) -->
+                  <!-- Notes (if any) -->
                   <div v-if="plant.notes" class="mb-3">
                     <div class="characteristic-item">
-                      <span class="characteristic-label">Примечания:</span>
+                      <span class="characteristic-label">Notes:</span>
                       <p class="mt-2 mb-0">{{ plant.notes }}</p>
                     </div>
                   </div>
                 </div>
                 
-                <!-- Похожие растения -->
+                <!-- Similar plants -->
                 <div v-if="plant.similar_plants && plant.similar_plants.length > 0" class="similar-plants mb-4">
                   <h5 class="section-title">
                     <i class="bi bi-shuffle me-2"></i>
-                    Похожие растения
+                    Similar Plants
                   </h5>
                   
                   <div class="row g-3">
@@ -272,7 +272,7 @@
             </div>
           </div>
           
-          <!-- Вкладки с информацией -->
+          <!-- Information tabs -->
           <div class="plant-tabs mt-5">
             <ul class="nav nav-tabs" id="plantTabs" role="tablist">
               <li class="nav-item" role="presentation">
@@ -287,7 +287,7 @@
                   aria-selected="true"
                 >
                   <i class="bi bi-water me-2"></i>
-                  Уход
+                  Care
                 </button>
               </li>
               <li class="nav-item" role="presentation">
@@ -302,7 +302,7 @@
                   aria-selected="false"
                 >
                   <i class="bi bi-flower1 me-2"></i>
-                  Выращивание
+                  Growing
                 </button>
               </li>
               <li class="nav-item" role="presentation">
@@ -317,13 +317,13 @@
                   aria-selected="false"
                 >
                   <i class="bi bi-question-circle me-2"></i>
-                  Вопросы и ответы
+                  Q&A
                 </button>
               </li>
             </ul>
             
             <div class="tab-content" id="plantTabsContent">
-              <!-- Вкладка ухода -->
+              <!-- Care tab -->
               <div 
                 class="tab-pane fade show active" 
                 id="care-tab-pane" 
@@ -336,7 +336,7 @@
                 </div>
               </div>
               
-              <!-- Вкладка выращивания -->
+              <!-- Growing tab -->
               <div 
                 class="tab-pane fade" 
                 id="growing-tab-pane" 
@@ -349,12 +349,12 @@
                     <div class="card-header bg-light py-3">
                       <h5 class="mb-0">
                         <i class="bi bi-flower1 me-2 text-primary"></i>
-                        Выращивание и размножение
+                        Growing and Propagation
                       </h5>
                     </div>
                     <div class="card-body p-4">
                       <div v-if="plant.propagation_methods && plant.propagation_methods.length > 0">
-                        <h6 class="fw-bold mb-3">Методы размножения</h6>
+                        <h6 class="fw-bold mb-3">Propagation Methods</h6>
                         <div class="row">
                           <div 
                             v-for="(method, index) in plant.propagation_methods" 
@@ -365,7 +365,7 @@
                               <h6 class="method-title mb-2">{{ method.name }}</h6>
                               <p class="method-description">{{ method.description }}</p>
                               <div v-if="method.difficulty" class="method-difficulty">
-                                <small class="text-muted me-2">Сложность:</small>
+                                <small class="text-muted me-2">Difficulty:</small>
                                 <div class="difficulty-stars">
                                   <i 
                                     v-for="i in 5" 
@@ -381,12 +381,12 @@
                       </div>
                       <div v-else class="text-center py-4">
                         <i class="bi bi-exclamation-circle text-muted display-4"></i>
-                        <p class="mt-3">Информация о методах размножения отсутствует</p>
+                        <p class="mt-3">No information about propagation methods available</p>
                       </div>
                       
-                      <!-- Инструкции по посадке -->
+                      <!-- Planting instructions -->
                       <div class="planting-instructions mt-4" v-if="plant.planting_instructions">
-                        <h6 class="fw-bold mb-3">Инструкции по посадке</h6>
+                        <h6 class="fw-bold mb-3">Planting Instructions</h6>
                         <div class="planting-content">{{ plant.planting_instructions }}</div>
                       </div>
                     </div>
@@ -394,7 +394,7 @@
                 </div>
               </div>
               
-              <!-- Вкладка вопросов и ответов -->
+              <!-- Q&A tab -->
               <div 
                 class="tab-pane fade" 
                 id="qa-tab-pane" 
@@ -407,30 +407,30 @@
                     <div class="card-header bg-light py-3">
                       <h5 class="mb-0">
                         <i class="bi bi-question-circle me-2 text-primary"></i>
-                        Вопросы и ответы
+                        Questions and Answers
                       </h5>
                     </div>
                     <div class="card-body p-4">
-                      <!-- Блок со статистикой и кнопкой "Задать вопрос" -->
+                      <!-- Stats and Ask Question button -->
                       <div class="d-flex justify-content-between align-items-center mb-4">
                         <div class="qa-stats">
                           <span class="text-muted">
-                            <strong>0</strong> вопросов | <strong>0</strong> ответов
+                            <strong>0</strong> questions | <strong>0</strong> answers
                           </span>
                         </div>
                         <button class="btn btn-primary">
                           <i class="bi bi-plus-circle me-2"></i>
-                          Задать вопрос
+                          Ask a Question
                         </button>
                       </div>
                       
-                      <!-- Заглушка для вопросов и ответов -->
+                      <!-- Q&A placeholder -->
                       <div class="text-center py-5">
                         <i class="bi bi-chat-dots display-4 text-muted mb-3"></i>
-                        <h5>Пока нет вопросов</h5>
-                        <p class="text-muted mb-4">Будьте первым, кто задаст вопрос о {{ plant.name }}</p>
+                        <h5>No questions yet</h5>
+                        <p class="text-muted mb-4">Be the first to ask a question about {{ plant.name }}</p>
                         <button class="btn btn-outline-primary">
-                          Задать первый вопрос
+                          Ask first question
                         </button>
                       </div>
                     </div>
@@ -457,16 +457,16 @@
   const plantsStore = usePlantsStore();
   const authStore = useAuthStore();
   
-  // Состояние компонента
+  // Component state
   const currentImageIndex = ref(0);
   const isFavorite = ref(false);
   
-  // Вычисляемые свойства
+  // Computed properties
   const plant = computed(() => plantsStore.currentPlant);
   const isLoading = computed(() => plantsStore.isLoading);
   const error = computed(() => plantsStore.error);
   
-  // Инициализация при создании компонента
+  // Initialize on component mount
   onMounted(async () => {
     const plantId = route.params.id;
     if (!plantId) {
@@ -474,42 +474,42 @@
       return;
     }
     
-    // Загружаем растение
+    // Load plant
     await loadPlant();
     
-    // Проверяем, находится ли растение в избранном у пользователя
+    // Check if plant is in favorites (if user is logged in)
     if (authStore.isLoggedIn) {
       checkIfFavorite();
     }
   });
   
-  // Загрузка данных о растении
+  // Load plant data
   async function loadPlant() {
     const plantId = route.params.id;
     await plantsStore.loadPlantById(plantId);
     
-    // Если произошла ошибка, показываем сообщение
+    // If error occurred, log it
     if (plantsStore.error) {
-      console.error('Ошибка при загрузке растения:', plantsStore.error);
+      console.error('Error loading plant:', plantsStore.error);
     }
   }
   
-  // Проверка, находится ли растение в избранном
+  // Check if plant is in favorites
   function checkIfFavorite() {
-    // Здесь должна быть логика проверки избранного через API
-    // Например:
+    // Here should be logic to check favorites through API
+    // For example:
     // const favorites = await userService.getFavorites();
     // isFavorite.value = favorites.some(fav => fav.id === plant.value.id);
     
-    // Заглушка для демонстрации
+    // Demo placeholder using localStorage
     const localFavorites = JSON.parse(localStorage.getItem('favoritePlants') || '[]');
     isFavorite.value = localFavorites.includes(plant.value?.id);
   }
   
-  // Добавление/удаление из избранного
+  // Add/remove from favorites
   function toggleFavorite() {
     if (!authStore.isLoggedIn) {
-      // Если пользователь не авторизован, перенаправляем на страницу входа
+      // If user is not logged in, redirect to login page
       router.push({ 
         name: 'Login', 
         query: { 
@@ -519,15 +519,15 @@
       return;
     }
     
-    // Здесь должна быть логика добавления/удаления из избранного через API
-    // Например:
+    // Here should be logic to add/remove from favorites through API
+    // For example:
     // if (isFavorite.value) {
     //   await userService.removeFromFavorites(plant.value.id);
     // } else {
     //   await userService.addToFavorites(plant.value.id);
     // }
     
-    // Заглушка для демонстрации
+    // Demo placeholder using localStorage
     const localFavorites = JSON.parse(localStorage.getItem('favoritePlants') || '[]');
     if (isFavorite.value) {
       const newFavorites = localFavorites.filter(id => id !== plant.value.id);
@@ -540,61 +540,61 @@
     isFavorite.value = !isFavorite.value;
   }
   
-  // Обработка смены изображения в галерее
+  // Handle image change in gallery
   function onImageChange(index) {
     currentImageIndex.value = index;
   }
   
-  // Функции для получения текстовых меток
+  // Get label functions
   function getPlantTypeLabel(type) {
-    if (!type) return 'Не указано';
+    if (!type) return 'Not specified';
     
     const typeLabels = {
-      'tree': 'Дерево',
-      'shrub': 'Кустарник',
-      'herb': 'Травянистое',
-      'succulent': 'Суккулент',
-      'cactus': 'Кактус',
-      'vine': 'Лиана',
-      'fern': 'Папоротник',
-      'aquatic': 'Водное',
-      'bulb': 'Луковичное'
+      'tree': 'Tree',
+      'shrub': 'Shrub',
+      'herb': 'Herbaceous',
+      'succulent': 'Succulent',
+      'cactus': 'Cactus',
+      'vine': 'Vine',
+      'fern': 'Fern',
+      'aquatic': 'Aquatic',
+      'bulb': 'Bulbous'
     };
     
     return typeLabels[type] || type;
   }
   
   function getLifeCycleLabel(cycle) {
-    if (!cycle) return 'Не указано';
+    if (!cycle) return 'Not specified';
     
     const cycleLabels = {
-      'annual': 'Однолетнее',
-      'biennial': 'Двулетнее',
-      'perennial': 'Многолетнее'
+      'annual': 'Annual',
+      'biennial': 'Biennial',
+      'perennial': 'Perennial'
     };
     
     return cycleLabels[cycle] || cycle;
   }
   
   function getGrowthRateLabel(rate) {
-    if (!rate) return 'Средний';
+    if (!rate) return 'Medium';
     
     const rateLabels = {
-      'fast': 'Быстрый',
-      'moderate': 'Средний',
-      'slow': 'Медленный'
+      'fast': 'Fast',
+      'moderate': 'Medium',
+      'slow': 'Slow'
     };
     
     return rateLabels[rate] || rate;
   }
   
-  // Обработка ошибок загрузки изображений
+  // Handle image load errors
   function handleImageError(event) {
-    event.target.src = '/placeholder-plant.jpg'; // Заменяем на placeholder
+    event.target.src = '/placeholder-plant.jpg'; // Replace with placeholder
     event.target.classList.add('img-error');
   }
   
-  // Отслеживаем изменение маршрута для обновления данных при переходе между растениями
+  // Watch route changes to update data when navigating between plants
   watch(() => route.params.id, async (newId) => {
     if (newId && newId !== String(plant.value?.id)) {
       await loadPlant();
@@ -603,7 +603,7 @@
         checkIfFavorite();
       }
       
-      // Прокручиваем страницу вверх
+      // Scroll page to top
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   });
@@ -762,7 +762,7 @@
     display: inline-block;
   }
   
-  /* Анимации */
+  /* Animations */
   .tab-pane {
     animation: fadeIn 0.5s ease;
   }
@@ -778,7 +778,7 @@
     }
   }
   
-  /* Адаптивность для мобильных устройств */
+  /* Responsive styles for mobile devices */
   @media (max-width: 768px) {
     .plant-title {
       font-size: 1.75rem;

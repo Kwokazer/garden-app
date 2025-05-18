@@ -1,8 +1,8 @@
-"""create plants tables
+"""simple_plant_updates
 
-Revision ID: d30386c393d5
+Revision ID: 1020b655fa55
 Revises: 
-Create Date: 2025-05-18 14:40:16.408239
+Create Date: 2025-05-18 14:18:21.373969
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'd30386c393d5'
+revision: str = '1020b655fa55'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -74,11 +74,11 @@ def upgrade():
         # Характеристики роста
         sa.Column('height_min', sa.Float(), nullable=True),
         sa.Column('height_max', sa.Float(), nullable=True),
-        sa.Column('growth_rate', sa.Enum('fast', 'moderate', 'slow', name='growthrate'), nullable=True),
+        sa.Column('growth_rate', sa.Enum('FAST', 'MODERATE', 'SLOW', name='growthrate'), nullable=True),
         
         # Тип растения и жизненный цикл
-        sa.Column('plant_type', sa.Enum('tree', 'shrub', 'flower', 'vegetable', 'fruit', 'herb', 'succulent', 'vine', 'aquatic', 'fern', name='planttype'), nullable=True),
-        sa.Column('life_cycle', sa.Enum('annual', 'biennial', 'perennial', name='lifecycle'), nullable=True),
+        sa.Column('plant_type', sa.Enum('TREE', 'SHRUB', 'FLOWER', 'VEGETABLE', 'FRUIT', 'HERB', 'SUCCULENT', 'VINE', 'AQUATIC', 'FERN', name='planttype'), nullable=True),
+        sa.Column('life_cycle', sa.Enum('ANNUAL', 'BIENNIAL', 'PERENNIAL', name='lifecycle'), nullable=True),
         
         # Популярность
         sa.Column('popularity_score', sa.Integer(), nullable=False, default=0),
@@ -92,16 +92,16 @@ def upgrade():
         sa.Column('hardiness_zone_max', sa.Integer(), nullable=True),
         
         # Условия выращивания
-        sa.Column('watering_frequency', sa.Enum('daily', 'twice_a_week', 'weekly', 'bi_weekly', 'monthly', 'rarely', name='wateringfrequency'), nullable=True),
-        sa.Column('light_level', sa.Enum('full_sun', 'partial_sun', 'shade', 'low_light', name='lightlevel'), nullable=True),
+        sa.Column('watering_frequency', sa.Enum('DAILY', 'TWICE_A_WEEK', 'WEEKLY', 'BI_WEEKLY', 'MONTHLY', 'RARELY', name='wateringfrequency'), nullable=True),
+        sa.Column('light_level', sa.Enum('FULL_SUN', 'PARTIAL_SUN', 'SHADE', 'LOW_LIGHT', name='lightlevel'), nullable=True),
         sa.Column('temperature_min', sa.Float(), nullable=True),
         sa.Column('temperature_max', sa.Float(), nullable=True),
-        sa.Column('humidity_level', sa.Enum('high', 'medium', 'low', name='humiditylevel'), nullable=True),
+        sa.Column('humidity_level', sa.Enum('HIGH', 'MEDIUM', 'LOW', name='humiditylevel'), nullable=True),
         
         # Уход
-        sa.Column('care_difficulty', sa.Enum('very_easy', 'easy', 'moderate', 'difficult', 'expert', name='caredifficulty'), nullable=True),
-        sa.Column('fertilizing_frequency', sa.Enum('weekly', 'bi_weekly', 'monthly', 'quarterly', 'annually', 'none', name='fertilizingfrequency'), nullable=True),
-        sa.Column('repotting_frequency', sa.Enum('annually', 'bi_annually', 'three_years', 'rarely', name='repottingfrequency'), nullable=True),
+        sa.Column('care_difficulty', sa.Enum('VERY_EASY', 'EASY', 'MODERATE', 'DIFFICULT', 'EXPERT', name='caredifficulty'), nullable=True),
+        sa.Column('fertilizing_frequency', sa.Enum('WEEKLY', 'BI_WEEKLY', 'MONTHLY', 'QUARTERLY', 'ANNUALLY', 'NONE', name='fertilizingfrequency'), nullable=True),
+        sa.Column('repotting_frequency', sa.Enum('ANNUALLY', 'BI_ANNUALLY', 'THREE_YEARS', 'RARELY', name='repottingfrequency'), nullable=True),
         
         # Безопасность
         sa.Column('is_toxic', sa.Boolean(), nullable=False, default=False),

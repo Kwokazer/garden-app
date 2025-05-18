@@ -12,82 +12,82 @@ from app.domain.models.plant_image import PlantImage
 
 # Перечисление типов растений
 class PlantType(str, enum.Enum):
-    TREE = "tree"              # Дерево
-    SHRUB = "shrub"            # Кустарник
-    FLOWER = "flower"          # Цветок
-    VEGETABLE = "vegetable"    # Овощ
-    FRUIT = "fruit"            # Фрукт
-    HERB = "herb"              # Трава/зелень
-    SUCCULENT = "succulent"    # Суккулент
-    VINE = "vine"              # Лиана/вьющееся
-    AQUATIC = "aquatic"        # Водное растение
-    FERN = "fern"              # Папоротник
+    TREE = "TREE"              # Дерево
+    SHRUB = "SHRUB"            # Кустарник
+    FLOWER = "FLOWER"          # Цветок
+    VEGETABLE = "VEGETABLE"    # Овощ
+    FRUIT = "FRUIT"            # Фрукт
+    HERB = "HERB"              # Трава/зелень
+    SUCCULENT = "SUCCULENT"    # Суккулент
+    VINE = "VINE"              # Лиана/вьющееся
+    AQUATIC = "AQUATIC"        # Водное растение
+    FERN = "FERN"              # Папоротник
 
 
 # Перечисление жизненных циклов
 class LifeCycle(str, enum.Enum):
-    ANNUAL = "annual"          # Однолетнее
-    BIENNIAL = "biennial"      # Двулетнее
-    PERENNIAL = "perennial"    # Многолетнее
+    ANNUAL = "ANNUAL"          # Однолетнее
+    BIENNIAL = "BIENNIAL"      # Двулетнее
+    PERENNIAL = "PERENNIAL"    # Многолетнее
 
 
 # Перечисление частоты полива
 class WateringFrequency(str, enum.Enum):
-    DAILY = "daily"
-    TWICE_A_WEEK = "twice_a_week"
-    WEEKLY = "weekly"
-    BI_WEEKLY = "bi_weekly"
-    MONTHLY = "monthly"
-    RARELY = "rarely"
+    DAILY = "DAILY"
+    TWICE_A_WEEK = "TWICE_A_WEEK"
+    WEEKLY = "WEEKLY"
+    BI_WEEKLY = "BI_WEEKLY"
+    MONTHLY = "MONTHLY"
+    RARELY = "RARELY"
 
 
 # Перечисление уровней освещения
 class LightLevel(str, enum.Enum):
-    FULL_SUN = "full_sun"
-    PARTIAL_SUN = "partial_sun"
-    SHADE = "shade"
-    LOW_LIGHT = "low_light"
+    FULL_SUN = "FULL_SUN"
+    PARTIAL_SUN = "PARTIAL_SUN"
+    SHADE = "SHADE"
+    LOW_LIGHT = "LOW_LIGHT"
 
 
 # Перечисление уровней влажности
 class HumidityLevel(str, enum.Enum):
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
 
 
 # Перечисление сложности ухода
 class CareDifficulty(str, enum.Enum):
-    VERY_EASY = "very_easy"
-    EASY = "easy"
-    MODERATE = "moderate"
-    DIFFICULT = "difficult"
-    EXPERT = "expert"
+    VERY_EASY = "VERY_EASY"
+    EASY = "EASY"
+    MODERATE = "MODERATE"
+    DIFFICULT = "DIFFICULT"
+    EXPERT = "EXPERT"
 
 
 # Перечисление частоты подкормки
 class FertilizingFrequency(str, enum.Enum):
-    WEEKLY = "weekly"
-    BI_WEEKLY = "bi_weekly"
-    MONTHLY = "monthly"
-    QUARTERLY = "quarterly"
-    ANNUALLY = "annually"
+    WEEKLY = "WEEKLY"
+    BI_WEEKLY = "BI_WEEKLY"
+    MONTHLY = "MONTHLY"
+    QUARTERLY = "QUARTERLY"
+    ANNUALLY = "ANNUALLY"
     NONE = "none"
 
 
 # Перечисление частоты пересадки
 class RepottingFrequency(str, enum.Enum):
-    ANNUALLY = "annually"
-    BI_ANNUALLY = "bi_annually"
-    THREE_YEARS = "three_years"
-    RARELY = "rarely"
+    ANNUALLY = "ANNUALLY"
+    BI_ANNUALLY = "BI_ANNUALLY"
+    THREE_YEARS = "THREE_YEARS"
+    RARELY = "RARELY"
 
 
 # Перечисление скорости роста
 class GrowthRate(str, enum.Enum):
-    FAST = "fast"
-    MODERATE = "moderate"
-    SLOW = "slow"
+    FAST = "FAST"
+    MODERATE = "MODERATE"
+    SLOW = "SLOW"
 
 
 class Plant(BaseModel, TimestampedModel):

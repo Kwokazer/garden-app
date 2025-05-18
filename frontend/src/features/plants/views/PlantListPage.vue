@@ -1,12 +1,12 @@
 <!-- src/features/plants/views/PlantsListPage.vue -->
 <template>
     <div class="plants-list-page">
-      <!-- Заголовок страницы -->
+      <!-- Page header -->
       <div class="container py-4">
         <div class="row align-items-center mb-4">
           <div class="col-md-8">
-            <h1 class="mb-1">База знаний растений</h1>
-            <p class="text-muted mb-0">Изучите нашу коллекцию растений и получите полезную информацию о выращивании</p>
+            <h1 class="mb-1">Plants Knowledge Base</h1>
+            <p class="text-muted mb-0">Explore our plant collection and get useful growing information</p>
           </div>
           <div class="col-md-4 text-md-end mt-3 mt-md-0">
             <div class="d-flex justify-content-md-end">
@@ -14,7 +14,7 @@
                 <input 
                   type="text" 
                   class="form-control" 
-                  placeholder="Быстрый поиск..." 
+                  placeholder="Quick search..." 
                   v-model="quickSearch"
                   @input="onQuickSearchDebounced"
                   @keyup.enter="applyQuickSearch"
@@ -32,7 +32,7 @@
           </div>
         </div>
         
-        <!-- Фильтры -->
+        <!-- Filters -->
         <PlantFilters 
           :isLoading="isLoading" 
           :initialFilters="plantsStore.activeFilters" 
@@ -40,51 +40,51 @@
         />
       </div>
       
-      <!-- Результаты -->
+      <!-- Results -->
       <div class="container pb-5">
-        <!-- Индикатор загрузки -->
+        <!-- Loading indicator -->
         <div v-if="isLoading" class="text-center py-5">
           <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Загрузка...</span>
+            <span class="visually-hidden">Loading...</span>
           </div>
-          <p class="mt-3 text-muted">Загрузка растений...</p>
+          <p class="mt-3 text-muted">Loading plants...</p>
         </div>
         
-        <!-- Сообщение об ошибке -->
+        <!-- Error message -->
         <div v-else-if="error" class="alert alert-danger mt-4">
           <i class="bi bi-exclamation-triangle-fill me-2"></i>
           {{ error }}
           <button 
             class="btn btn-outline-danger btn-sm ms-3" 
-            @click="loadPlants(1, plantsStore.pagination.itemsPerPage, true)"
+            @click="loadPlants(1, plantsStore.pagination.per_page, true)"
           >
-            Попробовать снова
+            Try again
           </button>
         </div>
         
-        <!-- Пустой результат -->
+        <!-- Empty result -->
         <div v-else-if="plants.length === 0" class="text-center py-5">
           <div class="empty-state">
             <i class="bi bi-flower1 display-1 text-muted mb-3"></i>
-            <h4>Растения не найдены</h4>
-            <p class="text-muted">Попробуйте изменить параметры поиска или фильтрации.</p>
-            <button class="btn btn-primary mt-3" @click="clearFilters">Сбросить все фильтры</button>
+            <h4>No plants found</h4>
+            <p class="text-muted">Try changing your search or filter parameters.</p>
+            <button class="btn btn-primary mt-3" @click="clearFilters">Reset all filters</button>
           </div>
         </div>
         
-        <!-- Список растений -->
+        <!-- Plants list -->
         <template v-else>
-          <!-- Информация о результатах -->
+          <!-- Results information -->
           <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
               <p class="mb-0">
-                <span class="fw-medium">{{ plantsStore.pagination.totalItems }}</span>
-                {{ getResultText(plantsStore.pagination.totalItems) }}
+                <span class="fw-medium">{{ plantsStore.pagination.total_items }}</span>
+                {{ getResultText(plantsStore.pagination.total_items) }}
               </p>
             </div>
             
-            <!-- Выбор отображения -->
-            <div class="btn-group" role="group" aria-label="Переключение отображения">
+            <!-- View type toggle -->
+            <div class="btn-group" role="group" aria-label="View toggle">
               <button 
                 type="button" 
                 class="btn" 
@@ -104,14 +104,14 @@
             </div>
           </div>
           
-          <!-- Сетка растений -->
+          <!-- Grid view -->
           <div v-if="viewMode === 'grid'" class="row g-4">
             <div v-for="plant in plants" :key="plant.id" class="col-md-6 col-lg-4">
               <PlantCard :plant="plant" />
             </div>
           </div>
           
-          <!-- Список растений -->
+          <!-- List view -->
           <div v-else-if="viewMode === 'list'" class="plants-list">
             <div v-for="plant in plants" :key="plant.id" class="card mb-3 border-0 shadow-sm">
               <div class="row g-0">
@@ -139,7 +139,7 @@
                         <h5 class="card-title fw-bold text-primary mb-1">{{ plant.name }}</h5>
                         <p class="text-muted small mb-2">{{ plant.latin_name }}</p>
                       </div>
-                      <!-- Бейджи для характеристик -->
+                      <!-- Characteristic badges -->
                       <div>
                         <span class="badge bg-light text-dark me-1">
                           <i class="bi bi-droplet me-1"></i>
@@ -154,16 +154,16 @@
                     
                     <p class="card-text mb-3">{{ truncateDescription(plant.description, 200) }}</p>
                     
-                    <!-- Климатические зоны -->
+                    <!-- Climate zones -->
                     <div v-if="plant.climate_zones && plant.climate_zones.length > 0" class="mb-3 small">
-                      <span class="text-muted me-2">Климатические зоны:</span>
-                      <span v-for="(zone, index) in plant.climate_zones" :key="zone.id" class="badge bg-info text-white me-1">
+                      <span class="text-muted me-2">Climate zones:</span>
+                      <span v-for="zone in plant.climate_zones" :key="zone.id" class="badge bg-info text-white me-1">
                         {{ zone.name }}
                       </span>
                     </div>
                     
                     <router-link :to="{ name: 'PlantDetails', params: { id: plant.id } }" class="btn btn-outline-primary mt-auto">
-                      Подробнее
+                      Details
                     </router-link>
                   </div>
                 </div>
@@ -171,13 +171,13 @@
             </div>
           </div>
           
-          <!-- Пагинация -->
+          <!-- Pagination -->
           <div class="mt-5">
             <PlantPagination 
-              :currentPage="plantsStore.pagination.currentPage" 
-              :totalPages="plantsStore.pagination.totalPages"
-              :totalItems="plantsStore.pagination.totalItems"
-              :perPage="plantsStore.pagination.itemsPerPage"
+              :currentPage="plantsStore.pagination.page" 
+              :totalPages="plantsStore.pagination.total_pages"
+              :totalItems="plantsStore.pagination.total_items"
+              :perPage="plantsStore.pagination.per_page"
               :isLoading="isLoading"
               @page-change="onPageChange"
             />
@@ -191,7 +191,7 @@
   import { ref, computed, onMounted, watch } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { usePlantsStore } from '../store/plantsStore';
-  import PlantFilters from '../components/PlantFilters.vue';
+  import PlantFilters from '../components/PlantFilter.vue';
   import PlantCard from '../components/PlantCard.vue';
   import PlantPagination from '../components/PlantPagination.vue';
   
@@ -199,19 +199,19 @@
   const router = useRouter();
   const plantsStore = usePlantsStore();
   
-  // Состояние компонента
-  const viewMode = ref(localStorage.getItem('plantsViewMode') || 'grid'); // grid или list
+  // Component state
+  const viewMode = ref(localStorage.getItem('plantsViewMode') || 'grid'); // grid or list
   const quickSearch = ref('');
   let quickSearchTimeout = null;
   
-  // Вычисляемые свойства
+  // Computed properties
   const plants = computed(() => plantsStore.plants);
   const isLoading = computed(() => plantsStore.isLoading);
   const error = computed(() => plantsStore.error);
   
-  // Инициализация при создании компонента
+  // Initialize on component mount
   onMounted(async () => {
-    // Загружаем категории и климатические зоны, если их еще нет
+    // Load categories and climate zones if not already loaded
     if (!plantsStore.categories.length) {
       await plantsStore.loadCategories();
     }
@@ -220,61 +220,61 @@
       await plantsStore.loadClimateZones();
     }
     
-    // Применяем параметры из URL (если есть)
+    // Apply URL parameters (if any)
     const page = parseInt(route.query.page) || 1;
     
-    // Устанавливаем фильтры из URL
+    // Set filters from URL
     if (route.query.search) {
       quickSearch.value = route.query.search;
       plantsStore.activeFilters.searchQuery = route.query.search;
     }
     
     if (route.query.category) {
-      plantsStore.activeFilters.category = route.query.category;
+      plantsStore.activeFilters.category_id = parseInt(route.query.category);
     }
     
     if (route.query.climateZone) {
-      plantsStore.activeFilters.climateZone = route.query.climateZone;
+      plantsStore.activeFilters.climate_zone_id = parseInt(route.query.climateZone);
     }
     
     if (route.query.sortBy) {
-      plantsStore.activeFilters.sortBy = route.query.sortBy;
+      plantsStore.activeFilters.sort_by = route.query.sortBy;
     }
     
     if (route.query.sortDirection) {
-      plantsStore.activeFilters.sortDirection = route.query.sortDirection;
+      plantsStore.activeFilters.sort_direction = route.query.sortDirection;
     }
     
-    // Загружаем растения
-    await loadPlants(page, plantsStore.pagination.itemsPerPage);
+    // Load plants
+    await loadPlants(page, plantsStore.pagination.per_page);
   });
   
-  // Устанавливаем режим отображения
+  // Set view mode
   function setViewMode(mode) {
     viewMode.value = mode;
-    localStorage.setItem('plantsViewMode', mode); // Сохраняем в localStorage
+    localStorage.setItem('plantsViewMode', mode); // Save to localStorage
   }
   
-  // Загружаем растения
-  async function loadPlants(page = 1, limit = 10, resetFilters = false) {
+  // Load plants
+  async function loadPlants(page = 1, limit = 20, resetFilters = false) {
     await plantsStore.loadPlants(page, limit, resetFilters);
     
-    // Обновляем URL с параметрами
+    // Update URL with parameters
     updateUrlParams({
       page: page > 1 ? page : undefined,
       search: plantsStore.activeFilters.searchQuery || undefined,
-      category: plantsStore.activeFilters.category || undefined,
-      climateZone: plantsStore.activeFilters.climateZone || undefined,
-      sortBy: plantsStore.activeFilters.sortBy !== 'name' ? plantsStore.activeFilters.sortBy : undefined,
-      sortDirection: plantsStore.activeFilters.sortDirection !== 'asc' ? plantsStore.activeFilters.sortDirection : undefined
+      category: plantsStore.activeFilters.category_id || undefined,
+      climateZone: plantsStore.activeFilters.climate_zone_id || undefined,
+      sortBy: plantsStore.activeFilters.sort_by !== 'name' ? plantsStore.activeFilters.sort_by : undefined,
+      sortDirection: plantsStore.activeFilters.sort_direction !== 'asc' ? plantsStore.activeFilters.sort_direction : undefined
     });
   }
   
-  // Обновление URL-параметров
+  // Update URL parameters
   function updateUrlParams(params) {
     const query = { ...route.query };
     
-    // Обновляем или удаляем параметры
+    // Update or remove parameters
     Object.keys(params).forEach(key => {
       if (params[key] === undefined) {
         delete query[key];
@@ -283,29 +283,29 @@
       }
     });
     
-    // Обновляем URL без перезагрузки страницы
+    // Update URL without page reload
     router.replace({ query });
   }
   
-  // Обработка смены страницы пагинации
+  // Handle pagination page change
   function onPageChange(page) {
-    loadPlants(page, plantsStore.pagination.itemsPerPage);
-    // Прокручиваем страницу вверх
+    loadPlants(page, plantsStore.pagination.per_page);
+    // Scroll page to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   
-  // Обработка применения фильтров
+  // Handle filter application
   function applyFilters(filters) {
-    // Устанавливаем быстрый поиск, если он изменился
+    // Update quick search if it changed
     if (filters.searchQuery !== quickSearch.value) {
       quickSearch.value = filters.searchQuery;
     }
     
-    // Обновляем фильтры и загружаем растения
+    // Update filters and load plants
     plantsStore.updateFilters(filters);
   }
   
-  // Обработка быстрого поиска (с debounce)
+  // Handle quick search with debounce
   function onQuickSearchDebounced() {
     if (quickSearchTimeout) {
       clearTimeout(quickSearchTimeout);
@@ -313,41 +313,41 @@
     
     quickSearchTimeout = setTimeout(() => {
       applyQuickSearch();
-    }, 500); // Ждем 500 мс после окончания ввода
+    }, 500); // Wait 500 ms after typing stops
   }
   
-  // Применяем быстрый поиск
+  // Apply quick search
   function applyQuickSearch() {
     plantsStore.updateFilters({ searchQuery: quickSearch.value });
   }
   
-  // Очистка всех фильтров
+  // Clear all filters
   function clearFilters() {
     quickSearch.value = '';
     plantsStore.clearFilters();
   }
   
-  // Функция для склонения слова "растение" в зависимости от количества
+  // Word form for "plant" based on count
   function getResultText(count) {
     const lastDigit = count % 10;
     const lastTwoDigits = count % 100;
     
     if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
-      return 'растений';
+      return 'plants';
     }
     
     if (lastDigit === 1) {
-      return 'растение';
+      return 'plant';
     }
     
     if (lastDigit >= 2 && lastDigit <= 4) {
-      return 'растения';
+      return 'plants';
     }
     
-    return 'растений';
+    return 'plants';
   }
   
-  // Обрезаем описание до указанной длины
+  // Truncate description to specified length
   function truncateDescription(text, maxLength) {
     if (!text) return '';
     if (text.length <= maxLength) return text;
@@ -355,48 +355,49 @@
     return text.substring(0, maxLength) + '...';
   }
   
-  // Получаем текстовую метку для режима полива
+  // Get text label for watering frequency
   function getWateringLabel(frequency) {
-    if (!frequency) return 'Не указано';
+    if (!frequency) return 'Not specified';
     
     const wateringLabels = {
-      'daily': 'Ежедневно',
-      'twice_a_week': '2 раза в неделю',
-      'weekly': 'Еженедельно',
-      'bi_weekly': 'Раз в 2 недели',
-      'monthly': 'Ежемесячно',
-      'rarely': 'Редко'
+      'daily': 'Daily',
+      'twice_a_week': 'Twice a week',
+      'weekly': 'Weekly',
+      'bi_weekly': 'Every 2 weeks',
+      'monthly': 'Monthly',
+      'rarely': 'Rarely'
     };
     
     return wateringLabels[frequency] || frequency;
   }
   
-  // Получаем текстовую метку для уровня освещения
+  // Get text label for light level
   function getLightLabel(level) {
-    if (!level) return 'Не указано';
+    if (!level) return 'Not specified';
     
     const lightLabels = {
-      'full_sun': 'Прямой свет',
-      'partial_sun': 'Полутень',
-      'shade': 'Тень',
-      'low_light': 'Малое освещение'
+      'full_sun': 'Full sun',
+      'partial_sun': 'Partial sun',
+      'shade': 'Shade',
+      'low_light': 'Low light'
     };
     
     return lightLabels[level] || level;
   }
   
-  // Обработка ошибок загрузки изображения
+  // Handle image load errors
   function handleImageError(event) {
-    event.target.src = '/placeholder-plant.jpg'; // Заменяем на placeholder
+    // Replace broken image with placeholder
+    event.target.src = '/placeholder-plant.jpg';
     event.target.classList.add('img-error');
   }
   
-  // Отслеживаем изменение маршрута для обновления данных
+  // Watch route changes to update data
   watch(() => route.query, (newQuery) => {
-    // Если изменилась страница, загружаем новые данные
+    // If page changed, load new data
     const page = parseInt(newQuery.page) || 1;
-    if (page !== plantsStore.pagination.currentPage) {
-      loadPlants(page, plantsStore.pagination.itemsPerPage);
+    if (page !== plantsStore.pagination.page) {
+      loadPlants(page, plantsStore.pagination.per_page);
     }
   }, { deep: true });
   </script>
@@ -448,7 +449,7 @@
     padding: 3rem 0;
   }
   
-  /* Анимации при загрузке */
+  /* Loading animations */
   .plants-list-page .row, .plants-list {
     animation: fadeIn 0.5s ease;
   }

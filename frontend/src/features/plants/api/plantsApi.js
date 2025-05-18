@@ -3,73 +3,102 @@
 import axios from '../../../interceptors/axios';
 
 /**
- * API клиент для работы с растениями
+ * API client for working with plants
  */
 export const plantsApi = {
   /**
-   * Получает список всех растений с пагинацией
-   * @param {number} page - Номер страницы (начиная с 1)
-   * @param {number} per_page - Количество растений на странице
-   * @param {Object} filters - Объект с фильтрами
-   * @returns {Promise<Object>} - Ответ от сервера с растениями
+   * Get list of all plants with pagination and filtering
+   * @param {number} page - Page number (starting from 1)
+   * @param {number} per_page - Number of plants per page
+   * @param {Object} filters - Filter object
+   * @returns {Promise<Object>} - Server response with plants
    */
   async getPlants(page = 1, per_page = 20, filters = {}) {
-    let params = {
-      page,
-      per_page,
-      ...filters
-    };
-
     try {
+      // Convert frontend filter names to backend ones
+      const params = {
+        page,
+        per_page,
+      };
+
+      // Map frontend filter properties to backend properties
+      if (filters.searchQuery) {
+        params.name = filters.searchQuery;
+      }
+      
+      if (filters.category_id) {
+        params.category_id = filters.category_id;
+      }
+      
+      if (filters.climate_zone_id) {
+        params.climate_zone_id = filters.climate_zone_id;
+      }
+      
+      if (filters.plant_type) {
+        params.plant_type = filters.plant_type;
+      }
+      
+      if (filters.care_difficulty) {
+        params.care_difficulty = filters.care_difficulty;
+      }
+
+      if (filters.sort_by) {
+        params.sort_by = filters.sort_by;
+      }
+      
+      if (filters.sort_direction) {
+        params.sort_direction = filters.sort_direction;
+      }
+      
       const response = await axios.get('/plants', { params });
       return response.data;
     } catch (error) {
-      console.error('Ошибка при получении списка растений:', error);
+      console.error('Error fetching plants list:', error);
       throw error;
     }
   },
 
   /**
-   * Получает детальную информацию о растении по ID
-   * @param {string|number} id - ID растения
-   * @returns {Promise<Object>} - Ответ от сервера с детальной информацией о растении
+   * Get detailed plant information by ID
+   * @param {string|number} id - Plant ID
+   * @returns {Promise<Object>} - Server response with detailed plant information
    */
   async getPlantById(id) {
     try {
       const response = await axios.get(`/plants/${id}`);
       return response.data;
     } catch (error) {
-      console.error(`Ошибка при получении растения с ID ${id}:`, error);
+      console.error(`Error fetching plant with ID ${id}:`, error);
       throw error;
     }
   },
 
   /**
-   * Поиск растений по названию или другим параметрам
-   * @param {string} query - Поисковый запрос
-   * @param {Object} options - Дополнительные параметры поиска
-   * @returns {Promise<Object>} - Ответ от сервера с результатами поиска
+   * Search plants by name or other parameters
+   * @param {string} query - Search query
+   * @param {Object} options - Additional search parameters
+   * @returns {Promise<Object>} - Server response with search results
    */
   async searchPlants(query, options = {}) {
-    let params = {
-      query: query,
-      ...options
-    };
-
     try {
+      const params = {
+        query: query,
+        ...options
+      };
+
       const response = await axios.get('/plants/search', { params });
       return response.data;
     } catch (error) {
-      console.error('Ошибка при поиске растений:', error);
+      console.error('Error searching plants:', error);
       throw error;
     }
   },
 
   /**
-   * Получает список категорий растений
-   * @param {number} page - Номер страницы
-   * @param {number} per_page - Количество записей на странице
-   * @returns {Promise<Array>} - Массив категорий растений
+   * Get list of plant categories
+   * @param {number} page - Page number
+   * @param {number} per_page - Number of items per page
+   * @returns {Promise<Array>} - Array of plant categories
    */
   async getCategories(page = 1, per_page = 100) {
     try {
@@ -78,16 +107,16 @@ export const plantsApi = {
       });
       return response.data;
     } catch (error) {
-      console.error('Ошибка при получении категорий растений:', error);
+      console.error('Error fetching plant categories:', error);
       throw error;
     }
   },
 
   /**
-   * Получает список климатических зон
-   * @param {number} page - Номер страницы  
-   * @param {number} per_page - Количество записей на странице
-   * @returns {Promise<Array>} - Массив климатических зон
+   * Get list of climate zones
+   * @param {number} page - Page number  
+   * @param {number} per_page - Number of items per page
+   * @returns {Promise<Array>} - Array of climate zones
    */
   async getClimateZones(page = 1, per_page = 100) {
     try {
@@ -96,84 +125,84 @@ export const plantsApi = {
       });
       return response.data;
     } catch (error) {
-      console.error('Ошибка при получении климатических зон:', error);
+      console.error('Error fetching climate zones:', error);
       throw error;
     }
   },
 
   /**
-   * Создает новое растение (требуется авторизация с правами администратора)
-   * @param {Object} plantData - Данные растения
-   * @returns {Promise<Object>} - Ответ от сервера с созданным растением
+   * Create new plant (requires admin authorization)
+   * @param {Object} plantData - Plant data
+   * @returns {Promise<Object>} - Server response with created plant
    */
   async createPlant(plantData) {
     try {
       const response = await axios.post('/plants', plantData);
       return response.data;
     } catch (error) {
-      console.error('Ошибка при создании растения:', error);
+      console.error('Error creating plant:', error);
       throw error;
     }
   },
 
   /**
-   * Обновляет растение (требуется авторизация с правами администратора)
-   * @param {string|number} id - ID растения
-   * @param {Object} plantData - Новые данные растения
-   * @returns {Promise<Object>} - Ответ от сервера с обновленным растением
+   * Update plant (requires admin authorization)
+   * @param {string|number} id - Plant ID
+   * @param {Object} plantData - New plant data
+   * @returns {Promise<Object>} - Server response with updated plant
    */
   async updatePlant(id, plantData) {
     try {
       const response = await axios.put(`/plants/${id}`, plantData);
       return response.data;
     } catch (error) {
-      console.error(`Ошибка при обновлении растения с ID ${id}:`, error);
+      console.error(`Error updating plant with ID ${id}:`, error);
       throw error;
     }
   },
 
   /**
-   * Удаляет растение (требуется авторизация с правами администратора)
-   * @param {string|number} id - ID растения
-   * @returns {Promise<Object>} - Ответ от сервера
+   * Delete plant (requires admin authorization)
+   * @param {string|number} id - Plant ID
+   * @returns {Promise<Object>} - Server response
    */
   async deletePlant(id) {
     try {
       const response = await axios.delete(`/plants/${id}`);
       return response.data;
     } catch (error) {
-      console.error(`Ошибка при удалении растения с ID ${id}:`, error);
+      console.error(`Error deleting plant with ID ${id}:`, error);
       throw error;
     }
   },
 
   /**
-   * Добавляет изображение к растению (требуется авторизация с правами администратора)
-   * @param {string|number} plantId - ID растения
-   * @param {Object} imageData - Данные изображения
-   * @returns {Promise<Object>} - Ответ от сервера с информацией о добавленном изображении
+   * Add image to plant (requires admin authorization)
+   * @param {string|number} plantId - Plant ID
+   * @param {Object} imageData - Image data
+   * @returns {Promise<Object>} - Server response with added image information
    */
   async addPlantImage(plantId, imageData) {
     try {
       const response = await axios.post(`/plants/${plantId}/images`, imageData);
       return response.data;
     } catch (error) {
-      console.error(`Ошибка при добавлении изображения к растению с ID ${plantId}:`, error);
+      console.error(`Error adding image to plant with ID ${plantId}:`, error);
       throw error;
     }
   },
 
   /**
-   * Удаляет изображение растения (требуется авторизация с правами администратора)
-   * @param {string|number} imageId - ID изображения
-   * @returns {Promise<Object>} - Ответ от сервера
+   * Delete plant image (requires admin authorization)
+   * @param {string|number} imageId - Image ID
+   * @returns {Promise<Object>} - Server response
    */
   async deletePlantImage(imageId) {
     try {
       const response = await axios.delete(`/plants/images/${imageId}`);
       return response.data;
     } catch (error) {
-      console.error(`Ошибка при удалении изображения ${imageId}:`, error);
+      console.error(`Error deleting image ${imageId}:`, error);
       throw error;
     }
   }

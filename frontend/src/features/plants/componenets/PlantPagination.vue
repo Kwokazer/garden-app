@@ -1,34 +1,34 @@
 <!-- src/features/plants/components/PlantPagination.vue -->
 <template>
-    <nav aria-label="Пагинация по списку растений" class="plant-pagination">
+    <nav aria-label="Plants list pagination" class="plant-pagination">
       <ul class="pagination justify-content-center">
-        <!-- Кнопка "Первая страница" -->
+        <!-- First page button -->
         <li class="page-item" :class="{ disabled: currentPage <= 1 }">
           <a 
             class="page-link" 
             href="#" 
             @click.prevent="!isLoading && currentPage > 1 && onPageChange(1)"
-            aria-label="К первой странице"
+            aria-label="First page"
             :tabindex="currentPage <= 1 ? -1 : 0"
           >
             <i class="bi bi-chevron-double-left"></i>
           </a>
         </li>
         
-        <!-- Кнопка "Предыдущая страница" -->
+        <!-- Previous page button -->
         <li class="page-item" :class="{ disabled: currentPage <= 1 }">
           <a 
             class="page-link" 
             href="#" 
             @click.prevent="!isLoading && currentPage > 1 && onPageChange(currentPage - 1)"
-            aria-label="К предыдущей странице"
+            aria-label="Previous page"
             :tabindex="currentPage <= 1 ? -1 : 0"
           >
             <i class="bi bi-chevron-left"></i>
           </a>
         </li>
         
-        <!-- Номера страниц -->
+        <!-- Page numbers -->
         <li 
           v-for="page in displayedPages" 
           :key="page" 
@@ -48,26 +48,26 @@
           </a>
         </li>
         
-        <!-- Кнопка "Следующая страница" -->
+        <!-- Next page button -->
         <li class="page-item" :class="{ disabled: currentPage >= totalPages }">
           <a 
             class="page-link" 
             href="#" 
             @click.prevent="!isLoading && currentPage < totalPages && onPageChange(currentPage + 1)"
-            aria-label="К следующей странице"
+            aria-label="Next page"
             :tabindex="currentPage >= totalPages ? -1 : 0"
           >
             <i class="bi bi-chevron-right"></i>
           </a>
         </li>
         
-        <!-- Кнопка "Последняя страница" -->
+        <!-- Last page button -->
         <li class="page-item" :class="{ disabled: currentPage >= totalPages }">
           <a 
             class="page-link" 
             href="#" 
             @click.prevent="!isLoading && currentPage < totalPages && onPageChange(totalPages)"
-            aria-label="К последней странице"
+            aria-label="Last page"
             :tabindex="currentPage >= totalPages ? -1 : 0"
           >
             <i class="bi bi-chevron-double-right"></i>
@@ -75,20 +75,20 @@
         </li>
       </ul>
       
-      <!-- Информация о пагинации -->
+      <!-- Pagination info -->
       <div class="text-center text-muted small mt-2">
         <span v-if="totalItems > 0">
-          Показано {{ firstItemIndex }} - {{ lastItemIndex }} из {{ totalItems }} растений
+          Showing {{ firstItemIndex }} - {{ lastItemIndex }} of {{ totalItems }} plants
         </span>
         <span v-else>
-          Растения не найдены
+          No plants found
         </span>
       </div>
     </nav>
   </template>
   
   <script setup>
-  import { ref, computed, watch } from 'vue';
+  import { computed } from 'vue';
   
   const props = defineProps({
     currentPage: {
@@ -115,7 +115,7 @@
   
   const emit = defineEmits(['page-change']);
   
-  // Расчет индексов отображаемых элементов
+  // Calculate displayed item indices
   const firstItemIndex = computed(() => {
     if (props.totalItems === 0) return 0;
     return (props.currentPage - 1) * props.perPage + 1;
@@ -125,13 +125,13 @@
     return Math.min(props.currentPage * props.perPage, props.totalItems);
   });
   
-  // Формирование отображаемых номеров страниц
+  // Generate displayed page numbers
   const displayedPages = computed(() => {
     const totalPages = props.totalPages;
     const currentPage = props.currentPage;
     const pages = [];
     
-    // Если страниц мало, показываем все
+    // If few pages, show all
     if (totalPages <= 7) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -139,36 +139,36 @@
       return pages;
     }
     
-    // Всегда показываем первую страницу
+    // Always show first page
     pages.push(1);
     
-    // Решаем, нужен ли эллипсис в начале
+    // Determine if we need ellipsis at the beginning
     if (currentPage > 3) {
       pages.push('...');
     }
     
-    // Вычисляем начальную и конечную страницы для отображения
+    // Calculate start and end pages to display
     let startPage = Math.max(2, currentPage - 1);
     let endPage = Math.min(totalPages - 1, currentPage + 1);
     
-    // Корректируем, если мы у начала или конца
+    // Adjust if near beginning or end
     if (currentPage <= 3) {
       endPage = Math.min(5, totalPages - 1);
     } else if (currentPage >= totalPages - 2) {
       startPage = Math.max(totalPages - 4, 2);
     }
     
-    // Добавляем промежуточные страницы
+    // Add middle pages
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
     }
     
-    // Решаем, нужен ли эллипсис в конце
+    // Determine if we need ellipsis at the end
     if (endPage < totalPages - 1) {
       pages.push('...');
     }
     
-    // Всегда показываем последнюю страницу
+    // Always show last page if more than one
     if (totalPages > 1) {
       pages.push(totalPages);
     }
@@ -176,7 +176,7 @@
     return pages;
   });
   
-  // Обработчик смены страницы
+  // Handle page change
   function onPageChange(page) {
     if (page !== props.currentPage && page > 0 && page <= props.totalPages && !props.isLoading) {
       emit('page-change', page);

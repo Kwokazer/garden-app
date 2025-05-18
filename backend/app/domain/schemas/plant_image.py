@@ -32,5 +32,7 @@ class PlantImageResponse(PlantImageBase, IDSchema, TimestampedSchema):
 class PlantImageRef(BaseSchema):
     """Упрощенная схема изображения для вложенного отображения"""
     id: int = Field(..., description="Уникальный идентификатор изображения")
-    image_url: str = Field(..., description="URL изображения растения")
-    is_primary: bool = Field(..., description="Является ли изображение основным") 
+    url: str = Field(..., description="URL изображения")
+    alt: Optional[str] = Field(None, description="Альтернативный текст")
+    title: Optional[str] = Field(None, description="Заголовок изображения")
+    is_primary: bool = Field(False, description="Основное изображение")
