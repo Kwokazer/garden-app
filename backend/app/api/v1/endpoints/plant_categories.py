@@ -25,6 +25,9 @@ async def get_redis_service() -> RedisService:
 async def get_plant_cache(redis_service: RedisService = Depends(get_redis_service)) -> PlantCache:
     return PlantCache(redis_service)
 
+async def get_plant_cache(redis_service: RedisService = Depends(get_redis_service)) -> PlantCache:
+    return PlantCache(redis_service)
+
 async def get_category_service(
     session: AsyncSession = Depends(get_db),
     plant_cache: Optional[PlantCache] = Depends(get_plant_cache)
