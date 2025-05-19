@@ -5,7 +5,8 @@ from app.application.services.auth_service import AuthService
 from app.application.services.user_service import UserService
 from app.infrastructure.cache.redis_service import RedisService
 from app.infrastructure.database import get_db
-
+from app.infrastructure.external.jitsi_service import JitsiService
+from app.core.config import Settings
 from .redis import get_redis_service
 
 
@@ -42,3 +43,13 @@ async def get_user_service(
     """
     # Создаем новый инстанс каждый раз, чтобы избежать проблем с асинхронным контекстом
     return UserService(db=db, redis_service=redis_service)
+
+
+def get_jitsi_service(settings: Settings = Depends(get_settings)) -> JitsiService:
+    """
+    Получение сервиса для работы с Jitsi
+    
+    Returns:
+        JitsiService: Экземпляр сервиса Jitsi
+    """
+    return JitsiService(settings)

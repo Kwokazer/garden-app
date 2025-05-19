@@ -17,9 +17,11 @@ class Settings(BaseSettings):
 
 
     # Настройки Jitsi
-    JITSI_APP_ID: str = os.getenv("JITSI_APP_ID", "garden_app")
-    JITSI_APP_SECRET: str = os.getenv("JITSI_APP_SECRET", "your_secret_key_here")
-    JITSI_BASE_URL: str = os.getenv("JITSI_BASE_URL", "https://meet.jit.si")
+    JITSI_API_URL: str = "https://jitsi.garden.local:8443"  # HTTPS порт
+    JITSI_HTTP_URL: str = "http://jitsi.garden.local:8000"  # HTTP порт (может потребоваться для некоторых операций)
+    JITSI_DOMAIN: str = "meet.jitsi"
+    JITSI_APP_ID: str = "garden_app"
+    JITSI_APP_SECRET: str = "jwt_secret_for_garden_app_123"
 
     # PostgreSQL
     POSTGRES_HOST: str
