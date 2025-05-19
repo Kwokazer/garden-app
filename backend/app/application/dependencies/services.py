@@ -10,6 +10,16 @@ from app.core.config import Settings
 from .redis import get_redis_service
 
 
+def get_settings() -> Settings:
+    """
+    Получение настроек приложения
+    
+    Returns:
+        Settings: Инстанс настроек приложения
+    """
+    return settings
+
+
 async def get_auth_service(
     db: AsyncSession = Depends(get_db),
     redis_service: RedisService = Depends(get_redis_service)

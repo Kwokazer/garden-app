@@ -1,10 +1,10 @@
 from fastapi import APIRouter
 
 try:
-    from app.api.v1.endpoints import auth, users, plants, climate_zones, questions, answers, tags, plant_categories
+    from app.api.v1.endpoints import auth, users, plants, climate_zones, questions, answers, tags, plant_categories, metrics
 except ImportError:
     # Обработка случая, когда plant_categories.py еще не создан
-    from app.api.v1.endpoints import auth, users, plants, climate_zones, questions, answers, tags, plant_categories
+    from app.api.v1.endpoints import auth, users, plants, climate_zones, questions, answers, tags, plant_categories, metrics
 
 api_router = APIRouter()
 
@@ -36,4 +36,5 @@ api_router.include_router(plant_categories.router, prefix="/plant-categories", t
 api_router.include_router(climate_zones.router, prefix="/climate-zones", tags=["climate_zones"])
 api_router.include_router(questions.router, prefix="/questions", tags=["questions"])
 api_router.include_router(answers.router, prefix="/answers", tags=["answers"])
-api_router.include_router(tags.router, prefix="/tags", tags=["tags"]) 
+api_router.include_router(tags.router, prefix="/tags", tags=["tags"])
+api_router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])

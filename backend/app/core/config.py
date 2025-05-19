@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # Основные настройки приложения
-    APP_NAME: str = "Garden API"  # Переименовано из PROJECT_NAME в APP_NAME
+    APP_NAME: str = "Garden API"
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = False
     ENVIRONMENT: str = "production"  # development, testing, production
@@ -15,13 +15,18 @@ class Settings(BaseSettings):
     # URL фронтенда для формирования ссылок в письмах
     FRONTEND_URL: str = "http://localhost:3000"
 
-
     # Настройки Jitsi
-    JITSI_API_URL: str = "https://jitsi.garden.local:8443"  # HTTPS порт
-    JITSI_HTTP_URL: str = "http://jitsi.garden.local:8000"  # HTTP порт (может потребоваться для некоторых операций)
+    JITSI_API_URL: str = "https://jitsi.garden.local:8443"  # HTTPS для внешних подключений
+    JITSI_HTTP_URL: str = "http://jitsi.garden.local:8080"  # HTTP для внутренних запросов
     JITSI_DOMAIN: str = "meet.jitsi"
     JITSI_APP_ID: str = "garden_app"
     JITSI_APP_SECRET: str = "jwt_secret_for_garden_app_123"
+
+    # Настройки записи вебинаров
+    JIBRI_ENABLED: bool = True
+    JIBRI_RECORDING_RESOLUTION: str = "720"  # 720p, 1080p
+    JIBRI_RECORDING_FRAMERATE: int = 30
+    JIBRI_FINALIZE_SCRIPT_PATH: str = "/config/finalize.sh"
 
     # PostgreSQL
     POSTGRES_HOST: str
@@ -42,6 +47,7 @@ class Settings(BaseSettings):
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"
     CELERY_TASK_ROUTES: Dict[str, Dict[str, str]] = {
         "app.tasks.email_tasks.*": {"queue": "email"},
+        "app.tasks.webinar_tasks.*": {"queue": "webinars"},
         "app.tasks.*": {"queue": "default"},
     }
     
@@ -52,7 +58,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # CORS - принимаем как строку
-    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:8080"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:8080,https://jitsi.garden.local:8443"
 
     # OAuth
     GOOGLE_CLIENT_ID: Optional[str] = None
@@ -72,16 +78,27 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 1025
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
-    EMAIL_FROM: str = "Garden <noreply@example.com>"
+    EMAIL_FROM: str = "Garden <noreply@garden.local>"
     EMAIL_TEMPLATES_DIR: str = "app/infrastructure/external/templates/email"
 
-    # Хранение файлов
-    STORAGE_TYPE: str = "local"  # local, s3, cloud_storage
+    # Хранение файлов и записей вебинаров
+    STORAGE_TYPE: str = "local"  # local, s3
     STORAGE_LOCAL_PATH: str = "./uploads"
+    WEBINAR_RECORDINGS_PATH: str = "./uploads/webinar_recordings"
+    WEBINAR_THUMBNAILS_PATH: str = "./uploads/webinar_thumbnails"
+    
+    # S3 настройки для продакшена
     S3_BUCKET_NAME: Optional[str] = None
     S3_REGION: Optional[str] = None
     S3_ACCESS_KEY: Optional[str] = None
     S3_SECRET_KEY: Optional[str] = None
+    S3_WEBINAR_RECORDINGS_PREFIX: str = "recordings/"
+    S3_WEBINAR_THUMBNAILS_PREFIX: str = "thumbnails/"
+
+    # Ограничения для вебинаров
+    MAX_WEBINAR_DURATION_HOURS: int = 8
+    MAX_WEBINAR_PARTICIPANTS: int = 50
+    RECORDING_RETENTION_DAYS: int = 365  # Сколько дней хранить записи
 
     @property
     def CORS_ORIGINS_LIST(self) -> List[str]:
@@ -117,6 +134,24 @@ class Settings(BaseSettings):
         Получить строку подключения к PostgreSQL в формате SQLAlchemy
         """
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+
+    @property
+    def WEBINAR_RECORDINGS_FULL_PATH(self) -> str:
+        """
+        Полный путь к директории записей вебинаров
+        """
+        if self.STORAGE_TYPE == "local":
+            return os.path.abspath(self.WEBINAR_RECORDINGS_PATH)
+        return self.WEBINAR_RECORDINGS_PATH
+
+    @property
+    def WEBINAR_THUMBNAILS_FULL_PATH(self) -> str:
+        """
+        Полный путь к директории превью вебинаров
+        """
+        if self.STORAGE_TYPE == "local":
+            return os.path.abspath(self.WEBINAR_THUMBNAILS_PATH)
+        return self.WEBINAR_THUMBNAILS_PATH
 
     def get_oauth_config(self, provider: str) -> Dict[str, str]:
         """
@@ -161,6 +196,32 @@ class Settings(BaseSettings):
         else:
             raise ValueError(f"Неизвестный OAuth провайдер: {provider}")
 
+    def get_webinar_storage_config(self) -> Dict[str, Any]:
+        """
+        Получить конфигурацию хранилища для записей вебинаров
+        
+        Returns:
+            Dict[str, Any]: Конфигурация хранилища
+        """
+        if self.STORAGE_TYPE == "local":
+            return {
+                "type": "local",
+                "recordings_path": self.WEBINAR_RECORDINGS_FULL_PATH,
+                "thumbnails_path": self.WEBINAR_THUMBNAILS_FULL_PATH
+            }
+        elif self.STORAGE_TYPE == "s3":
+            return {
+                "type": "s3",
+                "bucket": self.S3_BUCKET_NAME,
+                "region": self.S3_REGION,
+                "access_key": self.S3_ACCESS_KEY,
+                "secret_key": self.S3_SECRET_KEY,
+                "recordings_prefix": self.S3_WEBINAR_RECORDINGS_PREFIX,
+                "thumbnails_prefix": self.S3_WEBINAR_THUMBNAILS_PREFIX
+            }
+        else:
+            raise ValueError(f"Неизвестный тип хранилища: {self.STORAGE_TYPE}")
+
     # Настройки модели
     model_config = {
         "env_file": ".env",
@@ -171,3 +232,8 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Создание необходимых директорий при импорте
+if settings.STORAGE_TYPE == "local":
+    os.makedirs(settings.WEBINAR_RECORDINGS_FULL_PATH, exist_ok=True)
+    os.makedirs(settings.WEBINAR_THUMBNAILS_FULL_PATH, exist_ok=True)
