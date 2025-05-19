@@ -4,10 +4,10 @@
     <div class="card shadow-sm border-0 mb-3" :class="{ 'accepted-answer': answer.is_accepted }">
       <div class="card-body">
         <div class="d-flex">
-          <!-- Панель голосования -->
+          <!-- Панель голосования с уникальным ключом -->
           <div class="voting-section me-3">
             <VotingButtons
-              :key="`answer-vote-${answer.id}-${answer.votes_up}-${answer.votes_down}-${answer.user_vote}`"
+              :key="`answer-vote-${answer.id}-${votingKey}`"
               type="answer"
               :item-id="answer.id"
               :votes-up="answer.votes_up"
@@ -117,7 +117,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { useAuthStore } from '../../auth/store/authStore';
 import { useQuestionsStore } from '../store/questionsStore';
 import VotingButtons from './VotingButtons.vue';
@@ -145,6 +145,23 @@ const isAccepting = ref(false);
 const isEditing = ref(false);
 const isUpdating = ref(false);
 const isDeleting = ref(false);
+const votingKey = ref(Date.now()); // Ключ для принудительного ререндера
+
+// Наблюдение за изменениями голосов для принудительного обновления
+watch(
+  () => [props.answer.votes_up, props.answer.votes_down, props.answer.user_vote],
+  ([newUp, newDown, newVote], [oldUp, oldDown, oldVote]) => {
+    if (newUp !== oldUp || newDown !== oldDown || newVote !== oldVote) {
+      console.log(`🔄 AnswerCard: Vote data changed for answer ${props.answer.id}:`, {
+        old: `${oldUp}/${oldDown}/${oldVote}`,
+        new: `${newUp}/${newDown}/${newVote}`
+      });
+      // Принудительно обновляем ключ для ререндера VotingButtons
+      votingKey.value = Date.now();
+    }
+  },
+  { immediate: false }
+);
 
 // Вычисляемые свойства
 const isQuestionAuthor = computed(() => {
@@ -204,6 +221,12 @@ async function handleVote(voteData) {
     return;
   }
   
+  // Проверяем, не пытается ли пользователь голосовать за свой ответ
+  if (authStore.isLoggedIn && authStore.user && authStore.user.id === props.answer.author_id) {
+    alert('Вы не можете голосовать за свой собственный ответ');
+    return;
+  }
+  
   isVoting.value = true;
   
   try {
@@ -218,6 +241,12 @@ async function handleVote(voteData) {
     const result = await questionsStore.voteForAnswer(voteData.itemId, voteData.voteType);
     
     console.log(`✅ AnswerCard: Vote completed successfully:`, result);
+    
+    // Принудительно обновляем ключ для ререндера VotingButtons
+    votingKey.value = Date.now();
+    
+    // Ожидаем следующий тик для обеспечения обновления компонентов
+    await nextTick();
     
     // Эмитим событие для родительского компонента
     emit('vote', voteData);

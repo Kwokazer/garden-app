@@ -3,11 +3,16 @@
 import { defineStore } from 'pinia';
 import { ref, computed, nextTick } from 'vue';
 import { questionsApi, answersApi } from '../api/questionsApi';
+// Добавляем импорт authStore
+import { useAuthStore } from '../../auth/store/authStore';
 
 /**
  * Хранилище для управления состоянием вопросов и ответов
  */
 export const useQuestionsStore = defineStore('questions', () => {
+  // Добавляем инициализацию authStore
+  const authStore = useAuthStore();
+  
   // State (состояние)
   const questions = ref([]);
   const currentQuestion = ref(null);
@@ -227,6 +232,16 @@ export const useQuestionsStore = defineStore('questions', () => {
     console.log(`🗳️ Store: Starting vote for question ${questionId} with type ${voteType}`);
     
     try {
+      // Проверяем, не является ли пользователь автором вопроса
+      const questionToVote = questions.value.find(q => q.id === questionId) || 
+                            (currentQuestion.value?.id === questionId ? currentQuestion.value : null);
+      
+      if (questionToVote && authStore.isLoggedIn && authStore.user && 
+          authStore.user.id === questionToVote.author_id) {
+        console.error('❌ Store: Cannot vote for own question');
+        throw new Error('Вы не можете голосовать за свой собственный вопрос');
+      }
+      
       // Сохраняем состояние до голосования
       const questionBefore = questions.value.find(q => q.id === questionId);
       const currentBefore = currentQuestion.value?.id === questionId ? { ...currentQuestion.value } : null;
@@ -422,6 +437,16 @@ export const useQuestionsStore = defineStore('questions', () => {
     console.log(`🗳️ Store: Starting vote for answer ${answerId} with type ${voteType}`);
     
     try {
+      // Проверяем, не является ли пользователь автором ответа
+      if (currentQuestion.value?.answers) {
+        const answer = currentQuestion.value.answers.find(a => a.id === answerId);
+        
+        if (answer && authStore.isLoggedIn && authStore.user && authStore.user.id === answer.author_id) {
+          console.error('❌ Store: Cannot vote for own answer');
+          throw new Error('Вы не можете голосовать за свой собственный ответ');
+        }
+      }
+      
       // Сохраняем состояние до голосования
       const answerBefore = currentQuestion.value?.answers?.find(a => a.id === answerId);
       console.log('📊 Store: Before vote - Answer state:', 
@@ -487,7 +512,6 @@ export const useQuestionsStore = defineStore('questions', () => {
       return updatedAnswer;
     } catch (error) {
       console.error('❌ Store: Error voting for answer:', error);
-      error.value = error.message || `Ошибка при голосовании за ответ ${answerId}`;
       throw error;
     }
   }

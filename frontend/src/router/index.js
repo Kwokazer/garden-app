@@ -176,7 +176,13 @@ const routes = [
   {
     path: '/:pathMatch(.*)*',
     redirect: '/'
-  }
+  },
+  // {
+  //   path: '/webinars/:id/room',
+  //   name: 'WebinarRoom',
+  //   component: WebinarRoom,
+  //   meta: { requiresAuth: true }
+  // },
 ];
 
 // Create router instance

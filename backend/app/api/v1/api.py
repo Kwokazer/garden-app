@@ -24,7 +24,7 @@ async def api_root():
             "climate_zones": "/climate-zones",
             "questions": "/questions",
             "answers": "/answers",
-            "tags": "/tags"
+            "tags": "/tags",
         }
     }
 
@@ -36,4 +36,4 @@ api_router.include_router(plant_categories.router, prefix="/plant-categories", t
 api_router.include_router(climate_zones.router, prefix="/climate-zones", tags=["climate_zones"])
 api_router.include_router(questions.router, prefix="/questions", tags=["questions"])
 api_router.include_router(answers.router, prefix="/answers", tags=["answers"])
-api_router.include_router(tags.router, prefix="/tags", tags=["tags"])
+api_router.include_router(tags.router, prefix="/tags", tags=["tags"]) 

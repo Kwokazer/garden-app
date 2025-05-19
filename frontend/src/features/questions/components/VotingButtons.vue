@@ -1,11 +1,11 @@
-<!-- Полностью переписанный VotingButtons.vue -->
+// Исправленный компонент VotingButtons.vue
 <template>
   <div class="voting-buttons d-flex flex-column align-items-center">
     <!-- Кнопка за (up) -->
     <button
       class="btn btn-voting btn-vote-up"
       :class="{ 
-        'active': userVote === 'up',
+        'active': isVoteUp,
         'disabled': !canVote || isLoading
       }"
       @click="handleVote('up')"
@@ -29,7 +29,7 @@
     <button
       class="btn btn-voting btn-vote-down"
       :class="{ 
-        'active': userVote === 'down',
+        'active': isVoteDown,
         'disabled': !canVote || isLoading
       }"
       @click="handleVote('down')"
@@ -49,7 +49,7 @@
 </template>
 
 <script setup>
-import { computed, watch, ref } from 'vue';
+import { computed, watch, ref, onMounted } from 'vue';
 import { useAuthStore } from '../../auth/store/authStore';
 
 const props = defineProps({
@@ -76,7 +76,7 @@ const props = defineProps({
   },
   // Текущий голос пользователя
   userVote: {
-    type: [String, null],
+    type: [String, Number, null],
     default: null
   },
   // Состояние загрузки
@@ -98,6 +98,23 @@ const authStore = useAuthStore();
 // Счетчик для принудительного обновления
 const updateCounter = ref(0);
 
+// Отладка: наблюдение за изменениями userVote
+watch(() => props.userVote, (newVote, oldVote) => {
+  console.log(`VotingButtons [${props.type}:${props.itemId}]: userVote changed from "${oldVote}" to "${newVote}", type: ${typeof newVote}`);
+}, { immediate: true });
+
+// Отладка: вывод значений при монтировании компонента
+onMounted(() => {
+  console.log(`VotingButtons [${props.type}:${props.itemId}] mounted:`, { 
+    userVote: props.userVote, 
+    type: typeof props.userVote, 
+    isUp: props.userVote === 'up', 
+    isDown: props.userVote === 'down',
+    votesUp: props.votesUp,
+    votesDown: props.votesDown
+  });
+});
+
 // Отслеживаем изменения для принудительного обновления
 watch([() => props.votesUp, () => props.votesDown, () => props.userVote], 
   ([newUp, newDown, newVote], [oldUp, oldDown, oldVote]) => {
@@ -114,6 +131,19 @@ watch([() => props.votesUp, () => props.votesDown, () => props.userVote],
   }
 );
 
+// Вычисляемые свойства для более безопасного сравнения
+const isVoteUp = computed(() => {
+  const result = String(props.userVote) === 'up';
+  console.log(`isVoteUp: ${result}, value: ${props.userVote}, type: ${typeof props.userVote}`);
+  return result;
+});
+
+const isVoteDown = computed(() => {
+  const result = String(props.userVote) === 'down';
+  console.log(`isVoteDown: ${result}, value: ${props.userVote}, type: ${typeof props.userVote}`);
+  return result;
+});
+
 // Вычисляемые свойства
 const totalVotes = computed(() => {
   const total = props.votesUp - props.votesDown;
@@ -124,11 +154,13 @@ const totalVotes = computed(() => {
 const canVote = computed(() => {
   // Проверяем авторизацию
   if (!authStore.isLoggedIn) {
+    console.log(`VotingButtons: User not logged in, can't vote`);
     return false;
   }
   
   // Проверяем, что это не автор контента
   if (props.authorId && authStore.user && authStore.user.id === props.authorId) {
+    console.log(`VotingButtons: User is author (${authStore.user.id} === ${props.authorId}), can't vote for own content`);
     return false;
   }
   
@@ -137,16 +169,19 @@ const canVote = computed(() => {
 
 // Методы
 function getButtonTitle(voteType) {
-  if (!canVote.value) {
-    if (!authStore.isLoggedIn) {
-      return 'Войдите в систему для голосования';
-    }
-    if (props.authorId && authStore.user && authStore.user.id === props.authorId) {
-      return 'Нельзя голосовать за свой контент';
-    }
+  if (!authStore.isLoggedIn) {
+    return 'Войдите в систему для голосования';
   }
   
-  if (props.userVote === voteType) {
+  if (props.authorId && authStore.user && authStore.user.id === props.authorId) {
+    return 'Нельзя голосовать за свой контент';
+  }
+  
+  if (!canVote.value) {
+    return 'Голосование недоступно';
+  }
+  
+  if (voteType === 'up' && isVoteUp.value || voteType === 'down' && isVoteDown.value) {
     return 'Отменить голос';
   }
   
@@ -160,28 +195,26 @@ function handleVote(voteType) {
     votesDown: props.votesDown,
     userVote: props.userVote,
     canVote: canVote.value,
-    isLoading: props.isLoading
+    isLoading: props.isLoading,
+    authorId: props.authorId,
+    userId: authStore.user?.id
   });
   
   if (!canVote.value || props.isLoading) {
     console.log('⚠️ VotingButtons: Vote blocked - cannot vote or loading');
-    return;
-  }
-  
-  // Проверяем авторизацию
-  if (!authStore.isLoggedIn) {
-    alert('Для голосования необходимо войти в систему');
-    return;
-  }
-  
-  // Проверяем автора
-  if (props.authorId && authStore.user && authStore.user.id === props.authorId) {
-    alert('Вы не можете голосовать за свой собственный контент');
+    
+    // Показываем сообщение о том, почему голосование заблокировано
+    if (props.authorId && authStore.user && authStore.user.id === props.authorId) {
+      alert('Вы не можете голосовать за свой собственный контент');
+    } else if (!authStore.isLoggedIn) {
+      alert('Для голосования необходимо войти в систему');
+    }
+    
     return;
   }
   
   // Определяем, отменяем ли мы существующий голос
-  const isCancel = props.userVote === voteType;
+  const isCancel = (voteType === 'up' && isVoteUp.value) || (voteType === 'down' && isVoteDown.value);
   
   console.log(`✅ VotingButtons: Emitting vote event:`, {
     type: props.type,

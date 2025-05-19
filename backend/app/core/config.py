@@ -15,6 +15,12 @@ class Settings(BaseSettings):
     # URL фронтенда для формирования ссылок в письмах
     FRONTEND_URL: str = "http://localhost:3000"
 
+
+    # Настройки Jitsi
+    JITSI_APP_ID: str = os.getenv("JITSI_APP_ID", "garden_app")
+    JITSI_APP_SECRET: str = os.getenv("JITSI_APP_SECRET", "your_secret_key_here")
+    JITSI_BASE_URL: str = os.getenv("JITSI_BASE_URL", "https://meet.jit.si")
+
     # PostgreSQL
     POSTGRES_HOST: str
     POSTGRES_PORT: int

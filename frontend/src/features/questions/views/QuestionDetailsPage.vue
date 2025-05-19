@@ -189,7 +189,7 @@
             </div>
   
             <!-- Список ответов -->
-            <div v-if="sortedAnswers.length > 0" class="answers-list">
+            <div :key="answersListKey" v-if="sortedAnswers.length > 0" class="answers-list">
               <AnswerCard
                 v-for="answer in sortedAnswers"
                 :key="answer.id"
@@ -289,6 +289,7 @@
   const router = useRouter();
   const questionsStore = useQuestionsStore();
   const authStore = useAuthStore();
+  const answersListKey = ref(Date.now());
   
   // Состояние компонента
   const isLoading = ref(false);
@@ -396,13 +397,21 @@
   }
   
   async function handleAnswerVote(voteData) {
-    try {
-      await questionsStore.voteForAnswer(voteData.itemId, voteData.voteType);
-    } catch (error) {
-      console.error('Ошибка при голосовании за ответ:', error);
-      alert('Ошибка при голосовании: ' + error.message);
-    }
+  try {
+    await questionsStore.voteForAnswer(voteData.itemId, voteData.voteType);
+    
+    // Принудительно обновляем весь список ответов
+    answersListKey.value = Date.now();
+  } catch (error) {
+    console.error('Ошибка при голосовании за ответ:', error);
+    alert('Ошибка при голосовании: ' + error.message);
   }
+}
+
+watch(() => questionsStore.currentQuestion, () => {
+  // Обновляем ключ для принудительного ререндера
+  answersListKey.value = Date.now();
+}, { deep: true });
   
   async function handleAcceptAnswer(answerId) {
     try {
@@ -425,26 +434,64 @@
     }
   }
   
-    async function handleCreateAnswer(answerData) {
-    if (isCreatingAnswer.value) return;
+  async function handleCreateAnswer(answerData) {
+  if (isCreatingAnswer.value) return;
+  
+  isCreatingAnswer.value = true;
+  answerFormError.value = null;
+  
+  try {
+    // Создаем ответ через store
+    const newAnswer = await questionsStore.createAnswer(answerData);
+    console.log('Новый ответ создан:', newAnswer);
     
-    isCreatingAnswer.value = true;
-    answerFormError.value = null;
+    // Очищаем форму после успешного создания
+    const answerForm = document.getElementById('answerBody');
+    if (answerForm) {
+      answerForm.value = '';
+    }
     
-    try {
-        await questionsStore.createAnswer(answerData);
-        // Очищаем форму после успешного создания
-        const answerForm = document.getElementById('answerBody');
-        if (answerForm) {
-        answerForm.value = '';
+    // Принудительно обновляем список ответов
+    answersListKey.value = Date.now();
+    
+    // Обновляем sortedAnswers для мгновенного отображения
+    // 1. Обновляем данные в функции
+    updateSortedAnswers();
+    
+    // 2. Если ответ не появился в sortedAnswers (возможно из-за задержки обновления в store)
+    // добавляем его напрямую в массив
+    if (!sortedAnswers.value.find(a => a.id === newAnswer.id)) {
+      console.log('Добавляем новый ответ напрямую в список');
+      sortedAnswers.value = [...sortedAnswers.value, newAnswer];
+      
+      // Пересортируем ответы
+      sortedAnswers.value.sort((a, b) => {
+        if (a.is_accepted && !b.is_accepted) return -1;
+        if (!a.is_accepted && b.is_accepted) return 1;
+        
+        switch (answersSortOrder.value) {
+          case 'votes':
+            return (b.votes_up - b.votes_down) - (a.votes_up - a.votes_down);
+          case 'date_new':
+            return new Date(b.created_at) - new Date(a.created_at);
+          case 'date_old':
+            return new Date(a.created_at) - new Date(b.created_at);
+          default:
+            return 0;
         }
-    } catch (error) {
-        console.error('Ошибка при создании ответа:', error);
-        answerFormError.value = error.message || 'Не удалось создать ответ';
-    } finally {
-        isCreatingAnswer.value = false;
+      });
     }
-    }
+    
+    // Отображаем сообщение об успехе
+    alert('Ваш ответ успешно добавлен!');
+    
+  } catch (error) {
+    console.error('Ошибка при создании ответа:', error);
+    answerFormError.value = error.message || 'Не удалось создать ответ';
+  } finally {
+    isCreatingAnswer.value = false;
+  }
+}
   
   async function handleUpdateAnswer(updateData) {
     try {
