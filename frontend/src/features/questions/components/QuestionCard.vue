@@ -2,9 +2,10 @@
 <template>
   <div class="question-card card h-100 border-0 shadow-sm">
     <div class="card-body d-flex">
-      <!-- Панель голосования -->
+      <!-- Панель голосования с уникальным ключом -->
       <div class="voting-section me-3">
         <VotingButtons
+          :key="`q-vote-${question.id}-${votingKey}`"
           type="question"
           :item-id="question.id"
           :votes-up="question.votes_up"
@@ -118,7 +119,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { useAuthStore } from '../../auth/store/authStore';
 import { useQuestionsStore } from '../store/questionsStore';
 import VotingButtons from './VotingButtons.vue';
@@ -143,6 +144,41 @@ const questionsStore = useQuestionsStore();
 const isVoting = ref(false);
 const isDeleting = ref(false);
 const isLoading = ref(false);
+const votingKey = ref(Date.now()); // Ключ для принудительного ререндера
+
+// Наблюдаем за изменениями голосов для принудительного обновления
+watch(
+  () => [props.question.votes_up, props.question.votes_down, props.question.user_vote],
+  ([newUp, newDown, newVote], [oldUp, oldDown, oldVote]) => {
+    if (newUp !== oldUp || newDown !== oldDown || newVote !== oldVote) {
+      console.log(`🔄 QuestionCard: Vote data changed for question ${props.question.id}:`, {
+        old: `${oldUp}/${oldDown}/${oldVote}`,
+        new: `${newUp}/${newDown}/${newVote}`
+      });
+      // Принудительно обновляем ключ для ререндера VotingButtons
+      votingKey.value = Date.now();
+    }
+  },
+  { immediate: false }
+);
+
+// Отслеживаем изменения props
+watch(() => props.question, (newVal, oldVal) => {
+  if (oldVal && newVal.id === oldVal.id) {
+    console.log(`🔍 QuestionCard: Question prop changed for ID ${newVal.id}:`, {
+      old: {
+        votes_up: oldVal.votes_up,
+        votes_down: oldVal.votes_down,
+        user_vote: oldVal.user_vote
+      },
+      new: {
+        votes_up: newVal.votes_up,
+        votes_down: newVal.votes_down,
+        user_vote: newVal.user_vote
+      }
+    });
+  }
+}, { deep: true });
 
 // Вычисляемые свойства
 const canEdit = computed(() => {
@@ -203,16 +239,46 @@ function getFullDate(dateString) {
   return date.toLocaleString('ru-RU');
 }
 
-// Обработка голосования для ВОПРОСОВ
+// Обработка голосования
 async function handleVote(voteData) {
+  console.log(`🎯 QuestionCard: Vote received for question ${props.question.id}:`, voteData);
+  console.log(`📊 QuestionCard: Current vote state:`, {
+    votes_up: props.question.votes_up,
+    votes_down: props.question.votes_down,
+    user_vote: props.question.user_vote
+  });
+  
+  if (isVoting.value) {
+    console.log('⚠️ QuestionCard: Already voting, ignoring');
+    return;
+  }
+  
   isVoting.value = true;
   
   try {
-    await questionsStore.voteForQuestion(voteData.itemId, voteData.voteType);
+    console.log(`🗳️ QuestionCard: Calling store.voteForQuestion`);
+    
+    // Вызываем store метод
+    const result = await questionsStore.voteForQuestion(voteData.itemId, voteData.voteType);
+    
+    console.log(`✅ QuestionCard: Store returned:`, result);
+    
+    // Принудительно обновляем компонент
+    await nextTick();
+    votingKey.value = Date.now();
+    
+    // Эмитим событие для родительского компонента
     emit('vote', voteData);
+    
+    console.log(`🏁 QuestionCard: Vote completed, new state:`, {
+      votes_up: props.question.votes_up,
+      votes_down: props.question.votes_down,
+      user_vote: props.question.user_vote
+    });
+    
   } catch (error) {
-    console.error('Error voting for question:', error);
-    alert('Ошибка при голосовании: ' + error.message);
+    console.error('❌ QuestionCard: Vote error:', error);
+    alert(`Ошибка при голосовании: ${error.message || error}`);
   } finally {
     isVoting.value = false;
   }
@@ -322,7 +388,7 @@ async function handleDelete() {
     margin-right: 0;
   }
   
-  .voting-section .voting-buttons {
+  .voting-section :deep(.voting-buttons) {
     flex-direction: row;
     justify-content: center;
     width: 100%;

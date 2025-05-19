@@ -100,7 +100,7 @@ export const questionsApi = {
       }
       
       const url = `${BASE_API_URL}/questions?${params.toString()}`;
-      console.log('Fetching questions URL:', url);
+      console.log('API: Fetching questions URL:', url);
       
       const response = await fetch(url, {
         method: 'GET',
@@ -110,7 +110,7 @@ export const questionsApi = {
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error('Error fetching questions list:', error);
+      console.error('API: Error fetching questions list:', error);
       throw error;
     }
   },
@@ -147,7 +147,7 @@ export const questionsApi = {
       }
       
       const url = `${BASE_API_URL}/questions/by-plant/${plantId}?${params.toString()}`;
-      console.log('Fetching questions by plant URL:', url);
+      console.log('API: Fetching questions by plant URL:', url);
       
       const response = await fetch(url, {
         method: 'GET',
@@ -157,7 +157,7 @@ export const questionsApi = {
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error(`Error fetching questions for plant ${plantId}:`, error);
+      console.error(`API: Error fetching questions for plant ${plantId}:`, error);
       throw error;
     }
   },
@@ -170,7 +170,7 @@ export const questionsApi = {
   async getQuestionById(questionId) {
     try {
       const url = `${BASE_API_URL}/questions/${questionId}`;
-      console.log('Fetching question details URL:', url);
+      console.log('API: Fetching question details URL:', url);
       
       const response = await fetch(url, {
         method: 'GET',
@@ -180,7 +180,7 @@ export const questionsApi = {
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error(`Error fetching question ${questionId}:`, error);
+      console.error(`API: Error fetching question ${questionId}:`, error);
       throw error;
     }
   },
@@ -193,7 +193,7 @@ export const questionsApi = {
   async createQuestion(questionData) {
     try {
       const url = `${BASE_API_URL}/questions`;
-      console.log('Creating question URL:', url);
+      console.log('API: Creating question URL:', url);
       
       const response = await fetch(url, {
         method: 'POST',
@@ -204,7 +204,7 @@ export const questionsApi = {
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error('Error creating question:', error);
+      console.error('API: Error creating question:', error);
       throw error;
     }
   },
@@ -218,7 +218,7 @@ export const questionsApi = {
   async updateQuestion(questionId, questionData) {
     try {
       const url = `${BASE_API_URL}/questions/${questionId}`;
-      console.log('Updating question URL:', url);
+      console.log('API: Updating question URL:', url);
       
       const response = await fetch(url, {
         method: 'PUT',
@@ -229,7 +229,7 @@ export const questionsApi = {
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error(`Error updating question ${questionId}:`, error);
+      console.error(`API: Error updating question ${questionId}:`, error);
       throw error;
     }
   },
@@ -242,7 +242,7 @@ export const questionsApi = {
   async deleteQuestion(questionId) {
     try {
       const url = `${BASE_API_URL}/questions/${questionId}`;
-      console.log('Deleting question URL:', url);
+      console.log('API: Deleting question URL:', url);
       
       const response = await fetch(url, {
         method: 'DELETE',
@@ -252,7 +252,7 @@ export const questionsApi = {
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error(`Error deleting question ${questionId}:`, error);
+      console.error(`API: Error deleting question ${questionId}:`, error);
       throw error;
     }
   },
@@ -265,25 +265,49 @@ export const questionsApi = {
    */
   async voteForQuestion(questionId, voteType) {
     try {
+      console.log('🗳️ API: Starting vote for question', { questionId, voteType });
+      
       const url = `${BASE_API_URL}/questions/${questionId}/vote`;
-      console.log('API: Voting for question URL:', url);
-      console.log('API: Vote data:', { vote_type: voteType });
+      const payload = { vote_type: voteType };
+      
+      console.log('📤 API: Request URL:', url);
+      console.log('📤 API: Request payload:', payload);
       
       const response = await fetch(url, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ vote_type: voteType })
+        body: JSON.stringify(payload)
       });
       
-      console.log('API: Vote response status:', response.status);
-      console.log('API: Vote response headers:', Object.fromEntries(response.headers.entries()));
+      console.log('📥 API: Response status:', response.status);
+      console.log('📥 API: Response ok:', response.ok);
+      
+      if (!response.ok) {
+        let errorText;
+        try {
+          errorText = await response.text();
+          console.error('❌ API: Error response text:', errorText);
+        } catch (e) {
+          errorText = response.statusText;
+        }
+        
+        let errorMessage = 'Не удалось проголосовать за вопрос';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.detail || errorData.message || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
+        }
+        
+        throw new Error(errorMessage);
+      }
       
       const result = await handleResponse(response);
-      console.log('API: Vote result:', result.data);
+      console.log('✅ API: Vote success:', result.data);
       
       return result.data;
     } catch (error) {
-      console.error(`API: Error voting for question ${questionId}:`, error);
+      console.error(`❌ API: Error voting for question ${questionId}:`, error);
       throw error;
     }
   }
@@ -301,7 +325,7 @@ export const answersApi = {
   async createAnswer(answerData) {
     try {
       const url = `${BASE_API_URL}/answers`;
-      console.log('Creating answer URL:', url);
+      console.log('API: Creating answer URL:', url);
       
       const response = await fetch(url, {
         method: 'POST',
@@ -312,7 +336,7 @@ export const answersApi = {
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error('Error creating answer:', error);
+      console.error('API: Error creating answer:', error);
       throw error;
     }
   },
@@ -326,7 +350,7 @@ export const answersApi = {
   async updateAnswer(answerId, answerData) {
     try {
       const url = `${BASE_API_URL}/answers/${answerId}`;
-      console.log('Updating answer URL:', url);
+      console.log('API: Updating answer URL:', url);
       
       const response = await fetch(url, {
         method: 'PUT',
@@ -337,7 +361,7 @@ export const answersApi = {
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error(`Error updating answer ${answerId}:`, error);
+      console.error(`API: Error updating answer ${answerId}:`, error);
       throw error;
     }
   },
@@ -350,7 +374,7 @@ export const answersApi = {
   async deleteAnswer(answerId) {
     try {
       const url = `${BASE_API_URL}/answers/${answerId}`;
-      console.log('Deleting answer URL:', url);
+      console.log('API: Deleting answer URL:', url);
       
       const response = await fetch(url, {
         method: 'DELETE',
@@ -360,7 +384,7 @@ export const answersApi = {
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error(`Error deleting answer ${answerId}:`, error);
+      console.error(`API: Error deleting answer ${answerId}:`, error);
       throw error;
     }
   },
@@ -373,7 +397,7 @@ export const answersApi = {
   async acceptAnswer(answerId) {
     try {
       const url = `${BASE_API_URL}/answers/${answerId}/accept`;
-      console.log('Accepting answer URL:', url);
+      console.log('API: Accepting answer URL:', url);
       
       const response = await fetch(url, {
         method: 'POST',
@@ -383,7 +407,7 @@ export const answersApi = {
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error(`Error accepting answer ${answerId}:`, error);
+      console.error(`API: Error accepting answer ${answerId}:`, error);
       throw error;
     }
   },
@@ -396,7 +420,7 @@ export const answersApi = {
   async unacceptAnswer(answerId) {
     try {
       const url = `${BASE_API_URL}/answers/${answerId}/unaccept`;
-      console.log('Unaccepting answer URL:', url);
+      console.log('API: Unaccepting answer URL:', url);
       
       const response = await fetch(url, {
         method: 'POST',
@@ -406,7 +430,7 @@ export const answersApi = {
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error(`Error unaccepting answer ${answerId}:`, error);
+      console.error(`API: Error unaccepting answer ${answerId}:`, error);
       throw error;
     }
   },
@@ -419,19 +443,49 @@ export const answersApi = {
    */
   async voteForAnswer(answerId, voteType) {
     try {
+      console.log('🗳️ API: Starting vote for answer', { answerId, voteType });
+      
       const url = `${BASE_API_URL}/answers/${answerId}/vote`;
-      console.log('Voting for answer URL:', url);
+      const payload = { vote_type: voteType };
+      
+      console.log('📤 API: Request URL:', url);
+      console.log('📤 API: Request payload:', payload);
       
       const response = await fetch(url, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ vote_type: voteType })
+        body: JSON.stringify(payload)
       });
       
+      console.log('📥 API: Response status:', response.status);
+      console.log('📥 API: Response ok:', response.ok);
+      
+      if (!response.ok) {
+        let errorText;
+        try {
+          errorText = await response.text();
+          console.error('❌ API: Error response text:', errorText);
+        } catch (e) {
+          errorText = response.statusText;
+        }
+        
+        let errorMessage = 'Не удалось проголосовать за ответ';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.detail || errorData.message || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
       const result = await handleResponse(response);
+      console.log('✅ API: Vote success:', result.data);
+      
       return result.data;
     } catch (error) {
-      console.error(`Error voting for answer ${answerId}:`, error);
+      console.error(`❌ API: Error voting for answer ${answerId}:`, error);
       throw error;
     }
   }
