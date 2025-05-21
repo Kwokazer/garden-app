@@ -31,7 +31,6 @@ services:
       - SMTP_HOST=mailhog
       - SMTP_PORT=1025
       - FRONTEND_URL=http://localhost:3000
-      - JITSI_URL=http://jitsi-web:80 
     networks:
       - garden-network
 
@@ -49,7 +48,6 @@ services:
     command: npx vite --host 0.0.0.0
     environment:
       - VITE_API_URL=http://localhost:8000
-      - VITE_JITSI_URL=http://localhost:8090
     networks:
       - garden-network
 
@@ -127,117 +125,8 @@ services:
     depends_on:
       - api
       - frontend
-      - jitsi-web
     networks:
       - garden-network
-
-  # Jitsi Meet сервисы
-  jitsi-web:
-    image: jitsi/web:stable
-    restart: unless-stopped
-    ports:
-      - '8090:80'
-    volumes:
-      - ${CONFIG}/web:/config:Z
-      - ${CONFIG}/transcripts:/usr/share/jitsi-meet/transcripts:Z
-    environment:
-      - ENABLE_AUTH=0
-      - ENABLE_GUESTS=1
-      - ENABLE_LETSENCRYPT=0
-      - ENABLE_HTTP_REDIRECT=0
-      - ENABLE_HSTS=0
-      - DISABLE_HTTPS=1
-      - JICOFO_AUTH_USER=focus
-      - XMPP_DOMAIN=meet.jitsi
-      - XMPP_AUTH_DOMAIN=auth.meet.jitsi
-      - XMPP_BOSH_URL_BASE=http://prosody:5280
-      - XMPP_MUC_DOMAIN=muc.meet.jitsi
-      - TZ=UTC
-      - JVB_TCP_HARVESTER_DISABLED=true
-    networks:
-      - garden-network
-    depends_on:
-      - prosody
-    env_file:
-      - .env.jitsi
-
-  prosody:
-    image: jitsi/prosody:stable
-    restart: unless-stopped
-    expose:
-      - '5222'
-      - '5347'
-      - '5280'
-    volumes:
-      - ${CONFIG}/prosody/config:/config:Z
-      - ${CONFIG}/prosody/prosody-plugins-custom:/prosody-plugins-custom:Z
-    environment:
-      - AUTH_TYPE=internal
-      - ENABLE_AUTH=0
-      - ENABLE_GUESTS=1
-      - XMPP_DOMAIN=meet.jitsi
-      - XMPP_AUTH_DOMAIN=auth.meet.jitsi
-      - XMPP_MUC_DOMAIN=muc.meet.jitsi
-      - XMPP_INTERNAL_MUC_DOMAIN=internal-muc.meet.jitsi
-      - XMPP_GUEST_DOMAIN=guest.meet.jitsi
-      - JICOFO_COMPONENT_SECRET=s3cr37
-      - JICOFO_AUTH_USER=focus
-      - JICOFO_AUTH_PASSWORD=passw0rd
-      - JVB_AUTH_USER=jvb
-      - JVB_AUTH_PASSWORD=passw0rd
-      - TZ=UTC
-    networks:
-      - garden-network
-    env_file:
-      - .env.jitsi
-
-  jicofo:
-    image: jitsi/jicofo:stable
-    restart: unless-stopped
-    volumes:
-      - ${CONFIG}/jicofo:/config:Z
-    environment:
-      - ENABLE_AUTH=0
-      - XMPP_DOMAIN=meet.jitsi
-      - XMPP_AUTH_DOMAIN=auth.meet.jitsi
-      - XMPP_INTERNAL_MUC_DOMAIN=internal-muc.meet.jitsi
-      - XMPP_SERVER=prosody
-      - JICOFO_COMPONENT_SECRET=s3cr37
-      - JICOFO_AUTH_USER=focus
-      - JICOFO_AUTH_PASSWORD=passw0rd
-      - TZ=UTC
-    depends_on:
-      - prosody
-    networks:
-      - garden-network
-    env_file:
-      - .env.jitsi
-
-  jvb:
-    image: jitsi/jvb:stable
-    restart: unless-stopped
-    ports:
-      - '10000:10000/udp'
-    volumes:
-      - ${CONFIG}/jvb:/config:Z
-    environment:
-      - DOCKER_HOST_ADDRESS=localhost
-      - XMPP_AUTH_DOMAIN=auth.meet.jitsi
-      - XMPP_INTERNAL_MUC_DOMAIN=internal-muc.meet.jitsi
-      - XMPP_SERVER=prosody
-      - JVB_AUTH_USER=jvb
-      - JVB_AUTH_PASSWORD=passw0rd
-      - JVB_STUN_SERVERS=meet-jit-si-turnrelay.jitsi.net:443
-      - JVB_PORT=10000
-      - JVB_TCP_HARVESTER_DISABLED=true
-      - JVB_TCP_PORT=4443
-      - TZ=UTC
-    depends_on:
-      - prosody
-    networks:
-      - garden-network
-    env_file:
-      - .env.jitsi
 
 volumes:
   postgres_data:
