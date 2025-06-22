@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy import func, or_, select, text, update, and_
 from sqlalchemy.exc import SQLAlchemyError
@@ -265,4 +265,31 @@ class UserRepository(BaseRepository[User]):
             raise
         except SQLAlchemyError as e:
             logger.error(f"Ошибка при получении пользователя по ID с ролями: {str(e)}")
+            raise DatabaseError(f"Ошибка базы данных: {str(e)}")
+
+    async def get_all_paginated(self, page: int = 1, page_size: int = 10) -> Tuple[List[User], int]:
+        """Получить пользователей с пагинацией и общим количеством"""
+        try:
+            # Вычисляем offset
+            skip = (page - 1) * page_size
+
+            # Запрос для получения пользователей с ролями
+            stmt = (
+                select(User)
+                .options(selectinload(User.roles))  # Предзагружаем роли
+                .offset(skip)
+                .limit(page_size)
+                .order_by(User.created_at.desc())
+            )
+            result = await self.session.execute(stmt)
+            users = list(result.scalars().all())
+
+            # Запрос для получения общего количества
+            count_stmt = select(func.count(User.id))
+            count_result = await self.session.execute(count_stmt)
+            total = count_result.scalar()
+
+            return users, total
+        except SQLAlchemyError as e:
+            logger.error(f"Ошибка при получении пользователей с пагинацией: {str(e)}")
             raise DatabaseError(f"Ошибка базы данных: {str(e)}")

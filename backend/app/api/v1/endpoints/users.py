@@ -25,38 +25,45 @@ logger = logging.getLogger(__name__)
 @router.get("/me", response_model=UserDetailResponse)
 async def get_current_user_info(
     current_user: User = Depends(get_current_active_user),
-    auth_service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
+    db: AsyncSession = Depends(get_db)
 ) -> Dict[str, Any]:
     """
     Получение информации о текущем пользователе
-    
+
     Args:
         current_user: Текущий пользователь
         auth_service: Сервис аутентификации
-    
+        db: Сессия базы данных
+
     Returns:
         Dict[str, Any]: Информация о пользователе
     """
+    # Получаем пользователя с ролями из базы данных
+    user_repo = UserRepository(db)
+    user_with_roles = await user_repo.get_by_id_with_roles(current_user.id)
+
     # Получаем разрешения пользователя
     permissions = await auth_service.get_user_permissions(current_user.id)
-    
+
     # Формируем ответ
     user_dict = {
-        "id": current_user.id,
-        "email": current_user.email,
-        "username": current_user.username,
-        "first_name": current_user.first_name,
-        "last_name": current_user.last_name,
-        "avatar_url": current_user.avatar_url,
-        "bio": getattr(current_user, "bio", None),
-        "is_active": current_user.is_active,
-        "is_verified": current_user.is_verified,
-        "created_at": current_user.created_at,
-        "updated_at": current_user.updated_at,
-        "roles": [{"id": role.id, "name": role.name, "description": role.description} for role in current_user.roles],
+        "id": user_with_roles.id,
+        "email": user_with_roles.email,
+        "username": user_with_roles.username,
+        "first_name": user_with_roles.first_name,
+        "last_name": user_with_roles.last_name,
+        "avatar_url": user_with_roles.avatar_url,
+        "bio": getattr(user_with_roles, "bio", None),
+        "is_active": user_with_roles.is_active,
+        "is_verified": user_with_roles.is_verified,
+        "privacy_level": user_with_roles.privacy_level.value.lower(),
+        "created_at": user_with_roles.created_at,
+        "updated_at": user_with_roles.updated_at,
+        "roles": [{"id": role.id, "name": role.name, "description": role.description} for role in user_with_roles.roles],
         "permissions": [{"id": i+1, "name": perm, "description": None} for i, perm in enumerate(permissions)]
     }
-    
+
     return user_dict
 
 @router.get("/{id}", response_model=UserProfileResponse)
@@ -91,7 +98,11 @@ async def get_user_profile(
     # Проверка на приватность (для расширения в будущем)
     # Если пользователь просматривает себя или имеет роль администратора
     is_self = current_user and current_user.id == id
-    is_admin = current_user and any(role.name == "admin" for role in current_user.roles) if current_user else False
+    is_admin = False
+    if current_user:
+        # Получаем текущего пользователя с ролями для проверки прав
+        current_user_with_roles = await user_repo.get_by_id_with_roles(current_user.id)
+        is_admin = any(role.name == "admin" for role in current_user_with_roles.roles)
     
     # Формируем базовый ответ
     profile = {
@@ -141,6 +152,7 @@ async def get_users(
             "bio": getattr(user, "bio", None),
             "is_active": user.is_active,
             "is_verified": user.is_verified,
+            "privacy_level": user.privacy_level.value.lower(),
             "created_at": user.created_at,
             "updated_at": user.updated_at,
             "roles": [{"id": role.id, "name": role.name, "description": role.description} for role in user.roles]
@@ -198,20 +210,24 @@ async def update_current_user(
         # Обновляем данные пользователя
         updated_user = await user_repo.update(current_user.id, update_data)
         
+        # Получаем обновленного пользователя с ролями
+        updated_user_with_roles = await user_repo.get_by_id_with_roles(updated_user.id)
+
         # Формируем ответ
         user_dict = {
-            "id": updated_user.id,
-            "email": updated_user.email,
-            "username": updated_user.username,
-            "first_name": updated_user.first_name,
-            "last_name": updated_user.last_name,
-            "avatar_url": updated_user.avatar_url,
-            "bio": getattr(updated_user, "bio", None),
-            "is_active": updated_user.is_active,
-            "is_verified": updated_user.is_verified,
-            "created_at": updated_user.created_at,
-            "updated_at": updated_user.updated_at,
-            "roles": [{"id": role.id, "name": role.name, "description": role.description} for role in updated_user.roles]
+            "id": updated_user_with_roles.id,
+            "email": updated_user_with_roles.email,
+            "username": updated_user_with_roles.username,
+            "first_name": updated_user_with_roles.first_name,
+            "last_name": updated_user_with_roles.last_name,
+            "avatar_url": updated_user_with_roles.avatar_url,
+            "bio": getattr(updated_user_with_roles, "bio", None),
+            "is_active": updated_user_with_roles.is_active,
+            "is_verified": updated_user_with_roles.is_verified,
+            "privacy_level": updated_user_with_roles.privacy_level.value.lower(),
+            "created_at": updated_user_with_roles.created_at,
+            "updated_at": updated_user_with_roles.updated_at,
+            "roles": [{"id": role.id, "name": role.name, "description": role.description} for role in updated_user_with_roles.roles]
         }
         
         return user_dict
@@ -276,20 +292,24 @@ async def update_user(
         # Обновляем данные пользователя
         updated_user = await user_repo.update(id, update_data)
         
+        # Получаем обновленного пользователя с ролями
+        updated_user_with_roles = await user_repo.get_by_id_with_roles(updated_user.id)
+
         # Формируем ответ
         user_dict = {
-            "id": updated_user.id,
-            "email": updated_user.email,
-            "username": updated_user.username,
-            "first_name": updated_user.first_name,
-            "last_name": updated_user.last_name,
-            "avatar_url": updated_user.avatar_url,
-            "bio": getattr(updated_user, "bio", None),
-            "is_active": updated_user.is_active,
-            "is_verified": updated_user.is_verified,
-            "created_at": updated_user.created_at,
-            "updated_at": updated_user.updated_at,
-            "roles": [{"id": role.id, "name": role.name, "description": role.description} for role in updated_user.roles]
+            "id": updated_user_with_roles.id,
+            "email": updated_user_with_roles.email,
+            "username": updated_user_with_roles.username,
+            "first_name": updated_user_with_roles.first_name,
+            "last_name": updated_user_with_roles.last_name,
+            "avatar_url": updated_user_with_roles.avatar_url,
+            "bio": getattr(updated_user_with_roles, "bio", None),
+            "is_active": updated_user_with_roles.is_active,
+            "is_verified": updated_user_with_roles.is_verified,
+            "privacy_level": updated_user_with_roles.privacy_level.value.lower(),
+            "created_at": updated_user_with_roles.created_at,
+            "updated_at": updated_user_with_roles.updated_at,
+            "roles": [{"id": role.id, "name": role.name, "description": role.description} for role in updated_user_with_roles.roles]
         }
         
         return user_dict
@@ -342,8 +362,11 @@ async def add_role_to_user(
                 detail=f"Роль с ID {role_data.role_id} не найдена"
             )
         
+        # Получаем пользователя с ролями для проверки
+        user_with_roles = await user_repo.get_by_id_with_roles(user.id)
+
         # Проверяем, есть ли уже у пользователя эта роль
-        if any(r.id == role.id for r in user.roles):
+        if any(r.id == role.id for r in user_with_roles.roles):
             return {
                 "user_id": user.id,
                 "role": {
@@ -415,16 +438,19 @@ async def remove_role_from_user(
                 detail=f"Роль с ID {role_id} не найдена"
             )
         
+        # Получаем пользователя с ролями для проверки
+        user_with_roles = await user_repo.get_by_id_with_roles(user.id)
+
         # Проверяем, есть ли у пользователя эта роль
-        if not any(r.id == role.id for r in user.roles):
+        if not any(r.id == role.id for r in user_with_roles.roles):
             return {
                 "user_id": user.id,
                 "role_id": role.id,
                 "message": f"Роль '{role.name}' не присвоена пользователю"
             }
-        
+
         # Проверяем, это последняя роль или нет
-        if len(user.roles) == 1:
+        if len(user_with_roles.roles) == 1:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Нельзя удалить последнюю роль пользователя"

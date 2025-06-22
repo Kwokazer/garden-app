@@ -1,35 +1,32 @@
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.application.dependencies import get_auth_service
 from app.application.services.auth_service import AuthService
 from app.domain.models.user import User
 
-# Настройка OAuth2 для получения токена из заголовка Authorization
+# Настройка HTTPBearer для получения токена из заголовка Authorization
 # Добавляем auto_error=False, чтобы схема не вызывала ошибку, если токен отсутствует
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/api/v1/auth/login",
-    scheme_name="JWT",
-    auto_error=False 
-)
+security = HTTPBearer(auto_error=False)
 
 async def get_current_user(
-    # token: str = Depends(oauth2_scheme), # Теперь oauth2_scheme может вернуть None, поэтому тип token должен быть Optional[str]
-    token: Optional[str] = Depends(oauth2_scheme), # oauth2_scheme теперь с auto_error=False
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     auth_service: AuthService = Depends(get_auth_service)
-) -> User: # Эта функция все еще должна возвращать User или вызывать ошибку, если токен есть, но он невалидный
+) -> User:
     """
     Получить текущего пользователя из JWT токена.
     Вызывает ошибку, если токен предоставлен, но недействителен.
     """
-    if not token: # Если токен не предоставлен (из-за auto_error=False)
+    if not credentials: # Если токен не предоставлен
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Необходима аутентификация",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    token = credentials.credentials
     try:
         user = await auth_service.get_current_user(token)
         return user
@@ -146,15 +143,17 @@ def check_role(role_name: str):
     return role_dependency
 
 async def optional_current_user(
-    token: Optional[str] = Depends(oauth2_scheme), # oauth2_scheme теперь с auto_error=False
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     auth_service: AuthService = Depends(get_auth_service)
 ) -> Optional[User]:
     """
     Получить текущего пользователя, если токен предоставлен и валиден.
     Возвращает None, если пользователь не аутентифицирован или токен не предоставлен.
     """
-    if not token: # Если токен не предоставлен (oauth2_scheme вернет None)
+    if not credentials: # Если токен не предоставлен
         return None
+
+    token = credentials.credentials
     try:
         # AuthService.get_current_user должен сам обрабатывать ошибки и может вызывать AuthenticationError
         user = await auth_service.get_current_user(token)

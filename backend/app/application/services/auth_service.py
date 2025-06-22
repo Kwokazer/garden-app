@@ -14,6 +14,7 @@ from app.domain.models.user import User
 from app.infrastructure.cache.redis_service import RedisService
 from app.infrastructure.database import get_db
 from app.infrastructure.database.repositories import RoleRepository, UserRepository, OAuthRepository
+from app.infrastructure.database.repositories.role_repository import PermissionRepository
 
 from .base import (AuthenticationError, BaseService, ValidationError)
 
@@ -39,6 +40,7 @@ class AuthService(BaseService):
         self.db = db
         self.user_repository = UserRepository(db)
         self.role_repository = RoleRepository(db)
+        self.permission_repository = PermissionRepository(db)
         self.redis_cache = redis_cache or RedisService()
         
     def _verify_password(self, plain_password: str, hashed_password: str) -> bool:
