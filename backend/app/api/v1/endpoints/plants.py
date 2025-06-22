@@ -3,9 +3,11 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.common.security import check_permission
 from app.application.services.base import NotFoundError, ValidationError
 from app.application.services.plant_service import PlantService
 from app.application.services.plant_search_service import PlantSearchService
+from app.core.constants import PERMISSION_MANAGE_PLANTS
 from app.domain.schemas.plant import (PlantCreate, PlantFilterParams,
                                      PlantListResponse, PlantResponse, PlantUpdate)
 from app.domain.schemas.plant_image import PlantImageCreate, PlantImageResponse

@@ -72,7 +72,7 @@ class FertilizingFrequency(str, enum.Enum):
     MONTHLY = "MONTHLY"
     QUARTERLY = "QUARTERLY"
     ANNUALLY = "ANNUALLY"
-    NONE = "none"
+    NONE = "NONE"
 
 
 # Перечисление частоты пересадки
