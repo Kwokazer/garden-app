@@ -363,9 +363,9 @@ class AuthService(BaseService):
                 self._log_info(f"Токен без идентификатора пользователя (sub)")
                 raise AuthenticationError("Неверный формат токена")
             
-            # Получаем пользователя
+            # Получаем пользователя с ролями
             try:
-                user = await self.user_repository.get_by_id(int(user_id))
+                user = await self.user_repository.get_by_id_with_roles(int(user_id))
             except Exception as e:
                 self._log_error(f"Ошибка при получении пользователя ID: {user_id} из базы данных", e)
                 raise AuthenticationError("Пользователь не найден")

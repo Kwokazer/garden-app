@@ -15,6 +15,8 @@ from app.application.services.climate_zone_service import ClimateZoneService
 from app.application.services.question_service import QuestionService
 from app.application.services.answer_service import AnswerService
 from app.application.services.plant_search_service import PlantSearchService
+from app.application.services.webinar_service import WebinarService
+from app.application.services.jitsi_service import JitsiService
 
 __all__ = [
     # Base classes
@@ -35,4 +37,6 @@ __all__ = [
     'QuestionService',
     'AnswerService',
     'PlantSearchService',
-] 
+    'WebinarService',
+    'JitsiService',
+]

@@ -144,3 +144,11 @@ class UserPasswordChange(BaseSchema):
         if error:
             raise ValueError(error)
         return v
+
+class UserRef(BaseSchema):
+    """Упрощенная схема пользователя для вложенного отображения"""
+    id: int = Field(..., description="Уникальный идентификатор пользователя")
+    username: str = Field(..., description="Имя пользователя")
+    first_name: Optional[str] = Field(None, description="Имя")
+    last_name: Optional[str] = Field(None, description="Фамилия")
+    avatar_url: Optional[str] = Field(None, description="URL аватара")

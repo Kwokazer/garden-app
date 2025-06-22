@@ -43,9 +43,9 @@
                 </router-link>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="#webinars">
+                <router-link class="nav-link" to="/webinars">
                   <i class="bi bi-camera-video me-1"></i> Вебинары
-                </a>
+                </router-link>
               </li>
             </ul>
             

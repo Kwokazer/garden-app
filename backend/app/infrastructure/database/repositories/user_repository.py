@@ -244,4 +244,25 @@ class UserRepository(BaseRepository[User]):
             return result.scalars().first()
         except SQLAlchemyError as e:
             logger.error(f"Ошибка при получении пользователя по email с ролями: {str(e)}")
-            raise DatabaseError(f"Ошибка базы данных: {str(e)}") 
+            raise DatabaseError(f"Ошибка базы данных: {str(e)}")
+
+    async def get_by_id_with_roles(self, user_id: int) -> User:
+        """Получить пользователя по ID с загрузкой ролей"""
+        try:
+            stmt = (
+                select(User)
+                .options(selectinload(User.roles))  # Предзагружаем роли
+                .where(User.id == user_id)
+            )
+            result = await self.session.execute(stmt)
+            user = result.scalars().first()
+
+            if not user:
+                raise EntityNotFoundError("User", user_id)
+
+            return user
+        except EntityNotFoundError:
+            raise
+        except SQLAlchemyError as e:
+            logger.error(f"Ошибка при получении пользователя по ID с ролями: {str(e)}")
+            raise DatabaseError(f"Ошибка базы данных: {str(e)}")

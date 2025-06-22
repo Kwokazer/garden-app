@@ -270,3 +270,10 @@ class PlantFilterParams(BaseSchema):
     max_height: Optional[float] = Field(None, description="Максимальная высота растения (см)")
     min_temperature: Optional[float] = Field(None, description="Минимальная температура (°C)")
     max_temperature: Optional[float] = Field(None, description="Максимальная температура (°C)")
+
+class PlantRef(BaseSchema):
+    """Упрощенная схема растения для вложенного отображения"""
+    id: int = Field(..., description="Уникальный идентификатор растения")
+    name: str = Field(..., description="Название растения")
+    latin_name: Optional[str] = Field(None, description="Латинское название растения")
+    plant_type: Optional[PlantTypeEnum] = Field(None, description="Тип растения")

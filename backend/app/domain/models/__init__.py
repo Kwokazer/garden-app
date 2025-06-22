@@ -11,6 +11,7 @@ from app.domain.models.tag import Tag, plant_tag
 from app.domain.models.vote import QuestionVote, AnswerVote, VoteType
 from app.domain.models.role import Role, RolePermission
 from app.domain.models.user import PrivacyLevel, User, UserRole
+from app.domain.models.webinar import Webinar, WebinarParticipant, WebinarStatus, ParticipantRole
 
 __all__ = [
     # Base
@@ -44,4 +45,10 @@ __all__ = [
     "QuestionVote",
     "AnswerVote",
     "VoteType",
+
+    # Webinar related
+    "Webinar",
+    "WebinarParticipant",
+    "WebinarStatus",
+    "ParticipantRole",
 ]

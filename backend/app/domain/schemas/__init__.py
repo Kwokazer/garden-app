@@ -13,7 +13,7 @@ from app.domain.schemas.common import (PaginatedResponse, SuccessResponse,
                                        ErrorResponse)
 from app.domain.schemas.plant import (PlantBase, PlantCreate, PlantFilterParams,
                                      PlantListResponse, PlantResponse,
-                                     PlantTypeEnum, PlantUpdate)
+                                     PlantTypeEnum, PlantUpdate, PlantRef)
 from app.domain.schemas.plant_category import (PlantCategoryBase, PlantCategoryCreate,
                                              PlantCategoryResponse, PlantCategoryUpdate,
                                              PlantCategoryRef)
@@ -28,9 +28,16 @@ from app.domain.schemas.tag import (TagBase, TagCreate, TagRef,
 from app.domain.schemas.user import (PrivacyLevelEnum, RoleResponse, UserBase,
                                      UserCreate, UserDetailResponse,
                                      UserPasswordChange, UserPublicResponse,
-                                     UserResponse, UserUpdate)
+                                     UserResponse, UserUpdate, UserRef)
 from app.domain.schemas.vote import (AnswerVoteCreate, QuestionVoteCreate,
                                     VoteBase, VoteResponse, VoteTypeEnum)
+from app.domain.schemas.webinar import (WebinarBase, WebinarCreate, WebinarUpdate,
+                                       WebinarResponse, WebinarListResponse,
+                                       WebinarFilterParams, WebinarStatusEnum,
+                                       ParticipantRoleEnum, WebinarParticipantRef,
+                                       WebinarParticipantCreate, WebinarParticipantUpdate,
+                                       JitsiTokenRequest, JitsiTokenResponse,
+                                       JitsiConfigResponse)
 
 __all__ = [
     # Base schemas
@@ -40,9 +47,9 @@ __all__ = [
     "PaginatedResponse", "SuccessResponse", "ErrorResponse",
     
     # User schemas
-    "UserBase", "UserCreate", "UserUpdate", "UserResponse", 
-    "UserDetailResponse", "UserPublicResponse", "UserPasswordChange", 
-    "PrivacyLevelEnum", "RoleResponse",
+    "UserBase", "UserCreate", "UserUpdate", "UserResponse",
+    "UserDetailResponse", "UserPublicResponse", "UserPasswordChange",
+    "PrivacyLevelEnum", "RoleResponse", "UserRef",
     
     # Auth schemas
     "Login", "TokenResponse", "TokenData", "PasswordReset", 
@@ -51,7 +58,7 @@ __all__ = [
     
     # Plant schemas
     "PlantBase", "PlantCreate", "PlantUpdate", "PlantResponse", "PlantListResponse",
-    "PlantTypeEnum", "PlantFilterParams",
+    "PlantTypeEnum", "PlantFilterParams", "PlantRef",
     
     # Plant category schemas
     "PlantCategoryBase", "PlantCategoryCreate", "PlantCategoryUpdate", 
@@ -75,6 +82,13 @@ __all__ = [
     "TagBase", "TagCreate", "TagUpdate", "TagResponse", "TagRef",
     
     # Vote schemas
-    "VoteBase", "VoteTypeEnum", "VoteResponse", 
-    "QuestionVoteCreate", "AnswerVoteCreate"
+    "VoteBase", "VoteTypeEnum", "VoteResponse",
+    "QuestionVoteCreate", "AnswerVoteCreate",
+
+    # Webinar schemas
+    "WebinarBase", "WebinarCreate", "WebinarUpdate", "WebinarResponse",
+    "WebinarListResponse", "WebinarFilterParams", "WebinarStatusEnum",
+    "ParticipantRoleEnum", "WebinarParticipantRef", "WebinarParticipantCreate",
+    "WebinarParticipantUpdate", "JitsiTokenRequest", "JitsiTokenResponse",
+    "JitsiConfigResponse"
 ]
