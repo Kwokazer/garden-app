@@ -83,8 +83,8 @@ class JitsiService(BaseService):
             # Генерируем токен
             token = jwt.encode(payload, self.app_secret, algorithm="HS256")
             
-            # Формируем URL для подключения к локальному серверу
-            jitsi_url = f"http://localhost:9091/{webinar.room_name}?jwt={token}"
+            # Формируем URL для подключения к Jitsi серверу
+            jitsi_url = f"{settings.JITSI_HTTP_URL}/{webinar.room_name}?jwt={token}"
             
             self._log_info(f"Generated JWT token for user {user.id} in webinar {webinar.id}")
             
@@ -121,7 +121,7 @@ class JitsiService(BaseService):
             # Базовая конфигурация
             config = {
                 "room_name": webinar.room_name,
-                "domain": "localhost:9091",
+                "domain": self.jitsi_domain,
                 "config_overwrite": {
                     "startWithAudioMuted": not is_moderator,
                     "startWithVideoMuted": not is_moderator,

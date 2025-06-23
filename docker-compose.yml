@@ -274,6 +274,58 @@ services:
     networks:
       - garden-network
 
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A app.celery_app worker --loglevel=info -Q celery,webinar
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - ./backend/.env
+    environment:
+      - DOCKER_ENV=true
+      - POSTGRES_HOST=db
+      - REDIS_HOST=redis
+    networks:
+      - garden-network
+
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A app.celery_app beat --loglevel=info
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - ./backend/.env
+    environment:
+      - DOCKER_ENV=true
+      - POSTGRES_HOST=db
+      - REDIS_HOST=redis
+    networks:
+      - garden-network
+
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A app.celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    networks:
+      - garden-network
+
 volumes:
   postgres_data:
   mongo_data:

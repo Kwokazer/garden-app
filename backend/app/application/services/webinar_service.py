@@ -1,5 +1,5 @@
 # backend/app/application/services/webinar_service.py
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_, func
@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 from app.application.services.base import BaseService, NotFoundError, ValidationError, AuthorizationError
 from app.application.services.jitsi_service import JitsiService
 from app.domain.models import Webinar, WebinarParticipant, User, Plant, WebinarStatus, ParticipantRole
+from app.tasks.webinar_tasks import schedule_webinar_activation, cancel_webinar_activation
 from app.domain.schemas.webinar import (
     WebinarCreate, WebinarUpdate, WebinarFilterParams,
     WebinarParticipantCreate, WebinarParticipantUpdate
@@ -72,6 +73,14 @@ class WebinarService(BaseService[Webinar]):
         
         # Добавляем ведущего как участника с ролью HOST
         await self.add_participant(webinar.id, host.id, ParticipantRole.HOST)
+
+        # Планируем автоматическую активацию
+        if webinar.scheduled_at:
+            schedule_webinar_activation.delay(
+                webinar.id,
+                webinar.scheduled_at.isoformat()
+            )
+            self._log_info(f"Запланирована автоактивация вебинара {webinar.id} на {webinar.scheduled_at}")
 
         # Перезагружаем вебинар с полными данными
         created_webinar = await self.get_webinar(webinar.id)
@@ -206,12 +215,29 @@ class WebinarService(BaseService[Webinar]):
         
         # Обновляем поля
         update_data = webinar_data.model_dump(exclude_unset=True)
+
+        # Проверяем, изменилось ли время начала
+        scheduled_at_changed = "scheduled_at" in update_data
+
         for field, value in update_data.items():
             setattr(webinar, field, value)
-        
+
+        # Если изменилось время начала, перепланируем активацию
+        if scheduled_at_changed:
+            # Отменяем старую задачу
+            cancel_webinar_activation.delay(webinar_id)
+
+            # Планируем новую, если есть новое время
+            if webinar.scheduled_at:
+                schedule_webinar_activation.delay(
+                    webinar_id,
+                    webinar.scheduled_at.isoformat()
+                )
+                self._log_info(f"Перепланирована автоактивация вебинара {webinar_id} на {webinar.scheduled_at}")
+
         await self.db.commit()
         await self.db.refresh(webinar)
-        
+
         self._log_info(f"Updated webinar {webinar_id} by user {user.id}")
         return webinar
     
@@ -229,9 +255,12 @@ class WebinarService(BaseService[Webinar]):
         if not (user.has_role("admin") or user.id == webinar.host_id):
             raise AuthorizationError("Только администраторы и ведущие могут удалять вебинары")
         
+        # Отменяем запланированную активацию
+        cancel_webinar_activation.delay(webinar_id)
+
         await self.db.delete(webinar)
         await self.db.commit()
-        
+
         self._log_info(f"Deleted webinar {webinar_id} by user {user.id}")
     
     async def add_participant(
@@ -339,7 +368,7 @@ class WebinarService(BaseService[Webinar]):
         participant_result = await self.db.execute(participant_query)
         participant = participant_result.scalar_one()
         
-        participant.joined_at = datetime.utcnow()
+        participant.joined_at = datetime.now(timezone.utc)
         await self.db.commit()
         
         # Генерируем JWT токен и конфигурацию для Jitsi
@@ -361,7 +390,7 @@ class WebinarService(BaseService[Webinar]):
             webinar_data: Данные для валидации
         """
         # Проверяем дату
-        if webinar_data.scheduled_at <= datetime.utcnow():
+        if webinar_data.scheduled_at <= datetime.now(timezone.utc):
             raise ValidationError("Дата проведения должна быть в будущем")
         
         # Проверяем растение-тему, если указано

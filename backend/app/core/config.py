@@ -15,10 +15,10 @@ class Settings(BaseSettings):
     # URL фронтенда для формирования ссылок в письмах
     FRONTEND_URL: str = "http://localhost:3000"
 
-    # Настройки Jitsi (временно используем публичный сервер)
-    JITSI_API_URL: str = "https://meet.jit.si"
-    JITSI_HTTP_URL: str = "https://meet.jit.si"
-    JITSI_DOMAIN: str = "meet.jit.si"
+    # Настройки Jitsi (используем локальный сервер)
+    JITSI_API_URL: str = "http://localhost:9091"
+    JITSI_HTTP_URL: str = "http://localhost:9091"
+    JITSI_DOMAIN: str = "localhost:9091"
     JITSI_APP_ID: str = "garden_app"
     JITSI_APP_SECRET: str = "jwt_secret_for_garden_app_123"
 
