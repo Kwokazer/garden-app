@@ -106,15 +106,6 @@ services:
     networks:
       - garden-network
 
-  prometheus:
-    image: prom/prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    networks:
-      - garden-network
-
   nginx:
     image: nginx:alpine
     ports:
@@ -331,7 +322,6 @@ volumes:
   mongo_data:
   redis_data:
   rabbitmq_data:
-  prometheus_data:
   jitsi_recordings:
 
 networks:

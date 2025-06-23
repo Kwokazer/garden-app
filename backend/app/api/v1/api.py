@@ -1,10 +1,10 @@
 from fastapi import APIRouter
 
 try:
-    from app.api.v1.endpoints import auth, users, plants, climate_zones, questions, answers, tags, plant_categories, metrics, webinars
+    from app.api.v1.endpoints import auth, users, plants, climate_zones, questions, answers, tags, plant_categories, webinars
 except ImportError:
     # Обработка случая, когда некоторые эндпоинты еще не созданы
-    from app.api.v1.endpoints import auth, users, plants, climate_zones, questions, answers, tags, plant_categories, metrics, webinars
+    from app.api.v1.endpoints import auth, users, plants, climate_zones, questions, answers, tags, plant_categories, webinars
 
 api_router = APIRouter()
 
@@ -39,4 +39,3 @@ api_router.include_router(questions.router, prefix="/questions", tags=["question
 api_router.include_router(answers.router, prefix="/answers", tags=["answers"])
 api_router.include_router(tags.router, prefix="/tags", tags=["tags"])
 api_router.include_router(webinars.router, prefix="/webinars", tags=["webinars"])
-api_router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])

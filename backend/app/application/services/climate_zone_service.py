@@ -45,7 +45,7 @@ class ClimateZoneService(BaseService):
         # Сохраняем в кэш, если он доступен
         if self.plant_cache:
             data_to_cache = [zone.model_dump() for zone in result]
-            await self.plant_cache.redis.set(cache_key, data_to_cache, expires=3600)  # Кэш на 1 час
+            await self.plant_cache.redis.set(cache_key, data_to_cache, expire=3600)  # Кэш на 1 час
             self._log_info(f"Сохранены климатические зоны в кэш: {cache_key}")
             
         return result

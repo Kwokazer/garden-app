@@ -216,7 +216,7 @@ class RedisService:
         try:
             # Добавляем токен в множество с именем "blacklisted_tokens"
             blacklist_key = f"blacklisted_token:{token}"
-            return await self.set(blacklist_key, "1", ttl)
+            return await self.set(blacklist_key, "1", expire=ttl)
         except Exception as e:
             logger.error(f"Ошибка при добавлении токена в черный список: {str(e)}")
             return False

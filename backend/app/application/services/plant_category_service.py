@@ -48,7 +48,7 @@ class PlantCategoryService(BaseService):
         # Сохраняем в кэш, если он доступен
         if self.plant_cache:
             data_to_cache = [category.model_dump() for category in result]
-            await self.plant_cache.redis.set(cache_key, data_to_cache, ttl=3600)  # Кэш на 1 час
+            await self.plant_cache.redis.set(cache_key, data_to_cache, expire=3600)  # Кэш на 1 час
             self._log_info(f"Сохранены категории в кэш: {cache_key}")
             
         return result
@@ -182,7 +182,7 @@ class PlantCategoryService(BaseService):
             
             # Если данных нет в кэше, получаем из базы
             plants = await self.category_repository.get_plants_by_category(category_id, skip, limit)
-            total = await self.category_repository.count_plants_in_category(category_id)
+            total = await self.category_repository.count_plants_by_category(category_id)
             
             # Преобразуем результаты в схему ответа
             items = [PlantResponse.model_validate(plant) for plant in plants]
@@ -193,10 +193,10 @@ class PlantCategoryService(BaseService):
             # Формируем ответ с пагинацией
             result = PlantListResponse(
                 items=items,
-                total=total,
+                total_items=total,
                 page=(skip // limit) + 1 if limit > 0 else 1,
-                size=limit,
-                pages=pages
+                per_page=limit,
+                total_pages=pages
             )
             
             # Сохраняем результат в кэш, если кэш доступен

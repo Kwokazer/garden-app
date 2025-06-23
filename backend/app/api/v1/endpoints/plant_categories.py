@@ -9,23 +9,12 @@ from app.domain.schemas.plant_category import (PlantCategoryCreate, PlantCategor
 from app.domain.schemas.plant import PlantListResponse
 from app.infrastructure.database import get_db
 from app.infrastructure.cache.plant_cache import PlantCache
-from app.infrastructure.cache.redis_service import RedisService
+from app.application.dependencies import get_redis_service
 
 router = APIRouter()
 
 # Зависимости для сервисов
-async def get_redis_service() -> RedisService:
-    redis_service = RedisService()
-    await redis_service.connect()
-    try:
-        yield redis_service
-    finally:
-        await redis_service.close()
-
-async def get_plant_cache(redis_service: RedisService = Depends(get_redis_service)) -> PlantCache:
-    return PlantCache(redis_service)
-
-async def get_plant_cache(redis_service: RedisService = Depends(get_redis_service)) -> PlantCache:
+async def get_plant_cache(redis_service = Depends(get_redis_service)) -> PlantCache:
     return PlantCache(redis_service)
 
 async def get_category_service(

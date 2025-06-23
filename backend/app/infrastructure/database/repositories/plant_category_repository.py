@@ -58,7 +58,12 @@ class PlantCategoryRepository(BaseRepository[PlantCategory]):
         # Строим запрос
         query = (
             select(Plant)
-            .options(selectinload(Plant.categories), selectinload(Plant.climate_zones))
+            .options(
+                selectinload(Plant.categories),
+                selectinload(Plant.climate_zones),
+                selectinload(Plant.images),
+                selectinload(Plant.tags)
+            )
             .join(PlantToCategory, Plant.id == PlantToCategory.plant_id)
             .filter(PlantToCategory.category_id == category_id)
             .offset(skip).limit(limit)

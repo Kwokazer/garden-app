@@ -49,7 +49,7 @@ class PlantCacheService(BaseCacheService[Any]):
         Returns:
             bool: True в случае успеха
         """
-        return await self.redis.set(f"{self.prefix}:{key}", value, ttl or self.default_ttl)
+        return await self.redis.set(f"{self.prefix}:{key}", value, expire=ttl or self.default_ttl)
     
     async def delete(self, key: str) -> bool:
         """
