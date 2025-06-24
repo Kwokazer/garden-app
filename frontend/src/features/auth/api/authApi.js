@@ -82,7 +82,7 @@ export const authApi = {
       email,
       password,
     };
-    
+
     // Добавляем опциональные поля только если они переданы
     if (firstName) registrationData.first_name = firstName;
     if (lastName) registrationData.last_name = lastName;
@@ -110,7 +110,7 @@ export const authApi = {
         data: { message: "Выход выполнен (локально)." },
       });
     }
-    
+
     const response = await fetch(`${BASE_API_URL}/auth/logout`, {
       method: "POST",
       headers: {
@@ -160,16 +160,19 @@ export const authApi = {
    * @returns {Promise<Object>} - ответ от сервера
    */
   async resetPasswordConfirm(resetToken, newPassword) {
-    const response = await fetch(`${BASE_API_URL}/auth/reset-password-confirm`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        reset_token: resetToken,
-        new_password: newPassword,
-      }),
-    });
+    const response = await fetch(
+      `${BASE_API_URL}/auth/reset-password-confirm`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          reset_token: resetToken,
+          new_password: newPassword,
+        }),
+      }
+    );
     return handleResponse(response);
   },
 
@@ -197,13 +200,13 @@ export const authApi = {
    * @returns {Promise<Object>} - ответ от сервера с данными пользователя
    */
   async getCurrentUser(accessToken) {
-    const response = await fetch(`${BASE_API_URL}/users/me`, {
+    const response = await fetch(`${BASE_API_URL}/auth/me`, {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
     });
     return handleResponse(response);
-  }
+  },
 };

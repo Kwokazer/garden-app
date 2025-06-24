@@ -18,6 +18,7 @@ from app.domain.schemas.auth import (EmailVerificationRequest,
                                      RefreshTokenRequest, RegistrationRequest,
                                      RegistrationResponse, SuccessResponse,
                                      TokenResponse)
+from app.domain.schemas.user import UserMeResponse
 from app.infrastructure.external.email_service import EmailService
 
 # Создаем роутер с зависимостью AuthService на уровне роутера
@@ -185,6 +186,28 @@ async def reset_password_confirm(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Неверный или устаревший токен сброса пароля"
         )
+
+@router.get("/me", response_model=UserMeResponse)
+async def get_current_user(
+    user: User = Depends(get_current_active_user)
+) -> UserMeResponse:
+    """
+    Получение информации о текущем пользователе
+    """
+    return UserMeResponse(
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        avatar_url=user.avatar_url,
+        bio=None,  # Поле bio отсутствует в модели User
+        created_at=user.created_at,
+        is_active=user.is_active,
+        is_verified=user.is_verified,
+        privacy_level=user.privacy_level.value.lower(),
+        roles=[role.name for role in user.roles] if user.roles else []
+    )
 
 @router.post("/change-password", response_model=SuccessResponse)
 async def change_password(

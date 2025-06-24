@@ -8,7 +8,10 @@
             <div class="card-body p-4">
               <div class="d-flex justify-content-between align-items-center">
                 <div>
-                  <h2 class="fw-bold text-primary mb-1">Добро пожаловать, {{ displayName }}!</h2>
+                  <h2 class="fw-bold text-primary mb-1">
+                    <i :class="greetingIcon" class="me-2"></i>
+                    Добро пожаловать, {{ displayName }}!
+                  </h2>
                   <p class="text-muted">{{ greeting }}</p>
                 </div>
                 <button @click="handleLogout" class="btn btn-outline-danger" :disabled="auth.isLoading">
@@ -44,10 +47,6 @@
               
               <ul class="list-group list-group-flush">
                 <li class="list-group-item d-flex justify-content-between px-0">
-                  <span class="text-muted">ID:</span>
-                  <span class="fw-medium">{{ auth.user?.id || 'Не указан' }}</span>
-                </li>
-                <li class="list-group-item d-flex justify-content-between px-0">
                   <span class="text-muted">Имя:</span>
                   <span class="fw-medium">{{ auth.user?.first_name || 'Не указано' }}</span>
                 </li>
@@ -56,16 +55,25 @@
                   <span class="fw-medium">{{ auth.user?.last_name || 'Не указана' }}</span>
                 </li>
                 <li class="list-group-item d-flex justify-content-between px-0">
+                  <span class="text-muted">Дата регистрации:</span>
+                  <span class="fw-medium">{{ formatDate(auth.user?.created_at) }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0">
                   <span class="text-muted">Статус:</span>
-                  <span class="badge bg-success py-2">Активен</span>
+                  <span class="badge bg-success py-2">
+                    <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>
+                    Активен
+                  </span>
                 </li>
                 <li class="list-group-item d-flex justify-content-between px-0">
                   <span class="text-muted">Роли:</span>
                   <div>
-                    <span v-if="auth.user?.roles?.length" v-for="role in auth.user.roles" :key="role" 
-                          class="badge bg-info me-1 py-2">
-                      {{ role }}
-                    </span>
+                    <template v-if="auth.user?.roles?.length">
+                      <span v-for="role in auth.user.roles" :key="role"
+                            class="badge bg-info me-1 py-2">
+                        {{ role }}
+                      </span>
+                    </template>
                     <span v-else class="badge bg-secondary py-2">Пользователь</span>
                   </div>
                 </li>
@@ -93,59 +101,79 @@
             <div class="card-body p-4">
               <div class="row g-4">
                 <div class="col-md-6">
-                  <div class="d-flex align-items-center p-3 rounded border h-100">
-                    <div class="flex-shrink-0 me-3">
-                      <span class="avatar bg-primary-subtle text-primary rounded-circle p-3">
-                        <i class="bi bi-book fs-4"></i>
-                      </span>
+                  <router-link :to="{ name: 'PlantsList' }" class="text-decoration-none">
+                    <div class="quick-action-card d-flex align-items-center p-3 rounded border h-100">
+                      <div class="flex-shrink-0 me-3">
+                        <span class="avatar bg-primary-subtle text-primary rounded-circle p-3">
+                          <i class="bi bi-flower3 fs-4"></i>
+                        </span>
+                      </div>
+                      <div>
+                        <h6 class="fw-bold mb-1 text-dark">База растений</h6>
+                        <p class="text-muted mb-0 small">Изучите нашу базу данных растений и советы по выращиванию</p>
+                      </div>
+                      <div class="ms-auto">
+                        <i class="bi bi-arrow-right text-muted"></i>
+                      </div>
                     </div>
-                    <div>
-                      <h6 class="fw-bold mb-1">База растений</h6>
-                      <p class="text-muted mb-0 small">Изучите нашу базу данных растений и советы по выращиванию</p>
-                    </div>
-                  </div>
+                  </router-link>
                 </div>
-                
+
                 <div class="col-md-6">
-                  <div class="d-flex align-items-center p-3 rounded border h-100">
-                    <div class="flex-shrink-0 me-3">
-                      <span class="avatar bg-success-subtle text-success rounded-circle p-3">
-                        <i class="bi bi-chat-dots fs-4"></i>
-                      </span>
+                  <router-link :to="{ name: 'QuestionsList' }" class="text-decoration-none">
+                    <div class="quick-action-card d-flex align-items-center p-3 rounded border h-100">
+                      <div class="flex-shrink-0 me-3">
+                        <span class="avatar bg-success-subtle text-success rounded-circle p-3">
+                          <i class="bi bi-chat-dots fs-4"></i>
+                        </span>
+                      </div>
+                      <div>
+                        <h6 class="fw-bold mb-1 text-dark">Вопросы и ответы</h6>
+                        <p class="text-muted mb-0 small">Задайте вопрос или найдите ответы от других садоводов</p>
+                      </div>
+                      <div class="ms-auto">
+                        <i class="bi bi-arrow-right text-muted"></i>
+                      </div>
                     </div>
-                    <div>
-                      <h6 class="fw-bold mb-1">Вопросы и ответы</h6>
-                      <p class="text-muted mb-0 small">Задайте вопрос или найдите ответы от других садоводов</p>
-                    </div>
-                  </div>
+                  </router-link>
                 </div>
-                
+
                 <div class="col-md-6">
-                  <div class="d-flex align-items-center p-3 rounded border h-100">
-                    <div class="flex-shrink-0 me-3">
-                      <span class="avatar bg-warning-subtle text-warning rounded-circle p-3">
-                        <i class="bi bi-camera fs-4"></i>
-                      </span>
+                  <router-link :to="{ name: 'PlantsList', query: { favorites: 'true' } }" class="text-decoration-none">
+                    <div class="quick-action-card d-flex align-items-center p-3 rounded border h-100">
+                      <div class="flex-shrink-0 me-3">
+                        <span class="avatar bg-warning-subtle text-warning rounded-circle p-3">
+                          <i class="bi bi-heart fs-4"></i>
+                        </span>
+                      </div>
+                      <div>
+                        <h6 class="fw-bold mb-1 text-dark">Мой сад</h6>
+                        <p class="text-muted mb-0 small">Ваши избранные растения и личная коллекция</p>
+                      </div>
+                      <div class="ms-auto">
+                        <i class="bi bi-arrow-right text-muted"></i>
+                      </div>
                     </div>
-                    <div>
-                      <h6 class="fw-bold mb-1">Мой сад</h6>
-                      <p class="text-muted mb-0 small">Добавьте растения в свой виртуальный сад и отслеживайте их рост</p>
-                    </div>
-                  </div>
+                  </router-link>
                 </div>
-                
+
                 <div class="col-md-6">
-                  <div class="d-flex align-items-center p-3 rounded border h-100">
-                    <div class="flex-shrink-0 me-3">
-                      <span class="avatar bg-info-subtle text-info rounded-circle p-3">
-                        <i class="bi bi-calendar-event fs-4"></i>
-                      </span>
+                  <router-link :to="{ name: 'Webinars' }" class="text-decoration-none">
+                    <div class="quick-action-card d-flex align-items-center p-3 rounded border h-100">
+                      <div class="flex-shrink-0 me-3">
+                        <span class="avatar bg-info-subtle text-info rounded-circle p-3">
+                          <i class="bi bi-camera-video fs-4"></i>
+                        </span>
+                      </div>
+                      <div>
+                        <h6 class="fw-bold mb-1 text-dark">Вебинары</h6>
+                        <p class="text-muted mb-0 small">Зарегистрируйтесь на предстоящие вебинары и мастер-классы</p>
+                      </div>
+                      <div class="ms-auto">
+                        <i class="bi bi-arrow-right text-muted"></i>
+                      </div>
                     </div>
-                    <div>
-                      <h6 class="fw-bold mb-1">Вебинары</h6>
-                      <p class="text-muted mb-0 small">Зарегистрируйтесь на предстоящие вебинары и мастер-классы</p>
-                    </div>
-                  </div>
+                  </router-link>
                 </div>
               </div>
             </div>
@@ -182,10 +210,15 @@
   </template>
   
   <script setup>
-  import { computed } from 'vue';
+  import { computed, onMounted } from 'vue';
   import { useAuthStore } from '../store/authStore.js';
-  
+
   const auth = useAuthStore();
+
+  // Обновляем данные пользователя при загрузке страницы
+  onMounted(async () => {
+    await auth.refreshUserData();
+  });
   
   // Вычисляемое имя для отображения
   const displayName = computed(() => {
@@ -198,7 +231,7 @@
   // Динамическое приветствие в зависимости от времени суток
   const greeting = computed(() => {
     const hour = new Date().getHours();
-    
+
     if (hour >= 5 && hour < 12) {
       return 'Доброе утро! Что планируете посадить сегодня?';
     } else if (hour >= 12 && hour < 18) {
@@ -209,11 +242,58 @@
       return 'Доброй ночи! Отдыхайте, завтра ждет новый день в саду.';
     }
   });
+
+  // Иконка в зависимости от времени суток
+  const greetingIcon = computed(() => {
+    const hour = new Date().getHours();
+
+    if (hour >= 5 && hour < 12) {
+      return 'bi bi-sunrise text-warning';
+    } else if (hour >= 12 && hour < 18) {
+      return 'bi bi-sun text-warning';
+    } else if (hour >= 18 && hour < 23) {
+      return 'bi bi-sunset text-orange';
+    } else {
+      return 'bi bi-moon-stars text-info';
+    }
+  });
   
   // Обработчик выхода из системы
   async function handleLogout() {
     await auth.logout();
     // Редирект происходит в методе logout хранилища
+  }
+
+  // Форматирование даты
+  function formatDate(dateString) {
+    if (!dateString) return 'Не указана';
+
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+      return 'Вчера';
+    } else if (diffDays < 7) {
+      // Правильное склонение для дней
+      let dayWord;
+      if (diffDays === 2 || diffDays === 3 || diffDays === 4) {
+        dayWord = 'дня';
+      } else {
+        dayWord = 'дней';
+      }
+      return `${diffDays} ${dayWord} назад`;
+    } else if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return `${weeks} ${weeks === 1 ? 'неделю' : 'недель'} назад`;
+    } else {
+      return date.toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
   }
   </script>
   
@@ -221,10 +301,32 @@
   .card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
-  
+
   .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* Стили для быстрых действий */
+  .quick-action-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 1px solid #e9ecef !important;
+  }
+
+  .quick-action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-color: var(--bs-primary) !important;
+  }
+
+  .quick-action-card:hover .avatar {
+    transform: scale(1.05);
+  }
+
+  .quick-action-card:hover .bi-arrow-right {
+    transform: translateX(3px);
+    color: var(--bs-primary) !important;
   }
   
   .avatar-placeholder {
@@ -244,6 +346,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: transform 0.3s ease;
+  }
+
+  /* Улучшенный аватар профиля */
+  .avatar-placeholder {
+    transition: all 0.3s ease;
+    border: 3px solid #e9ecef;
+  }
+
+  .avatar-placeholder:hover {
+    border-color: var(--bs-primary);
+    transform: scale(1.02);
   }
   
   .bg-primary-subtle {
@@ -279,5 +393,31 @@
   
   .list-group-item:last-child {
     border-bottom: 0;
+  }
+
+  /* Анимация для статуса активности */
+  .badge .bi-circle-fill {
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  /* Улучшенные переходы для элементов списка */
+  .list-group-item {
+    transition: background-color 0.2s ease;
+  }
+
+  .list-group-item:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.02);
   }
   </style>

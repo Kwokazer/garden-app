@@ -97,6 +97,21 @@ class UserProfileResponse(BaseSchema):
     bio: Optional[str] = None
     created_at: datetime
 
+class UserMeResponse(BaseSchema):
+    """Схема для ответа /auth/me с упрощенными ролями"""
+    id: int
+    username: str
+    email: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    bio: Optional[str] = None
+    created_at: datetime
+    is_active: bool
+    is_verified: bool
+    privacy_level: PrivacyLevelEnum
+    roles: List[str] = Field(default_factory=list, description="Названия ролей пользователя")
+
 class UserListResponse(BaseSchema):
     """Схема для списка пользователей с пагинацией"""
     total: int

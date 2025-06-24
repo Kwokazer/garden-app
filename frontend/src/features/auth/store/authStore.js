@@ -13,7 +13,7 @@ function parseJwt(token) {
     // Разделяем JWT на части и берем payload (вторую часть)
     const base64Url = token.split(".")[1];
     const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    
+
     // Декодируем Base64
     const jsonPayload = decodeURIComponent(
       atob(base64)
@@ -23,7 +23,7 @@ function parseJwt(token) {
         })
         .join("")
     );
-    
+
     return JSON.parse(jsonPayload);
   } catch (e) {
     console.error("Ошибка декодирования JWT: ", e);
@@ -61,7 +61,7 @@ export const useAuthStore = defineStore("auth", () => {
       localStorage.removeItem("user");
       return;
     }
-    
+
     const decodedToken = parseJwt(token);
     if (decodedToken && decodedToken.sub) {
       // Из токена можем получить базовую информацию
@@ -69,11 +69,11 @@ export const useAuthStore = defineStore("auth", () => {
         id: decodedToken.sub,
         roles: decodedToken.roles || [],
       };
-      
+
       // Если в токене есть email или username, добавляем их
       if (decodedToken.email) userData.email = decodedToken.email;
       if (decodedToken.username) userData.username = decodedToken.username;
-      
+
       user.value = userData;
       localStorage.setItem("user", JSON.stringify(userData));
     } else {
@@ -81,10 +81,12 @@ export const useAuthStore = defineStore("auth", () => {
       localStorage.removeItem("user");
     }
   }
-  
+
   // Инициализация пользователя из токена при загрузке store
   if (accessToken.value) {
     setUserFromToken(accessToken.value);
+    // Обновляем данные пользователя из API при инициализации
+    refreshUserData();
   }
 
   /**
@@ -93,13 +95,13 @@ export const useAuthStore = defineStore("auth", () => {
   async function login(credentials) {
     isLoading.value = true;
     error.value = null;
-    
+
     try {
       const response = await authApi.login(
         credentials.email,
         credentials.password
       );
-      
+
       if (response.success && response.data.access_token) {
         // Сохраняем токены
         accessToken.value = response.data.access_token;
@@ -110,7 +112,7 @@ export const useAuthStore = defineStore("auth", () => {
 
         // Устанавливаем данные пользователя из токена
         setUserFromToken(accessToken.value);
-        
+
         // Если нужно, можно запросить дополнительные данные профиля
         try {
           const userResponse = await authApi.getCurrentUser(accessToken.value);
@@ -118,13 +120,16 @@ export const useAuthStore = defineStore("auth", () => {
             // Дополняем данные пользователя полной информацией из профиля
             const fullUserData = {
               ...user.value,
-              ...userResponse.data
+              ...userResponse.data,
             };
             user.value = fullUserData;
             localStorage.setItem("user", JSON.stringify(fullUserData));
           }
         } catch (userError) {
-          console.warn("Не удалось получить дополнительные данные пользователя:", userError);
+          console.warn(
+            "Не удалось получить дополнительные данные пользователя:",
+            userError
+          );
           // Продолжаем с базовыми данными из токена
         }
 
@@ -138,7 +143,7 @@ export const useAuthStore = defineStore("auth", () => {
       }
     } catch (e) {
       error.value = e.message || "Не удалось выполнить вход.";
-      
+
       // Очищаем все данные аутентификации при ошибке
       accessToken.value = null;
       refreshToken.value = null;
@@ -146,7 +151,7 @@ export const useAuthStore = defineStore("auth", () => {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
-      
+
       return false;
     } finally {
       isLoading.value = false;
@@ -159,7 +164,7 @@ export const useAuthStore = defineStore("auth", () => {
   async function register(userData) {
     isLoading.value = true;
     error.value = null;
-    
+
     try {
       const response = await authApi.register(
         userData.username,
@@ -168,7 +173,7 @@ export const useAuthStore = defineStore("auth", () => {
         userData.firstName,
         userData.lastName
       );
-      
+
       if (response.success && response.data.id) {
         // Показываем сообщение об успешной регистрации
         router.push("/login");
@@ -201,7 +206,7 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
-    
+
     // Затем делаем редирект (еще до вызова API)
     router.push("/login");
 
@@ -223,7 +228,7 @@ export const useAuthStore = defineStore("auth", () => {
     isLoading.value = true;
     error.value = null;
     const currentRefreshToken = refreshToken.value;
-    
+
     if (!currentRefreshToken) {
       error.value = "Нет refresh токена для обновления.";
       isLoading.value = false;
@@ -235,12 +240,12 @@ export const useAuthStore = defineStore("auth", () => {
       const response = await authApi.refreshToken(currentRefreshToken);
       if (response.success && response.data.access_token) {
         accessToken.value = response.data.access_token;
-        
+
         if (response.data.refresh_token) {
           refreshToken.value = response.data.refresh_token;
           localStorage.setItem("refreshToken", refreshToken.value);
         }
-        
+
         localStorage.setItem("accessToken", accessToken.value);
         setUserFromToken(accessToken.value);
         isLoading.value = false;
@@ -253,6 +258,27 @@ export const useAuthStore = defineStore("auth", () => {
       await logout();
       isLoading.value = false;
       return false;
+    }
+  }
+
+  /**
+   * Обновляет данные пользователя из API
+   */
+  async function refreshUserData() {
+    if (!accessToken.value) return;
+
+    try {
+      const userResponse = await authApi.getCurrentUser(accessToken.value);
+      if (userResponse.success && userResponse.data) {
+        const fullUserData = {
+          ...user.value,
+          ...userResponse.data,
+        };
+        user.value = fullUserData;
+        localStorage.setItem("user", JSON.stringify(fullUserData));
+      }
+    } catch (userError) {
+      console.warn("Не удалось обновить данные пользователя:", userError);
     }
   }
 
@@ -271,7 +297,7 @@ export const useAuthStore = defineStore("auth", () => {
     user,
     isLoading,
     error,
-    
+
     // Getters
     isLoggedIn,
     authUser,
@@ -279,7 +305,7 @@ export const useAuthStore = defineStore("auth", () => {
     getRefreshToken,
     getError,
     getIsLoading,
-    
+
     // Actions
     login,
     register,
@@ -287,5 +313,6 @@ export const useAuthStore = defineStore("auth", () => {
     clearError,
     attemptRefreshToken,
     setUserFromToken,
+    refreshUserData,
   };
 });
