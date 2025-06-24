@@ -5,20 +5,20 @@
         <div class="card-header bg-light py-3">
           <h5 class="mb-0">
             <i class="bi bi-funnel me-2 text-primary"></i>
-            Filters and Search
+            Фильтры и поиск
           </h5>
         </div>
         <div class="card-body p-3">
           <!-- Search -->
           <div class="mb-3">
-            <label for="searchQuery" class="form-label">Search Plants</label>
+            <label for="searchQuery" class="form-label">Поиск растений</label>
             <div class="input-group">
-              <input 
-                type="text" 
-                class="form-control" 
-                id="searchQuery" 
-                v-model="filters.searchQuery" 
-                placeholder="Enter plant name..."
+              <input
+                type="text"
+                class="form-control"
+                id="searchQuery"
+                v-model="filters.searchQuery"
+                placeholder="Введите название растения..."
                 @input="onSearchDebounced"
               >
               <button class="btn btn-primary" type="button" @click="applyFilters">
@@ -32,14 +32,14 @@
             <div class="row">
               <!-- Category -->
               <div class="col-md-6 mb-3">
-                <label for="categoryFilter" class="form-label">Category</label>
-                <select 
-                  class="form-select" 
-                  id="categoryFilter" 
+                <label for="categoryFilter" class="form-label">Категория</label>
+                <select
+                  class="form-select"
+                  id="categoryFilter"
                   v-model="filters.category_id"
                   :disabled="isLoading || !categories.length"
                 >
-                  <option :value="null">All categories</option>
+                  <option :value="null">Все категории</option>
                   <option 
                     v-for="category in categories" 
                     :key="category.id" 
@@ -52,14 +52,14 @@
               
               <!-- Climate zone -->
               <div class="col-md-6 mb-3">
-                <label for="climateZoneFilter" class="form-label">Climate Zone</label>
-                <select 
-                  class="form-select" 
-                  id="climateZoneFilter" 
+                <label for="climateZoneFilter" class="form-label">Климатическая зона</label>
+                <select
+                  class="form-select"
+                  id="climateZoneFilter"
                   v-model="filters.climate_zone_id"
                   :disabled="isLoading || !climateZones.length"
                 >
-                  <option :value="null">All zones</option>
+                  <option :value="null">Все зоны</option>
                   <option 
                     v-for="zone in climateZones" 
                     :key="zone.id" 
@@ -75,40 +75,40 @@
             <div class="row">
               <!-- Plant type -->
               <div class="col-md-6 mb-3">
-                <label for="plantTypeFilter" class="form-label">Plant Type</label>
-                <select 
-                  class="form-select" 
-                  id="plantTypeFilter" 
+                <label for="plantTypeFilter" class="form-label">Тип растения</label>
+                <select
+                  class="form-select"
+                  id="plantTypeFilter"
                   v-model="filters.plant_type"
                 >
-                  <option :value="null">All types</option>
-                  <option value="tree">Tree</option>
-                  <option value="shrub">Shrub</option>
-                  <option value="flower">Flower</option>
-                  <option value="vegetable">Vegetable</option>
-                  <option value="fruit">Fruit</option>
-                  <option value="herb">Herb</option>
-                  <option value="succulent">Succulent</option>
-                  <option value="vine">Vine/Climbing</option>
-                  <option value="aquatic">Aquatic</option>
-                  <option value="fern">Fern</option>
+                  <option :value="null">Все типы</option>
+                  <option value="tree">Дерево</option>
+                  <option value="shrub">Кустарник</option>
+                  <option value="flower">Цветок</option>
+                  <option value="vegetable">Овощ</option>
+                  <option value="fruit">Фрукт</option>
+                  <option value="herb">Трава</option>
+                  <option value="succulent">Суккулент</option>
+                  <option value="vine">Лиана/Вьющееся</option>
+                  <option value="aquatic">Водное</option>
+                  <option value="fern">Папоротник</option>
                 </select>
               </div>
               
               <!-- Care difficulty -->
               <div class="col-md-6 mb-3">
-                <label for="careDifficultyFilter" class="form-label">Care Difficulty</label>
-                <select 
-                  class="form-select" 
-                  id="careDifficultyFilter" 
+                <label for="careDifficultyFilter" class="form-label">Сложность ухода</label>
+                <select
+                  class="form-select"
+                  id="careDifficultyFilter"
                   v-model="filters.care_difficulty"
                 >
-                  <option :value="null">Any</option>
-                  <option value="very_easy">Very Easy</option>
-                  <option value="easy">Easy</option>
-                  <option value="moderate">Moderate</option>
-                  <option value="difficult">Difficult</option>
-                  <option value="expert">Expert</option>
+                  <option :value="null">Любая</option>
+                  <option value="very_easy">Очень легко</option>
+                  <option value="easy">Легко</option>
+                  <option value="moderate">Умеренно</option>
+                  <option value="difficult">Сложно</option>
+                  <option value="expert">Экспертный</option>
                 </select>
               </div>
             </div>
@@ -116,19 +116,19 @@
             <!-- Sort options -->
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label for="sortBy" class="form-label">Sort by</label>
+                <label for="sortBy" class="form-label">Сортировать по</label>
                 <select class="form-select" id="sortBy" v-model="filters.sort_by">
-                  <option value="name">Name</option>
-                  <option value="created_at">Date Added</option>
-                  <option value="popularity">Popularity</option>
+                  <option value="name">Названию</option>
+                  <option value="created_at">Дате добавления</option>
+                  <option value="popularity">Популярности</option>
                 </select>
               </div>
-              
+
               <div class="col-md-6 mb-3">
-                <label for="sortDirection" class="form-label">Direction</label>
+                <label for="sortDirection" class="form-label">Направление</label>
                 <select class="form-select" id="sortDirection" v-model="filters.sort_direction">
-                  <option value="asc">Ascending</option>
-                  <option value="desc">Descending</option>
+                  <option value="asc">По возрастанию</option>
+                  <option value="desc">По убыванию</option>
                 </select>
               </div>
             </div>
@@ -146,7 +146,7 @@
               @click="toggleAdvancedFilters"
             >
               <i class="bi" :class="showAdvancedFilters ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-              {{ showAdvancedFilters ? 'Hide filters' : 'Show advanced filters' }}
+              {{ showAdvancedFilters ? 'Скрыть фильтры' : 'Показать дополнительные фильтры' }}
             </button>
             
             <div>
@@ -156,16 +156,16 @@
                 @click="resetFilters"
                 :disabled="isLoading"
               >
-                Reset
+                Сбросить
               </button>
-              <button 
-                class="btn btn-primary" 
-                type="button" 
+              <button
+                class="btn btn-primary"
+                type="button"
                 @click="applyFilters"
                 :disabled="isLoading"
               >
                 <i class="bi bi-funnel me-1"></i>
-                Apply
+                Применить
               </button>
             </div>
           </div>

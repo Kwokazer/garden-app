@@ -8,7 +8,7 @@
             class="page-link" 
             href="#" 
             @click.prevent="!isLoading && currentPage > 1 && onPageChange(1)"
-            aria-label="First page"
+            aria-label="Первая страница"
             :tabindex="currentPage <= 1 ? -1 : 0"
           >
             <i class="bi bi-chevron-double-left"></i>
@@ -21,7 +21,7 @@
             class="page-link" 
             href="#" 
             @click.prevent="!isLoading && currentPage > 1 && onPageChange(currentPage - 1)"
-            aria-label="Previous page"
+            aria-label="Предыдущая страница"
             :tabindex="currentPage <= 1 ? -1 : 0"
           >
             <i class="bi bi-chevron-left"></i>
@@ -54,7 +54,7 @@
             class="page-link" 
             href="#" 
             @click.prevent="!isLoading && currentPage < totalPages && onPageChange(currentPage + 1)"
-            aria-label="Next page"
+            aria-label="Следующая страница"
             :tabindex="currentPage >= totalPages ? -1 : 0"
           >
             <i class="bi bi-chevron-right"></i>
@@ -67,7 +67,7 @@
             class="page-link" 
             href="#" 
             @click.prevent="!isLoading && currentPage < totalPages && onPageChange(totalPages)"
-            aria-label="Last page"
+            aria-label="Последняя страница"
             :tabindex="currentPage >= totalPages ? -1 : 0"
           >
             <i class="bi bi-chevron-double-right"></i>
@@ -78,10 +78,10 @@
       <!-- Pagination info -->
       <div class="text-center text-muted small mt-2">
         <span v-if="totalItems > 0">
-          Showing {{ firstItemIndex }} - {{ lastItemIndex }} of {{ totalItems }} plants
+          Показано {{ firstItemIndex }} - {{ lastItemIndex }} из {{ totalItems }} растений
         </span>
         <span v-else>
-          No plants found
+          Растения не найдены
         </span>
       </div>
     </nav>

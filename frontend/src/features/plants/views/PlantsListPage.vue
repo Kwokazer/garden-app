@@ -5,8 +5,8 @@
       <div class="container py-4">
         <div class="row align-items-center mb-4">
           <div class="col-md-8">
-            <h1 class="mb-1">Plants Knowledge Base</h1>
-            <p class="text-muted mb-0">Explore our plant collection and get useful growing information</p>
+            <h1 class="mb-1">База знаний о растениях</h1>
+            <p class="text-muted mb-0">Изучайте нашу коллекцию растений и получайте полезную информацию по выращиванию</p>
           </div>
           <div class="col-md-4 text-md-end mt-3 mt-md-0">
             <div class="d-flex justify-content-md-end">
@@ -14,7 +14,7 @@
                 <input 
                   type="text" 
                   class="form-control" 
-                  placeholder="Quick search..." 
+                  placeholder="Быстрый поиск..."
                   v-model="quickSearch"
                   @input="onQuickSearchDebounced"
                   @keyup.enter="applyQuickSearch"
@@ -45,9 +45,9 @@
         <!-- Loading indicator -->
         <div v-if="isLoading" class="text-center py-5">
           <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
+            <span class="visually-hidden">Загрузка...</span>
           </div>
-          <p class="mt-3 text-muted">Loading plants...</p>
+          <p class="mt-3 text-muted">Загрузка растений...</p>
         </div>
         
         <!-- Error message -->
@@ -58,7 +58,7 @@
             class="btn btn-outline-danger btn-sm ms-3" 
             @click="loadPlants(1, plantsStore.pagination.per_page, true)"
           >
-            Try again
+            Попробовать снова
           </button>
         </div>
         
@@ -66,9 +66,9 @@
         <div v-else-if="plants.length === 0" class="text-center py-5">
           <div class="empty-state">
             <i class="bi bi-flower1 display-1 text-muted mb-3"></i>
-            <h4>No plants found</h4>
-            <p class="text-muted">Try changing your search or filter parameters.</p>
-            <button class="btn btn-primary mt-3" @click="clearFilters">Reset all filters</button>
+            <h4>Растения не найдены</h4>
+            <p class="text-muted">Попробуйте изменить параметры поиска или фильтры.</p>
+            <button class="btn btn-primary mt-3" @click="clearFilters">Сбросить все фильтры</button>
           </div>
         </div>
         
@@ -156,14 +156,14 @@
                     
                     <!-- Climate zones -->
                     <div v-if="plant.climate_zones && plant.climate_zones.length > 0" class="mb-3 small">
-                      <span class="text-muted me-2">Climate zones:</span>
+                      <span class="text-muted me-2">Климатические зоны:</span>
                       <span v-for="zone in plant.climate_zones" :key="zone.id" class="badge bg-info text-white me-1">
                         {{ zone.name }}
                       </span>
                     </div>
-                    
+
                     <router-link :to="{ name: 'PlantDetails', params: { id: plant.id } }" class="btn btn-outline-primary mt-auto">
-                      Details
+                      Подробнее
                     </router-link>
                   </div>
                 </div>
@@ -331,20 +331,20 @@
   function getResultText(count) {
     const lastDigit = count % 10;
     const lastTwoDigits = count % 100;
-    
+
     if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
-      return 'plants';
+      return 'растений';
     }
-    
+
     if (lastDigit === 1) {
-      return 'plant';
+      return 'растение';
     }
-    
+
     if (lastDigit >= 2 && lastDigit <= 4) {
-      return 'plants';
+      return 'растения';
     }
-    
-    return 'plants';
+
+    return 'растений';
   }
   
   // Truncate description to specified length
@@ -357,31 +357,31 @@
   
   // Get text label for watering frequency
   function getWateringLabel(frequency) {
-    if (!frequency) return 'Not specified';
-    
+    if (!frequency) return 'Не указано';
+
     const wateringLabels = {
-      'daily': 'Daily',
-      'twice_a_week': 'Twice a week',
-      'weekly': 'Weekly',
-      'bi_weekly': 'Every 2 weeks',
-      'monthly': 'Monthly',
-      'rarely': 'Rarely'
+      'daily': 'Ежедневно',
+      'twice_a_week': 'Дважды в неделю',
+      'weekly': 'Еженедельно',
+      'bi_weekly': 'Раз в две недели',
+      'monthly': 'Ежемесячно',
+      'rarely': 'Редко'
     };
-    
+
     return wateringLabels[frequency] || frequency;
   }
   
   // Get text label for light level
   function getLightLabel(level) {
-    if (!level) return 'Not specified';
-    
+    if (!level) return 'Не указано';
+
     const lightLabels = {
-      'full_sun': 'Full sun',
-      'partial_sun': 'Partial sun',
-      'shade': 'Shade',
-      'low_light': 'Low light'
+      'full_sun': 'Полное солнце',
+      'partial_sun': 'Частичное солнце',
+      'shade': 'Тень',
+      'low_light': 'Слабое освещение'
     };
-    
+
     return lightLabels[level] || level;
   }
   

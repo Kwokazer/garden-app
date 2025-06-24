@@ -74,7 +74,7 @@
               
               <!-- Question form -->
               <QuestionForm
-                :initial-data="{}"
+                :initial-data="initialData"
                 :is-loading="isLoading"
                 :error="formError"
                 @submit="handleCreateQuestion"
@@ -88,13 +88,14 @@
   </template>
   
   <script setup>
-  import { ref } from 'vue';
-  import { useRouter } from 'vue-router';
+  import { ref, computed } from 'vue';
+  import { useRouter, useRoute } from 'vue-router';
   import { useAuthStore } from '../../auth/store/authStore';
   import { useQuestionsStore } from '../store/questionsStore';
   import QuestionForm from '../components/QuestionForm.vue';
-  
+
   const router = useRouter();
+  const route = useRoute();
   const authStore = useAuthStore();
   const questionsStore = useQuestionsStore();
   
@@ -103,6 +104,21 @@
   const error = ref(null);
   const formError = ref(null);
   const isSuccess = ref(false);
+
+  // Initial data for the form (includes plant_id from query if provided)
+  const initialData = computed(() => {
+    const data = {};
+
+    // If plant_id is provided in query params, include it in initial data
+    if (route.query.plant_id) {
+      const plantId = parseInt(route.query.plant_id);
+      if (!isNaN(plantId)) {
+        data.plant_id = plantId;
+      }
+    }
+
+    return data;
+  });
   
   // Methods
   async function handleCreateQuestion(questionData) {

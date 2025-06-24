@@ -29,7 +29,7 @@
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
               <li class="nav-item">
                 <router-link class="nav-link" to="/dashboard" v-if="isLoggedIn">
-                  <i class="bi bi-speedometer2 me-1"></i> Дашборд
+                  <i class="bi bi-person-circle me-1"></i> Мой профиль
                 </router-link>
               </li>
               <li class="nav-item">
@@ -66,13 +66,8 @@
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuButton">
                   <li>
                     <router-link class="dropdown-item" to="/dashboard">
-                      <i class="bi bi-speedometer2 me-2"></i> Дашборд
+                      <i class="bi bi-person-circle me-2"></i> Мой профиль
                     </router-link>
-                  </li>
-                  <li>
-                    <a class="dropdown-item" href="#profile">
-                      <i class="bi bi-person me-2"></i> Мой профиль
-                    </a>
                   </li>
                   <li>
                     <a class="dropdown-item" href="#settings">

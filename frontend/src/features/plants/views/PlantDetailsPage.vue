@@ -7,13 +7,13 @@
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item">
-              <router-link to="/">Home</router-link>
+              <router-link to="/">Главная</router-link>
             </li>
             <li class="breadcrumb-item">
-              <router-link :to="{ name: 'PlantsList' }">Plants</router-link>
+              <router-link :to="{ name: 'PlantsList' }">Растения</router-link>
             </li>
             <li class="breadcrumb-item active" aria-current="page">
-              {{ plant ? plant.name : 'Loading...' }}
+              {{ plant ? plant.name : 'Загрузка...' }}
             </li>
           </ol>
         </nav>
@@ -75,10 +75,10 @@
             <div class="d-flex justify-content-between mt-3">
               <div class="share-buttons">
                 <button class="btn btn-outline-secondary btn-sm me-2">
-                  <i class="bi bi-share me-1"></i> Share
+                  <i class="bi bi-share me-1"></i> Поделиться
                 </button>
                 <button class="btn btn-outline-secondary btn-sm me-2">
-                  <i class="bi bi-printer me-1"></i> Print
+                  <i class="bi bi-printer me-1"></i> Печать
                 </button>
               </div>
               <div>
@@ -88,7 +88,7 @@
                   @click="toggleFavorite"
                 >
                   <i class="bi" :class="isFavorite ? 'bi-heart-fill' : 'bi-heart'"></i>
-                  {{ isFavorite ? 'In favorites' : 'Add to favorites' }}
+                  {{ isFavorite ? 'В избранном' : 'Добавить в избранное' }}
                 </button>
               </div>
             </div>
@@ -127,7 +127,7 @@
               <div class="card bg-light mb-4 border-0">
                 <div class="card-body">
                   <p v-if="plant.description" class="m-0">{{ plant.description }}</p>
-                  <p v-else class="text-muted m-0">No description available</p>
+                  <p v-else class="text-muted m-0">Описание недоступно</p>
                 </div>
               </div>
               
@@ -135,58 +135,58 @@
               <div class="plant-characteristics mb-4">
                 <h5 class="section-title">
                   <i class="bi bi-info-circle me-2"></i>
-                  Main Characteristics
+                  Основные характеристики
                 </h5>
                 
                 <div class="row">
                   <!-- Plant type -->
                   <div class="col-md-6 mb-3">
                     <div class="characteristic-item">
-                      <span class="characteristic-label">Plant type:</span>
+                      <span class="characteristic-label">Тип растения:</span>
                       <span class="characteristic-value">{{ getPlantTypeLabel(plant.plant_type) }}</span>
                     </div>
                   </div>
-                  
+
                   <!-- Life cycle -->
                   <div class="col-md-6 mb-3">
                     <div class="characteristic-item">
-                      <span class="characteristic-label">Life cycle:</span>
+                      <span class="characteristic-label">Жизненный цикл:</span>
                       <span class="characteristic-value">{{ getLifeCycleLabel(plant.life_cycle) }}</span>
                     </div>
                   </div>
-                  
+
                   <!-- Plant height -->
                   <div class="col-md-6 mb-3">
                     <div class="characteristic-item">
-                      <span class="characteristic-label">Height:</span>
+                      <span class="characteristic-label">Высота:</span>
                       <span class="characteristic-value">
-                        {{ plant.height_min && plant.height_max ? `${plant.height_min}-${plant.height_max} cm` : 'Not specified' }}
+                        {{ plant.height_min && plant.height_max ? `${plant.height_min}-${plant.height_max} см` : 'Не указано' }}
                       </span>
                     </div>
                   </div>
-                  
+
                   <!-- Growth rate -->
                   <div class="col-md-6 mb-3">
                     <div class="characteristic-item">
-                      <span class="characteristic-label">Growth rate:</span>
+                      <span class="characteristic-label">Скорость роста:</span>
                       <span class="characteristic-value">{{ getGrowthRateLabel(plant.growth_rate) }}</span>
                     </div>
                   </div>
-                  
+
                   <!-- Flowering period -->
                   <div class="col-md-6 mb-3">
                     <div class="characteristic-item">
-                      <span class="characteristic-label">Flowering period:</span>
+                      <span class="characteristic-label">Период цветения:</span>
                       <span class="characteristic-value">
-                        {{ plant.flowering_period ? plant.flowering_period : 'Not specified' }}
+                        {{ plant.flowering_period ? plant.flowering_period : 'Не указано' }}
                       </span>
                     </div>
                   </div>
-                  
+
                   <!-- Toxicity -->
                   <div class="col-md-6 mb-3">
                     <div class="characteristic-item">
-                      <span class="characteristic-label">Toxicity:</span>
+                      <span class="characteristic-label">Токсичность:</span>
                       <span 
                         class="characteristic-value" 
                         :class="{ 'text-danger': plant.is_toxic, 'text-success': !plant.is_toxic }"
@@ -194,9 +194,9 @@
                         <i 
                           class="bi" 
                           :class="plant.is_toxic ? 'bi-exclamation-circle' : 'bi-check-circle'"
-                          :title="plant.is_toxic ? 'Toxic' : 'Non-toxic'"
+                          :title="plant.is_toxic ? 'Токсично' : 'Не токсично'"
                         ></i>
-                        {{ plant.is_toxic ? 'Toxic' : 'Non-toxic' }}
+                        {{ plant.is_toxic ? 'Токсично' : 'Не токсично' }}
                       </span>
                     </div>
                   </div>
@@ -205,7 +205,7 @@
                 <!-- Climate zones -->
                 <div class="mb-3">
                   <div class="characteristic-item">
-                    <span class="characteristic-label">Climate zones:</span>
+                    <span class="characteristic-label">Климатические зоны:</span>
                     <div class="mt-2">
                       <div v-if="plant.climate_zones && plant.climate_zones.length > 0" class="d-flex flex-wrap">
                         <span 
@@ -216,7 +216,7 @@
                           {{ zone.name }}
                         </span>
                       </div>
-                      <span v-else class="text-muted">Not specified</span>
+                      <span v-else class="text-muted">Не указано</span>
                     </div>
                   </div>
                 </div>
@@ -287,37 +287,37 @@
                 aria-selected="true"
               >
                 <i class="bi bi-water me-2"></i>
-                Care
+                Уход
               </button>
             </li>
             <li class="nav-item" role="presentation">
-              <button 
-                class="nav-link" 
-                id="growing-tab" 
-                data-bs-toggle="tab" 
-                data-bs-target="#growing-tab-pane" 
-                type="button" 
-                role="tab" 
-                aria-controls="growing-tab-pane" 
+              <button
+                class="nav-link"
+                id="growing-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#growing-tab-pane"
+                type="button"
+                role="tab"
+                aria-controls="growing-tab-pane"
                 aria-selected="false"
               >
                 <i class="bi bi-flower1 me-2"></i>
-                Growing
+                Выращивание
               </button>
             </li>
             <li class="nav-item" role="presentation">
-              <button 
-                class="nav-link" 
-                id="qa-tab" 
-                data-bs-toggle="tab" 
-                data-bs-target="#qa-tab-pane" 
-                type="button" 
-                role="tab" 
-                aria-controls="qa-tab-pane" 
+              <button
+                class="nav-link"
+                id="qa-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#qa-tab-pane"
+                type="button"
+                role="tab"
+                aria-controls="qa-tab-pane"
                 aria-selected="false"
               >
                 <i class="bi bi-question-circle me-2"></i>
-                Q&A
+                Вопросы и ответы
               </button>
             </li>
           </ul>
@@ -349,12 +349,12 @@
                   <div class="card-header bg-light py-3">
                     <h5 class="mb-0">
                       <i class="bi bi-flower1 me-2 text-primary"></i>
-                      Growing and Propagation
+                      Выращивание и размножение
                     </h5>
                   </div>
                   <div class="card-body p-4">
                     <div v-if="plant.propagation_methods && plant.propagation_methods.length > 0">
-                      <h6 class="fw-bold mb-3">Propagation Methods</h6>
+                      <h6 class="fw-bold mb-3">Методы размножения</h6>
                       <div class="row">
                         <div 
                           v-for="(method, index) in plant.propagation_methods" 
@@ -365,7 +365,7 @@
                             <h6 class="method-title mb-2">{{ method.name }}</h6>
                             <p class="method-description">{{ method.description }}</p>
                             <div v-if="method.difficulty" class="method-difficulty">
-                              <small class="text-muted me-2">Difficulty:</small>
+                              <small class="text-muted me-2">Сложность:</small>
                               <div class="difficulty-stars">
                                 <i 
                                   v-for="i in 5" 
@@ -381,12 +381,12 @@
                     </div>
                     <div v-else class="text-center py-4">
                       <i class="bi bi-exclamation-circle text-muted display-4"></i>
-                      <p class="mt-3">No information about propagation methods available</p>
+                      <p class="mt-3">Информация о методах размножения недоступна</p>
                     </div>
                     
                     <!-- Planting instructions -->
                     <div class="planting-instructions mt-4" v-if="plant.planting_instructions">
-                      <h6 class="fw-bold mb-3">Planting Instructions</h6>
+                      <h6 class="fw-bold mb-3">Инструкции по посадке</h6>
                       <div class="planting-content">{{ plant.planting_instructions }}</div>
                     </div>
                   </div>
@@ -407,7 +407,7 @@
                   <div class="card-header bg-light py-3">
                     <h5 class="mb-0">
                       <i class="bi bi-question-circle me-2 text-primary"></i>
-                      Questions and Answers
+                      Вопросы и ответы
                     </h5>
                   </div>
                   <div class="card-body p-4">
@@ -415,39 +415,39 @@
                     <div class="d-flex justify-content-between align-items-center mb-4">
                       <div class="qa-stats">
                         <span class="text-muted">
-                          <strong>{{ questionsPagination.total }}</strong> {{ questionsPagination.total === 1 ? 'question' : 'questions' }}
+                          <strong>{{ questionsPagination.total }}</strong> {{ getQuestionText(questionsPagination.total) }}
                         </span>
                       </div>
                       <button class="btn btn-primary" @click="navigateToAskQuestion">
                         <i class="bi bi-plus-circle me-2"></i>
-                        Ask a Question
+                        Задать вопрос
                       </button>
                     </div>
                     
                     <!-- Загрузка вопросов -->
                     <div v-if="isLoadingQuestions" class="text-center py-4">
                       <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading questions...</span>
+                        <span class="visually-hidden">Загрузка вопросов...</span>
                       </div>
-                      <p class="mt-3 text-muted">Loading questions...</p>
+                      <p class="mt-3 text-muted">Загрузка вопросов...</p>
                     </div>
-                    
+
                     <!-- Ошибка при загрузке вопросов -->
                     <div v-else-if="questionsError" class="alert alert-danger">
                       <i class="bi bi-exclamation-triangle-fill me-2"></i>
                       {{ questionsError }}
                       <button class="btn btn-outline-danger btn-sm ms-3" @click="loadQuestionsForPlant()">
-                        Try again
+                        Попробовать снова
                       </button>
                     </div>
                     
                     <!-- Нет вопросов -->
                     <div v-else-if="plantQuestions.length === 0" class="text-center py-5">
                       <i class="bi bi-chat-dots display-4 text-muted mb-3"></i>
-                      <h5>No questions yet</h5>
-                      <p class="text-muted mb-4">Be the first to ask a question about {{ plant.name }}</p>
+                      <h5>Пока нет вопросов</h5>
+                      <p class="text-muted mb-4">Станьте первым, кто задаст вопрос о {{ plant.name }}</p>
                       <button class="btn btn-outline-primary" @click="navigateToAskQuestion">
-                        Ask first question
+                        Задать первый вопрос
                       </button>
                     </div>
                     
@@ -509,7 +509,7 @@
                       <div class="text-center mt-4">
                         <button class="btn btn-outline-primary" @click="navigateToAskQuestion">
                           <i class="bi bi-plus-circle me-2"></i>
-                          Ask new question
+                          Задать новый вопрос
                         </button>
                       </div>
                     </div>
@@ -697,45 +697,91 @@ function onImageChange(index) {
 
 // Get label functions
 function getPlantTypeLabel(type) {
-  if (!type) return 'Not specified';
-  
+  if (!type) return 'Не указано';
+
   const typeLabels = {
-    'tree': 'Tree',
-    'shrub': 'Shrub',
-    'herb': 'Herbaceous',
-    'succulent': 'Succulent',
-    'cactus': 'Cactus',
-    'vine': 'Vine',
-    'fern': 'Fern',
-    'aquatic': 'Aquatic',
-    'bulb': 'Bulbous'
+    'tree': 'Дерево',
+    'shrub': 'Кустарник',
+    'herb': 'Травянистое',
+    'succulent': 'Суккулент',
+    'cactus': 'Кактус',
+    'vine': 'Лиана',
+    'fern': 'Папоротник',
+    'aquatic': 'Водное',
+    'bulb': 'Луковичное',
+    'flower': 'Цветок',
+    'vegetable': 'Овощ',
+    'fruit': 'Фрукт',
+    'grass': 'Злак',
+    // Добавляем переводы для значений в верхнем регистре
+    'TREE': 'Дерево',
+    'SHRUB': 'Кустарник',
+    'HERB': 'Травянистое',
+    'SUCCULENT': 'Суккулент',
+    'CACTUS': 'Кактус',
+    'VINE': 'Лиана',
+    'FERN': 'Папоротник',
+    'AQUATIC': 'Водное',
+    'BULB': 'Луковичное',
+    'FLOWER': 'Цветок',
+    'VEGETABLE': 'Овощ',
+    'FRUIT': 'Фрукт',
+    'GRASS': 'Злак'
   };
-  
-  return typeLabels[type] || type;
+
+  return typeLabels[type] || typeLabels[type.toLowerCase()] || type;
 }
 
 function getLifeCycleLabel(cycle) {
-  if (!cycle) return 'Not specified';
-  
+  if (!cycle) return 'Не указано';
+
   const cycleLabels = {
-    'annual': 'Annual',
-    'biennial': 'Biennial',
-    'perennial': 'Perennial'
+    'annual': 'Однолетнее',
+    'biennial': 'Двулетнее',
+    'perennial': 'Многолетнее',
+    // Добавляем переводы для значений в верхнем регистре
+    'ANNUAL': 'Однолетнее',
+    'BIENNIAL': 'Двулетнее',
+    'PERENNIAL': 'Многолетнее'
   };
-  
-  return cycleLabels[cycle] || cycle;
+
+  return cycleLabels[cycle] || cycleLabels[cycle.toLowerCase()] || cycle;
 }
 
 function getGrowthRateLabel(rate) {
-  if (!rate) return 'Medium';
-  
+  if (!rate) return 'Умеренная';
+
   const rateLabels = {
-    'fast': 'Fast',
-    'moderate': 'Medium',
-    'slow': 'Slow'
+    'fast': 'Быстрая',
+    'moderate': 'Умеренная',
+    'slow': 'Медленная',
+    // Добавляем переводы для значений в верхнем регистре
+    'FAST': 'Быстрая',
+    'MODERATE': 'Умеренная',
+    'SLOW': 'Медленная'
   };
-  
-  return rateLabels[rate] || rate;
+
+  return rateLabels[rate] || rateLabels[rate.toLowerCase()] || rate;
+}
+
+// Функция для склонения слова "вопрос"
+function getQuestionText(count) {
+  const lastDigit = count % 10;
+  const lastTwoDigits = count % 100;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+    return 'вопросов';
+  }
+
+  if (lastDigit === 1) {
+    return 'вопрос';
+  }
+
+  if (lastDigit >= 2 && lastDigit <= 4) {
+    return 'вопроса';
+  }
+
+  return 'вопросов';
 }
 
 // Handle image load errors

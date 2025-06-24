@@ -98,7 +98,7 @@ const routes = [
     component: DashboardPage,
     meta: {
       requiresAuth: true,
-      title: "Личный кабинет - Garden",
+      title: "Мой профиль - Garden",
     },
   },
   // Plant routes

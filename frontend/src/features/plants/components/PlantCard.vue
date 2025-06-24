@@ -48,17 +48,17 @@
         
         <!-- Climate zones -->
         <div v-if="plant.climate_zones && plant.climate_zones.length > 0" class="small mb-3">
-          <span class="text-muted me-2">Climate zones:</span>
+          <span class="text-muted me-2">Климатические зоны:</span>
           <span v-for="zone in plant.climate_zones" :key="zone.id" class="badge bg-info text-white me-1">
             {{ zone.name }}
           </span>
         </div>
-        
+
         <!-- Details button -->
-        <router-link 
-          :to="{ name: 'PlantDetails', params: { id: plant.id } }" 
+        <router-link
+          :to="{ name: 'PlantDetails', params: { id: plant.id } }"
           class="btn btn-outline-primary mt-auto">
-          Details
+          Подробнее
         </router-link>
       </div>
     </div>
@@ -103,40 +103,40 @@
   
   // Get text label for temperature range
   function getTemperatureLabel(min, max) {
-    if (min === undefined && max === undefined) return 'Not specified';
+    if (min === undefined && max === undefined) return 'Не указано';
     if (min !== undefined && max !== undefined) return `${min}°C - ${max}°C`;
-    if (min !== undefined) return `from ${min}°C`;
-    if (max !== undefined) return `up to ${max}°C`;
-    return 'Not specified';
+    if (min !== undefined) return `от ${min}°C`;
+    if (max !== undefined) return `до ${max}°C`;
+    return 'Не указано';
   }
   
   // Get text label for watering frequency
   function getWateringLabel(frequency) {
-    if (!frequency) return 'Not specified';
-    
+    if (!frequency) return 'Не указано';
+
     const wateringLabels = {
-      'daily': 'Daily',
-      'twice_a_week': 'Twice a week',
-      'weekly': 'Weekly',
-      'bi_weekly': 'Every 2 weeks',
-      'monthly': 'Monthly',
-      'rarely': 'Rarely'
+      'daily': 'Ежедневно',
+      'twice_a_week': 'Дважды в неделю',
+      'weekly': 'Еженедельно',
+      'bi_weekly': 'Раз в две недели',
+      'monthly': 'Ежемесячно',
+      'rarely': 'Редко'
     };
-    
+
     return wateringLabels[frequency] || frequency;
   }
   
   // Get text label for light level
   function getLightLabel(level) {
-    if (!level) return 'Not specified';
-    
+    if (!level) return 'Не указано';
+
     const lightLabels = {
-      'full_sun': 'Full sun',
-      'partial_sun': 'Partial sun',
-      'shade': 'Shade',
-      'low_light': 'Low light'
+      'full_sun': 'Полное солнце',
+      'partial_sun': 'Частичное солнце',
+      'shade': 'Тень',
+      'low_light': 'Слабое освещение'
     };
-    
+
     return lightLabels[level] || level;
   }
   </script>
