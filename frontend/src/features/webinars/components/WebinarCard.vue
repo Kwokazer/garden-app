@@ -101,18 +101,18 @@ export default {
     })
     
     const canEdit = computed(() => {
-      const user = authStore.getUser
+      const user = authStore.authUser
       if (!user) return false
-      
-      return user.id === props.webinar.host_id || 
+
+      return user.id === props.webinar.host_id ||
              user.roles?.some(role => role.name === 'admin')
     })
-    
+
     const canDelete = computed(() => {
-      const user = authStore.getUser
+      const user = authStore.authUser
       if (!user) return false
-      
-      return user.id === props.webinar.host_id || 
+
+      return user.id === props.webinar.host_id ||
              user.roles?.some(role => role.name === 'admin')
     })
     

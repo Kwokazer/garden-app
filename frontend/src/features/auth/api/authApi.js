@@ -1,50 +1,11 @@
 // src/features/auth/api/authApi.js
+import axiosInstance from "../../../interceptors/axios.js";
 
 /**
  * API клиент для аутентификации с запросами к бэкенду
  */
 
 const BASE_API_URL = "/api/v1"; // Основной URL для API
-
-/**
- * Обрабатывает ответы от API
- */
-async function handleResponse(response) {
-  const contentType = response.headers.get("content-type");
-  let data;
-
-  if (contentType && contentType.includes("application/json")) {
-    data = await response.json();
-  } else {
-    const textData = await response.text();
-    try {
-      data = JSON.parse(textData);
-    } catch (e) {
-      data = { message: textData || response.statusText };
-    }
-  }
-
-  if (!response.ok) {
-    const message =
-      data && data.detail
-        ? typeof data.detail === "string"
-          ? data.detail
-          : JSON.stringify(data.detail)
-        : data && data.message
-        ? data.message
-        : response.statusText;
-    // Возвращаем объект с ошибкой
-    return Promise.reject({
-      success: false,
-      message: message,
-      status: response.status,
-      errorData: data,
-    });
-  }
-
-  // Успешный ответ
-  return Promise.resolve({ success: true, data: data });
-}
 
 /**
  * API клиент для работы с аутентификацией
@@ -57,14 +18,20 @@ export const authApi = {
    * @returns {Promise<Object>} - ответ от сервера с токенами
    */
   async login(email, password) {
-    const response = await fetch(`${BASE_API_URL}/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
-    return handleResponse(response);
+    try {
+      const response = await axiosInstance.post("/auth/login", {
+        email,
+        password,
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return Promise.reject({
+        success: false,
+        message: error.response?.data?.detail || error.message,
+        status: error.response?.status,
+        errorData: error.response?.data,
+      });
+    }
   },
 
   /**
@@ -87,14 +54,20 @@ export const authApi = {
     if (firstName) registrationData.first_name = firstName;
     if (lastName) registrationData.last_name = lastName;
 
-    const response = await fetch(`${BASE_API_URL}/auth/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(registrationData),
-    });
-    return handleResponse(response);
+    try {
+      const response = await axiosInstance.post(
+        "/auth/register",
+        registrationData
+      );
+      return { success: true, data: response.data };
+    } catch (error) {
+      return Promise.reject({
+        success: false,
+        message: error.response?.data?.detail || error.message,
+        status: error.response?.status,
+        errorData: error.response?.data,
+      });
+    }
   },
 
   /**
@@ -111,14 +84,19 @@ export const authApi = {
       });
     }
 
-    const response = await fetch(`${BASE_API_URL}/auth/logout`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
-    return handleResponse(response);
+    try {
+      const response = await axiosInstance.post("/auth/logout", {
+        refresh_token: refreshToken,
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return Promise.reject({
+        success: false,
+        message: error.response?.data?.detail || error.message,
+        status: error.response?.status,
+        errorData: error.response?.data,
+      });
+    }
   },
 
   /**
@@ -127,14 +105,19 @@ export const authApi = {
    * @returns {Promise<Object>} - ответ от сервера с новыми токенами
    */
   async refreshToken(token) {
-    const response = await fetch(`${BASE_API_URL}/auth/refresh`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ refresh_token: token }),
-    });
-    return handleResponse(response);
+    try {
+      const response = await axiosInstance.post("/auth/refresh", {
+        refresh_token: token,
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return Promise.reject({
+        success: false,
+        message: error.response?.data?.detail || error.message,
+        status: error.response?.status,
+        errorData: error.response?.data,
+      });
+    }
   },
 
   /**
@@ -143,14 +126,19 @@ export const authApi = {
    * @returns {Promise<Object>} - ответ от сервера
    */
   async resetPassword(email) {
-    const response = await fetch(`${BASE_API_URL}/auth/reset-password`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email }),
-    });
-    return handleResponse(response);
+    try {
+      const response = await axiosInstance.post("/auth/reset-password", {
+        email,
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return Promise.reject({
+        success: false,
+        message: error.response?.data?.detail || error.message,
+        status: error.response?.status,
+        errorData: error.response?.data,
+      });
+    }
   },
 
   /**
@@ -160,20 +148,23 @@ export const authApi = {
    * @returns {Promise<Object>} - ответ от сервера
    */
   async resetPasswordConfirm(resetToken, newPassword) {
-    const response = await fetch(
-      `${BASE_API_URL}/auth/reset-password-confirm`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+    try {
+      const response = await axiosInstance.post(
+        "/auth/reset-password-confirm",
+        {
           reset_token: resetToken,
           new_password: newPassword,
-        }),
-      }
-    );
-    return handleResponse(response);
+        }
+      );
+      return { success: true, data: response.data };
+    } catch (error) {
+      return Promise.reject({
+        success: false,
+        message: error.response?.data?.detail || error.message,
+        status: error.response?.status,
+        errorData: error.response?.data,
+      });
+    }
   },
 
   /**
@@ -182,16 +173,19 @@ export const authApi = {
    * @returns {Promise<Object>} - ответ от сервера
    */
   async verifyEmail(verificationToken) {
-    const response = await fetch(`${BASE_API_URL}/auth/verify-email`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    try {
+      const response = await axiosInstance.post("/auth/verify-email", {
         verification_token: verificationToken,
-      }),
-    });
-    return handleResponse(response);
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return Promise.reject({
+        success: false,
+        message: error.response?.data?.detail || error.message,
+        status: error.response?.status,
+        errorData: error.response?.data,
+      });
+    }
   },
 
   /**
@@ -200,13 +194,20 @@ export const authApi = {
    * @returns {Promise<Object>} - ответ от сервера с данными пользователя
    */
   async getCurrentUser(accessToken) {
-    const response = await fetch(`${BASE_API_URL}/auth/me`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-    });
-    return handleResponse(response);
+    try {
+      // Если токен передан, используем его, иначе axios interceptor добавит токен из localStorage
+      const headers = accessToken
+        ? { Authorization: `Bearer ${accessToken}` }
+        : {};
+      const response = await axiosInstance.get("/auth/me", { headers });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return Promise.reject({
+        success: false,
+        message: error.response?.data?.detail || error.message,
+        status: error.response?.status,
+        errorData: error.response?.data,
+      });
+    }
   },
 };

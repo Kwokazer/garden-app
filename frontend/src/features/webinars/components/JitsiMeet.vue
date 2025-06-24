@@ -11,9 +11,18 @@
       <div class="error-icon">⚠️</div>
       <h3>Ошибка подключения</h3>
       <p>{{ error }}</p>
-      <button @click="retry" class="btn btn--primary">
-        Попробовать снова
-      </button>
+      <div class="error-actions">
+        <button
+          v-if="jitsiConfig.domain.includes('garden.local')"
+          @click="openJitsiInNewTab"
+          class="btn btn--secondary"
+        >
+          Открыть Jitsi сервер
+        </button>
+        <button @click="retry" class="btn btn--primary">
+          Попробовать снова
+        </button>
+      </div>
     </div>
 
     <!-- Jitsi Meet iframe -->
@@ -77,46 +86,78 @@ export default {
       try {
         isLoading.value = true
         error.value = null
-        
+
+        console.log('Initializing Jitsi with config:', props.jitsiConfig)
+
         // Проверяем, что Jitsi Meet API загружен
         if (typeof window.JitsiMeetExternalAPI === 'undefined') {
           await loadJitsiScript()
         }
-        
+
         await nextTick()
-        
+
+        // Ждем, пока элемент появится в DOM
+        let jitsiContainer = null
+        let attempts = 0
+        const maxAttempts = 10
+
+        while (!jitsiContainer && attempts < maxAttempts) {
+          jitsiContainer = document.getElementById('jitsi-meet')
+          if (!jitsiContainer) {
+            await new Promise(resolve => setTimeout(resolve, 100))
+            attempts++
+          }
+        }
+
+        if (!jitsiContainer) {
+          throw new Error('Jitsi container element not found after waiting')
+        }
+
         // Конфигурация для Jitsi Meet
         const config = {
+          startWithAudioMuted: false,
+          startWithVideoMuted: false,
+          enableWelcomePage: false,
+          enableUserRolesBasedOnToken: true,
           ...props.jitsiConfig.config_overwrite,
           jwt: props.jwtToken
         }
-        
+
         const interfaceConfig = {
+          TOOLBAR_BUTTONS: [
+            'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
+            'fodeviceselection', 'hangup', 'profile', 'chat', 'recording',
+            'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
+            'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
+            'tileview', 'videobackgroundblur', 'download', 'help', 'mute-everyone'
+          ],
           ...props.jitsiConfig.interface_config_overwrite
         }
-        
+
         const options = {
           roomName: props.jitsiConfig.room_name,
           width: '100%',
           height: '100%',
-          parentNode: document.getElementById('jitsi-meet'),
+          parentNode: jitsiContainer,
           configOverwrite: config,
           interfaceConfigOverwrite: interfaceConfig,
-          userInfo: props.jitsiConfig.user_info,
+          userInfo: props.jitsiConfig.user_info || {},
           jwt: props.jwtToken
         }
-        
+
+        console.log('Creating Jitsi API with options:', options)
+
         // Создаем экземпляр Jitsi Meet
         jitsiApi.value = new window.JitsiMeetExternalAPI(props.jitsiConfig.domain, options)
-        
+
         // Обработчики событий
         setupEventHandlers()
-        
+
         isLoading.value = false
-        
+
       } catch (err) {
         console.error('Error initializing Jitsi Meet:', err)
-        error.value = 'Не удалось подключиться к вебинару. Проверьте интернет-соединение.'
+        error.value = `Не удалось подключиться к вебинару: ${err.message}`
         isLoading.value = false
         emit('error', err)
       }
@@ -126,24 +167,43 @@ export default {
       return new Promise((resolve, reject) => {
         // Проверяем, не загружен ли уже скрипт
         if (document.querySelector('script[src*="external_api.js"]')) {
+          console.log('Jitsi script already loaded')
           resolve()
           return
         }
-        
+
         const script = document.createElement('script')
-        script.src = `https://${props.jitsiConfig.domain}/external_api.js`
+        // Определяем протокол: если домен содержит localhost, используем HTTP, иначе HTTPS
+        const protocol = props.jitsiConfig.domain.includes('localhost') ? 'http' : 'https'
+        script.src = `${protocol}://${props.jitsiConfig.domain}/external_api.js`
         script.async = true
-        
+
+        // Добавляем атрибуты для работы с самоподписанными сертификатами
+        script.crossOrigin = 'anonymous'
+
         script.onload = () => {
-          console.log('Jitsi Meet External API loaded')
-          resolve()
+          console.log('Jitsi Meet External API loaded from:', script.src)
+          // Дополнительная проверка, что API действительно загружен
+          if (typeof window.JitsiMeetExternalAPI !== 'undefined') {
+            resolve()
+          } else {
+            reject(new Error('JitsiMeetExternalAPI not found after script load'))
+          }
         }
-        
-        script.onerror = () => {
-          reject(new Error('Failed to load Jitsi Meet External API'))
+
+        script.onerror = (event) => {
+          console.error('Failed to load Jitsi script from:', script.src, event)
+          reject(new Error(`Не удалось загрузить Jitsi API. Проверьте, что Jitsi сервер запущен и доступен по адресу ${script.src}`))
         }
-        
+
         document.head.appendChild(script)
+
+        // Таймаут для загрузки скрипта
+        setTimeout(() => {
+          if (typeof window.JitsiMeetExternalAPI === 'undefined') {
+            reject(new Error('Timeout loading Jitsi Meet External API'))
+          }
+        }, 10000)
       })
     }
     
@@ -223,6 +283,11 @@ export default {
       }
       emit('leave')
     }
+
+    const openJitsiInNewTab = () => {
+      const protocol = props.jitsiConfig.domain.includes('localhost') ? 'http' : 'https'
+      window.open(`${protocol}://${props.jitsiConfig.domain}`, '_blank')
+    }
     
     // Lifecycle
     onMounted(() => {
@@ -239,7 +304,8 @@ export default {
       error,
       retry,
       toggleFullscreen,
-      leaveWebinar
+      leaveWebinar,
+      openJitsiInNewTab
     }
   }
 }
@@ -297,6 +363,13 @@ export default {
 .jitsi-error p {
   color: #a0aec0;
   margin-bottom: 24px;
+}
+
+.error-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .jitsi-container {
@@ -387,6 +460,15 @@ export default {
 
 .btn--primary:hover {
   background-color: #3182ce;
+}
+
+.btn--secondary {
+  background-color: #edf2f7;
+  color: #4a5568;
+}
+
+.btn--secondary:hover {
+  background-color: #e2e8f0;
 }
 
 /* Адаптивность */

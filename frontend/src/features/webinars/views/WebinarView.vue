@@ -66,21 +66,13 @@
       <!-- Действия -->
       <div class="webinar-actions">
         <button
-          v-if="canJoin && !isJoined"
+          v-if="canJoin"
           @click="joinWebinar"
           :disabled="isJoining"
           class="btn btn--primary btn--large"
         >
           <span v-if="isJoining" class="loading-spinner"></span>
           {{ webinar.status === 'LIVE' ? 'Присоединиться к вебинару' : 'Подключиться к вебинару' }}
-        </button>
-
-        <button
-          v-if="isJoined"
-          @click="leaveWebinar"
-          class="btn btn--danger btn--large"
-        >
-          Покинуть вебинар
         </button>
 
         <router-link
@@ -100,22 +92,10 @@
         </button>
       </div>
 
-      <!-- Jitsi Meet интеграция -->
-      <div v-if="isJoined && jitsiConfig && jwtToken" class="jitsi-section">
-        <JitsiMeet
-          :webinar-id="webinar.id"
-          :webinar-title="webinar.title"
-          :jitsi-config="jitsiConfig"
-          :jwt-token="jwtToken"
-          @connected="onJitsiConnected"
-          @disconnected="onJitsiDisconnected"
-          @error="onJitsiError"
-          @leave="leaveWebinar"
-        />
-      </div>
+
 
       <!-- Информация о вебинаре -->
-      <div v-if="!isJoined" class="webinar-info">
+      <div class="webinar-info">
         <div class="info-section">
           <h3>О вебинаре</h3>
           <div class="info-grid">
@@ -165,13 +145,9 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useWebinarsStore } from '../store/webinarsStore'
 import { useAuthStore } from '@/features/auth/store/authStore'
-import JitsiMeet from '../components/JitsiMeet.vue'
 
 export default {
   name: 'WebinarView',
-  components: {
-    JitsiMeet
-  },
   setup() {
     const route = useRoute()
     const router = useRouter()
@@ -181,13 +157,10 @@ export default {
     const isLoading = ref(true)
     const error = ref(null)
     const isJoining = ref(false)
-    const isJoined = ref(false)
-    const jitsiConfig = ref(null)
-    const jwtToken = ref(null)
     
     // Computed properties
     const webinar = computed(() => webinarsStore.getCurrentWebinar)
-    const user = computed(() => authStore.getUser)
+    const user = computed(() => authStore.authUser)
     
     const canJoin = computed(() => {
       if (!webinar.value || !user.value) return false
@@ -230,31 +203,25 @@ export default {
     
     const joinWebinar = async () => {
       if (!webinar.value || !user.value) return
-      
+
       isJoining.value = true
       try {
         // Получаем данные для подключения к Jitsi
         const connectionData = await webinarsStore.joinWebinar(webinar.value.id)
-        
-        // Получаем конфигурацию Jitsi
-        const config = await webinarsStore.getJitsiConfig(webinar.value.id)
-        
-        jitsiConfig.value = config
-        jwtToken.value = connectionData.jwt_token
-        isJoined.value = true
-        
+
+        // Открываем Jitsi в новой вкладке
+        if (connectionData.jitsi_url) {
+          window.open(connectionData.jitsi_url, '_blank')
+        } else {
+          throw new Error('Не удалось получить ссылку на вебинар')
+        }
+
       } catch (err) {
         console.error('Error joining webinar:', err)
         alert(err.message || 'Ошибка присоединения к вебинару')
       } finally {
         isJoining.value = false
       }
-    }
-    
-    const leaveWebinar = () => {
-      isJoined.value = false
-      jitsiConfig.value = null
-      jwtToken.value = null
     }
     
     const deleteWebinar = async () => {
@@ -271,19 +238,7 @@ export default {
       }
     }
     
-    const onJitsiConnected = () => {
-      console.log('Connected to Jitsi Meet')
-    }
-    
-    const onJitsiDisconnected = () => {
-      console.log('Disconnected from Jitsi Meet')
-      leaveWebinar()
-    }
-    
-    const onJitsiError = (error) => {
-      console.error('Jitsi Meet error:', error)
-      alert('Ошибка видеоконференции: ' + error.message)
-    }
+
     
     const getStatusText = (status) => {
       const statusMap = {
@@ -323,7 +278,6 @@ export default {
     
     onUnmounted(() => {
       // Очищаем данные при уходе со страницы
-      leaveWebinar()
     })
     
     return {
@@ -331,18 +285,11 @@ export default {
       error,
       webinar,
       isJoining,
-      isJoined,
-      jitsiConfig,
-      jwtToken,
       canJoin,
       canEdit,
       canDelete,
       joinWebinar,
-      leaveWebinar,
       deleteWebinar,
-      onJitsiConnected,
-      onJitsiDisconnected,
-      onJitsiError,
       getStatusText,
       getRoleText,
       formatDate
@@ -580,14 +527,7 @@ export default {
   animation: spin 1s linear infinite;
 }
 
-.jitsi-section {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  height: 600px;
-  margin-bottom: 32px;
-}
+
 
 .webinar-info {
   display: grid;
@@ -691,8 +631,6 @@ export default {
     grid-template-columns: 1fr;
   }
   
-  .jitsi-section {
-    height: 400px;
-  }
+
 }
 </style>

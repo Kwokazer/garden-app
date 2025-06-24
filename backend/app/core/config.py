@@ -16,9 +16,9 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:3000"
 
     # Настройки Jitsi (используем локальный сервер)
-    JITSI_API_URL: str = "http://localhost:9091"
-    JITSI_HTTP_URL: str = "http://localhost:9091"
-    JITSI_DOMAIN: str = "localhost:9091"
+    JITSI_API_URL: str = "https://jitsi.garden.local:9091"
+    JITSI_HTTP_URL: str = "https://jitsi.garden.local:9091"
+    JITSI_DOMAIN: str = "jitsi.garden.local:9091"
     JITSI_APP_ID: str = "garden_app"
     JITSI_APP_SECRET: str = "jwt_secret_for_garden_app_123"
 

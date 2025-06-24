@@ -37,8 +37,18 @@
 
     <!-- Контент табов -->
     <div class="tab-content">
+      <!-- Сообщение для неавторизованных пользователей -->
+      <div v-if="!user" class="empty-state">
+        <div class="empty-icon">🔐</div>
+        <h3>Войдите в систему</h3>
+        <p>Для просмотра вебинаров необходимо войти в систему</p>
+        <router-link to="/login" class="btn btn--primary">
+          Войти
+        </router-link>
+      </div>
+
       <!-- Все вебинары -->
-      <div v-if="activeTab === 'all'" class="tab-panel">
+      <div v-else-if="activeTab === 'all'" class="tab-panel">
         <WebinarsList />
       </div>
 
@@ -82,9 +92,6 @@
           <div class="empty-icon">👥</div>
           <h3>Вы пока не участвуете в вебинарах</h3>
           <p>Найдите интересные вебинары и присоединяйтесь к обучению</p>
-          <button @click="activeTab = 'all'" class="btn btn--primary">
-            Посмотреть все вебинары
-          </button>
         </div>
         
         <div v-else class="webinars-grid">
@@ -122,26 +129,29 @@ export default {
     const webinarsStore = useWebinarsStore()
     const authStore = useAuthStore()
     
-    const activeTab = ref('all')
     const isLoadingHosted = ref(false)
     const isLoadingParticipating = ref(false)
-    
+
     // Computed properties
-    const user = computed(() => authStore.getUser)
+    const user = computed(() => authStore.authUser)
     const hostedWebinars = computed(() => webinarsStore.getMyHostedWebinars)
     const participatingWebinars = computed(() => webinarsStore.getMyParticipatingWebinars)
-    
+
     const canCreateWebinar = computed(() => {
       if (!user.value) return false
       return user.value.roles?.some(role => ['admin', 'plant_expert'].includes(role.name))
     })
-    
+
     const tabs = computed(() => {
-      const baseTabs = [
-        { key: 'all', label: 'Все вебинары' }
-      ]
-      
+      const baseTabs = []
+
       if (user.value) {
+        // Добавляем вкладку "Все вебинары" для авторизованных пользователей
+        baseTabs.push({
+          key: 'all',
+          label: 'Все вебинары'
+        })
+
         if (canCreateWebinar.value) {
           baseTabs.push({
             key: 'hosted',
@@ -149,16 +159,26 @@ export default {
             count: hostedWebinars.value.length
           })
         }
-        
+
         baseTabs.push({
           key: 'participating',
           label: 'Участвую',
           count: participatingWebinars.value.length
         })
       }
-      
+
       return baseTabs
     })
+
+    // Активная вкладка - инициализируем первой доступной
+    const activeTab = ref('')
+
+    // Устанавливаем активную вкладку при изменении пользователя
+    watch(user, (newUser) => {
+      if (newUser && tabs.value.length > 0) {
+        activeTab.value = tabs.value[0].key
+      }
+    }, { immediate: true })
     
     // Methods
     const loadHostedWebinars = async () => {

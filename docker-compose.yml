@@ -259,7 +259,7 @@ services:
       - JIBRI_RECORDING_DIR=/recordings
       - JIBRI_FINALIZE_RECORDING_SCRIPT_PATH=/config/finalize.sh
       - ENABLE_RECORDING=1
-      - PUBLIC_URL=http://localhost:9091
+      - PUBLIC_URL=https://localhost:9091
       - TZ=Europe/Moscow
     depends_on:
       - jitsi-web

@@ -330,16 +330,27 @@ class WebinarService(BaseService[Webinar]):
     async def join_webinar(self, webinar_id: int, user: User) -> Dict[str, Any]:
         """
         Присоединяет пользователя к вебинару и возвращает данные для подключения
-        
+
         Args:
             webinar_id: ID вебинара
             user: Пользователь
-            
+
         Returns:
             Данные для подключения к Jitsi
         """
         webinar = await self.get_webinar(webinar_id)
-        
+
+        # Проверяем статус вебинара - можно подключиться только к активным вебинарам
+        if webinar.status != WebinarStatus.LIVE:
+            if webinar.status == WebinarStatus.SCHEDULED:
+                raise AuthorizationError("Вебинар еще не начался")
+            elif webinar.status == WebinarStatus.ENDED:
+                raise AuthorizationError("Вебинар уже завершен")
+            elif webinar.status == WebinarStatus.CANCELLED:
+                raise AuthorizationError("Вебинар отменен")
+            else:
+                raise AuthorizationError(f"Невозможно подключиться к вебинару со статусом {webinar.status.value}")
+
         # Проверяем доступность вебинара
         if not webinar.is_public and user.id != webinar.host_id:
             # Проверяем, что пользователь приглашен
@@ -390,7 +401,12 @@ class WebinarService(BaseService[Webinar]):
             webinar_data: Данные для валидации
         """
         # Проверяем дату
-        if webinar_data.scheduled_at <= datetime.now(timezone.utc):
+        # Если scheduled_at не имеет timezone, считаем его UTC
+        scheduled_at = webinar_data.scheduled_at
+        if scheduled_at.tzinfo is None:
+            scheduled_at = scheduled_at.replace(tzinfo=timezone.utc)
+
+        if scheduled_at <= datetime.now(timezone.utc):
             raise ValidationError("Дата проведения должна быть в будущем")
         
         # Проверяем растение-тему, если указано

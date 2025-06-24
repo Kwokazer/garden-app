@@ -1,6 +1,6 @@
 // src/features/webinars/api/webinarsApi.js
 
-const BASE_API_URL = "/api/v1"
+const BASE_API_URL = "/api/v1";
 
 /**
  * Обрабатывает ответы от API
@@ -44,15 +44,15 @@ async function handleResponse(response) {
  * Получает заголовки с авторизацией
  */
 function getAuthHeaders() {
-  const token = localStorage.getItem('accessToken');
+  const token = localStorage.getItem("accessToken");
   const headers = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
-  
+
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
-  
+
   return headers;
 }
 
@@ -69,51 +69,55 @@ export const webinarsApi = {
    */
   async getWebinars(page = 1, per_page = 20, filters = {}) {
     try {
+      // Ensure page and per_page are valid integers
+      const validPage = parseInt(page) || 1;
+      const validPerPage = parseInt(per_page) || 20;
+
       const params = new URLSearchParams();
-      params.append('page', page);
-      params.append('per_page', per_page);
-      
+      params.append("page", validPage);
+      params.append("per_page", validPerPage);
+
       // Добавляем фильтры в запрос
       if (filters.title) {
-        params.append('title', filters.title);
+        params.append("title", filters.title);
       }
-      
+
       if (filters.host_id) {
-        params.append('host_id', filters.host_id);
+        params.append("host_id", filters.host_id);
       }
-      
+
       if (filters.status) {
-        params.append('status', filters.status);
+        params.append("status", filters.status);
       }
-      
-      if (filters.is_public !== undefined) {
-        params.append('is_public', filters.is_public);
+
+      if (filters.is_public !== undefined && filters.is_public !== null) {
+        params.append("is_public", Boolean(filters.is_public));
       }
-      
+
       if (filters.plant_topic_id) {
-        params.append('plant_topic_id', filters.plant_topic_id);
+        params.append("plant_topic_id", filters.plant_topic_id);
       }
-      
+
       if (filters.date_from) {
-        params.append('date_from', filters.date_from);
+        params.append("date_from", filters.date_from);
       }
-      
+
       if (filters.date_to) {
-        params.append('date_to', filters.date_to);
+        params.append("date_to", filters.date_to);
       }
-      
-      const url = `${BASE_API_URL}/webinars?${params.toString()}`;
-      console.log('Fetching URL:', url);
-      
+
+      const url = `${BASE_API_URL}/webinars/?${params.toString()}`;
+      console.log("Fetching URL:", url);
+
       const response = await fetch(url, {
-        method: 'GET',
-        headers: getAuthHeaders()
+        method: "GET",
+        headers: getAuthHeaders(),
       });
-      
+
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error('Error fetching webinars list:', error);
+      console.error("Error fetching webinars list:", error);
       throw error;
     }
   },
@@ -126,13 +130,13 @@ export const webinarsApi = {
   async getWebinarById(id) {
     try {
       const url = `${BASE_API_URL}/webinars/${id}`;
-      console.log('Fetching URL:', url);
-      
+      console.log("Fetching URL:", url);
+
       const response = await fetch(url, {
-        method: 'GET',
-        headers: getAuthHeaders()
+        method: "GET",
+        headers: getAuthHeaders(),
       });
-      
+
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
@@ -148,19 +152,19 @@ export const webinarsApi = {
    */
   async createWebinar(webinarData) {
     try {
-      const url = `${BASE_API_URL}/webinars`;
-      console.log('Creating webinar:', webinarData);
-      
+      const url = `${BASE_API_URL}/webinars/`;
+      console.log("Creating webinar:", webinarData);
+
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: getAuthHeaders(),
-        body: JSON.stringify(webinarData)
+        body: JSON.stringify(webinarData),
       });
-      
+
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error('Error creating webinar:', error);
+      console.error("Error creating webinar:", error);
       throw error;
     }
   },
@@ -174,14 +178,14 @@ export const webinarsApi = {
   async updateWebinar(id, webinarData) {
     try {
       const url = `${BASE_API_URL}/webinars/${id}`;
-      console.log('Updating webinar:', id, webinarData);
-      
+      console.log("Updating webinar:", id, webinarData);
+
       const response = await fetch(url, {
-        method: 'PUT',
+        method: "PUT",
         headers: getAuthHeaders(),
-        body: JSON.stringify(webinarData)
+        body: JSON.stringify(webinarData),
       });
-      
+
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
@@ -198,13 +202,13 @@ export const webinarsApi = {
   async deleteWebinar(id) {
     try {
       const url = `${BASE_API_URL}/webinars/${id}`;
-      console.log('Deleting webinar:', id);
-      
+      console.log("Deleting webinar:", id);
+
       const response = await fetch(url, {
-        method: 'DELETE',
-        headers: getAuthHeaders()
+        method: "DELETE",
+        headers: getAuthHeaders(),
       });
-      
+
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
@@ -221,13 +225,13 @@ export const webinarsApi = {
   async joinWebinar(id) {
     try {
       const url = `${BASE_API_URL}/webinars/${id}/join`;
-      console.log('Joining webinar:', id);
-      
+      console.log("Joining webinar:", id);
+
       const response = await fetch(url, {
-        method: 'POST',
-        headers: getAuthHeaders()
+        method: "POST",
+        headers: getAuthHeaders(),
       });
-      
+
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
@@ -244,13 +248,13 @@ export const webinarsApi = {
   async getJitsiToken(id) {
     try {
       const url = `${BASE_API_URL}/webinars/${id}/jitsi-token`;
-      console.log('Getting Jitsi token for webinar:', id);
-      
+      console.log("Getting Jitsi token for webinar:", id);
+
       const response = await fetch(url, {
-        method: 'POST',
-        headers: getAuthHeaders()
+        method: "POST",
+        headers: getAuthHeaders(),
       });
-      
+
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
@@ -267,13 +271,13 @@ export const webinarsApi = {
   async getJitsiConfig(id) {
     try {
       const url = `${BASE_API_URL}/webinars/${id}/jitsi-config`;
-      console.log('Getting Jitsi config for webinar:', id);
-      
+      console.log("Getting Jitsi config for webinar:", id);
+
       const response = await fetch(url, {
-        method: 'GET',
-        headers: getAuthHeaders()
+        method: "GET",
+        headers: getAuthHeaders(),
       });
-      
+
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
@@ -290,22 +294,26 @@ export const webinarsApi = {
    */
   async getMyHostedWebinars(page = 1, per_page = 20) {
     try {
+      // Ensure page and per_page are valid integers
+      const validPage = parseInt(page) || 1;
+      const validPerPage = parseInt(per_page) || 20;
+
       const params = new URLSearchParams();
-      params.append('page', page);
-      params.append('per_page', per_page);
-      
+      params.append("page", validPage);
+      params.append("per_page", validPerPage);
+
       const url = `${BASE_API_URL}/webinars/my/hosted?${params.toString()}`;
-      console.log('Fetching my hosted webinars:', url);
-      
+      console.log("Fetching my hosted webinars:", url);
+
       const response = await fetch(url, {
-        method: 'GET',
-        headers: getAuthHeaders()
+        method: "GET",
+        headers: getAuthHeaders(),
       });
-      
+
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error('Error fetching my hosted webinars:', error);
+      console.error("Error fetching my hosted webinars:", error);
       throw error;
     }
   },
@@ -318,23 +326,27 @@ export const webinarsApi = {
    */
   async getMyParticipatingWebinars(page = 1, per_page = 20) {
     try {
+      // Ensure page and per_page are valid integers
+      const validPage = parseInt(page) || 1;
+      const validPerPage = parseInt(per_page) || 20;
+
       const params = new URLSearchParams();
-      params.append('page', page);
-      params.append('per_page', per_page);
-      
+      params.append("page", validPage);
+      params.append("per_page", validPerPage);
+
       const url = `${BASE_API_URL}/webinars/my/participating?${params.toString()}`;
-      console.log('Fetching my participating webinars:', url);
-      
+      console.log("Fetching my participating webinars:", url);
+
       const response = await fetch(url, {
-        method: 'GET',
-        headers: getAuthHeaders()
+        method: "GET",
+        headers: getAuthHeaders(),
       });
-      
+
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error('Error fetching my participating webinars:', error);
+      console.error("Error fetching my participating webinars:", error);
       throw error;
     }
-  }
+  },
 };
