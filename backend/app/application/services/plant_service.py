@@ -246,10 +246,20 @@ class PlantService(BaseService):
             # Извлекаем связанные данные из запроса
             category_ids = plant_data.category_ids or []
             climate_zone_ids = plant_data.climate_zone_ids or []
-            
+            tag_ids = plant_data.tag_ids or []
+
             # Создаем растение в БД
-            create_data = plant_data.model_dump(exclude={"category_ids", "climate_zone_ids"})
-            plant = await self.plant_repository.create_plant(create_data, category_ids, climate_zone_ids)
+            create_data = plant_data.model_dump(exclude={"category_ids", "climate_zone_ids", "tag_ids"})
+
+            # Сериализуем JSON поля
+            if 'care_tips' in create_data and isinstance(create_data['care_tips'], list):
+                create_data['care_tips'] = json.dumps(create_data['care_tips'])
+            if 'common_problems' in create_data and isinstance(create_data['common_problems'], list):
+                create_data['common_problems'] = json.dumps(create_data['common_problems'])
+            if 'propagation_methods' in create_data and isinstance(create_data['propagation_methods'], list):
+                create_data['propagation_methods'] = json.dumps(create_data['propagation_methods'])
+
+            plant = await self.plant_repository.create_plant(create_data, category_ids, climate_zone_ids, tag_ids)
             
             # Инвалидируем кэш списков растений, если кэш доступен
             if self.plant_cache:
@@ -273,7 +283,7 @@ class PlantService(BaseService):
         """
         try:
             # Проверяем, что растение существует
-            existing_plant = await self.plant_repository.get_plant(plant_id)
+            existing_plant = await self.plant_repository.get_by_id(plant_id)
             if not existing_plant:
                 raise NotFoundError("Plant", plant_id)
             
@@ -295,14 +305,27 @@ class PlantService(BaseService):
             category_ids = None
             if plant_data.category_ids is not None:
                 category_ids = plant_data.category_ids
-                
+
             climate_zone_ids = None
             if plant_data.climate_zone_ids is not None:
                 climate_zone_ids = plant_data.climate_zone_ids
-            
+
+            tag_ids = None
+            if plant_data.tag_ids is not None:
+                tag_ids = plant_data.tag_ids
+
             # Обновляем данные растения в БД
-            update_data = plant_data.model_dump(exclude={"category_ids", "climate_zone_ids"}, exclude_unset=True)
-            plant = await self.plant_repository.update_plant(plant_id, update_data, category_ids, climate_zone_ids)
+            update_data = plant_data.model_dump(exclude={"category_ids", "climate_zone_ids", "tag_ids"}, exclude_unset=True)
+
+            # Сериализуем JSON поля
+            if 'care_tips' in update_data and isinstance(update_data['care_tips'], list):
+                update_data['care_tips'] = json.dumps(update_data['care_tips'])
+            if 'common_problems' in update_data and isinstance(update_data['common_problems'], list):
+                update_data['common_problems'] = json.dumps(update_data['common_problems'])
+            if 'propagation_methods' in update_data and isinstance(update_data['propagation_methods'], list):
+                update_data['propagation_methods'] = json.dumps(update_data['propagation_methods'])
+
+            plant = await self.plant_repository.update_plant(plant_id, update_data, category_ids, climate_zone_ids, tag_ids)
             
             # Инвалидируем кэши, если кэш доступен
             if self.plant_cache:
@@ -357,7 +380,7 @@ class PlantService(BaseService):
         """
         try:
             # Проверяем, что растение существует
-            existing_plant = await self.plant_repository.get_plant(plant_id)
+            existing_plant = await self.plant_repository.get_by_id(plant_id)
             if not existing_plant:
                 raise NotFoundError("Plant", plant_id)
             
@@ -388,7 +411,7 @@ class PlantService(BaseService):
         """
         try:
             # Проверяем, что растение существует
-            plant = await self.plant_repository.get_plant(plant_id)
+            plant = await self.plant_repository.get_by_id(plant_id)
             if not plant:
                 raise NotFoundError("Plant", plant_id)
             

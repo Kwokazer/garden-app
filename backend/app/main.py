@@ -3,6 +3,7 @@ import logging
 import uvicorn
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api.common.errors import register_exception_handlers
 from app.api.v1.api import api_router
@@ -39,6 +40,19 @@ app.add_middleware(
 
 # Подключение API роутеров
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# Настройка статических файлов для изображений растений
+if settings.STORAGE_TYPE == "local":
+    app.mount(
+        "/static/plant_images",
+        StaticFiles(directory=settings.PLANT_IMAGES_FULL_PATH),
+        name="plant_images"
+    )
+    app.mount(
+        "/static/plant_thumbnails",
+        StaticFiles(directory=settings.PLANT_THUMBNAILS_FULL_PATH),
+        name="plant_thumbnails"
+    )
 
 # События приложения для инициализации и закрытия ресурсов
 @app.on_event("startup")

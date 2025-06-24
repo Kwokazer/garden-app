@@ -9,6 +9,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - uploads_data:/app/uploads
     depends_on:
       - db
       - redis
@@ -272,6 +273,7 @@ services:
     command: celery -A app.celery_app worker --loglevel=info -Q celery,webinar
     volumes:
       - ./backend:/app
+      - uploads_data:/app/uploads
     depends_on:
       - db
       - redis
@@ -291,6 +293,7 @@ services:
     command: celery -A app.celery_app beat --loglevel=info
     volumes:
       - ./backend:/app
+      - uploads_data:/app/uploads
     depends_on:
       - db
       - redis
@@ -323,6 +326,7 @@ volumes:
   redis_data:
   rabbitmq_data:
   jitsi_recordings:
+  uploads_data:
 
 networks:
   garden-network:

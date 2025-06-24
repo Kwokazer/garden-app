@@ -86,6 +86,18 @@ class Settings(BaseSettings):
     STORAGE_LOCAL_PATH: str = "./uploads"
     WEBINAR_RECORDINGS_PATH: str = "./uploads/webinar_recordings"
     WEBINAR_THUMBNAILS_PATH: str = "./uploads/webinar_thumbnails"
+
+    # Хранение изображений растений
+    PLANT_IMAGES_PATH: str = "./uploads/plant_images"
+    PLANT_THUMBNAILS_PATH: str = "./uploads/plant_thumbnails"
+    PLANT_IMAGES_URL_PREFIX: str = "/static/plant_images"
+    PLANT_THUMBNAILS_URL_PREFIX: str = "/static/plant_thumbnails"
+
+    # Настройки обработки изображений
+    THUMBNAIL_SIZE: tuple = (300, 300)  # Размер миниатюр в пикселях
+    MAX_IMAGE_SIZE: tuple = (1920, 1920)  # Максимальный размер изображения
+    IMAGE_QUALITY: int = 85  # Качество JPEG (1-100)
+    ALLOWED_IMAGE_FORMATS: list = ["JPEG", "PNG", "WEBP"]
     
     # S3 настройки для продакшена
     S3_BUCKET_NAME: Optional[str] = None
@@ -152,6 +164,24 @@ class Settings(BaseSettings):
         if self.STORAGE_TYPE == "local":
             return os.path.abspath(self.WEBINAR_THUMBNAILS_PATH)
         return self.WEBINAR_THUMBNAILS_PATH
+
+    @property
+    def PLANT_IMAGES_FULL_PATH(self) -> str:
+        """
+        Полный путь к директории изображений растений
+        """
+        if self.STORAGE_TYPE == "local":
+            return os.path.abspath(self.PLANT_IMAGES_PATH)
+        return self.PLANT_IMAGES_PATH
+
+    @property
+    def PLANT_THUMBNAILS_FULL_PATH(self) -> str:
+        """
+        Полный путь к директории миниатюр растений
+        """
+        if self.STORAGE_TYPE == "local":
+            return os.path.abspath(self.PLANT_THUMBNAILS_PATH)
+        return self.PLANT_THUMBNAILS_PATH
 
     def get_oauth_config(self, provider: str) -> Dict[str, str]:
         """
@@ -237,3 +267,5 @@ settings = Settings()
 if settings.STORAGE_TYPE == "local":
     os.makedirs(settings.WEBINAR_RECORDINGS_FULL_PATH, exist_ok=True)
     os.makedirs(settings.WEBINAR_THUMBNAILS_FULL_PATH, exist_ok=True)
+    os.makedirs(settings.PLANT_IMAGES_FULL_PATH, exist_ok=True)
+    os.makedirs(settings.PLANT_THUMBNAILS_FULL_PATH, exist_ok=True)
