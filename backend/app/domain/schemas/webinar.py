@@ -118,10 +118,4 @@ class JitsiTokenResponse(BaseSchema):
     jitsi_url: str = Field(..., description="URL для подключения к Jitsi")
     expires_at: datetime = Field(..., description="Время истечения токена")
 
-class JitsiConfigResponse(BaseSchema):
-    """Конфигурация для встраивания Jitsi"""
-    room_name: str = Field(..., description="Имя комнаты")
-    domain: str = Field(..., description="Домен Jitsi")
-    config_overwrite: Dict[str, Any] = Field(default_factory=dict, description="Переопределение конфигурации")
-    interface_config_overwrite: Dict[str, Any] = Field(default_factory=dict, description="Переопределение интерфейса")
-    user_info: Dict[str, Any] = Field(..., description="Информация о пользователе")
+

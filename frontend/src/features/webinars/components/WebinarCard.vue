@@ -1,7 +1,7 @@
 <template>
   <div class="webinar-card">
     <div class="webinar-card__header">
-      <h3 class="webinar-card__title">{{ webinar.title }}</h3>
+      <h3 class="webinar-card__title">{{ truncateText(webinar.title, 60) }}</h3>
       <div class="webinar-card__status" :class="`status--${webinar.status.toLowerCase()}`">
         {{ getStatusText(webinar.status) }}
       </div>
@@ -101,19 +101,19 @@ export default {
     })
     
     const canEdit = computed(() => {
-      const user = authStore.authUser
+      const user = authStore.getUser
       if (!user) return false
 
       return user.id === props.webinar.host_id ||
-             user.roles?.some(role => role.name === 'admin')
+             user.roles?.some(role => role === 'admin')
     })
 
     const canDelete = computed(() => {
-      const user = authStore.authUser
+      const user = authStore.getUser
       if (!user) return false
 
       return user.id === props.webinar.host_id ||
-             user.roles?.some(role => role.name === 'admin')
+             user.roles?.some(role => role === 'admin')
     })
     
     const getStatusText = (status) => {
@@ -173,6 +173,7 @@ export default {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 16px;
+  gap: 12px;
 }
 
 .webinar-card__title {
@@ -181,7 +182,10 @@ export default {
   color: #1a202c;
   margin: 0;
   flex: 1;
-  margin-right: 12px;
+  min-width: 0; /* Позволяет элементу сжиматься */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .webinar-card__status {
@@ -191,6 +195,8 @@ export default {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  flex-shrink: 0; /* Статус не сжимается */
+  white-space: nowrap; /* Статус не переносится */
 }
 
 .status--scheduled {
@@ -327,13 +333,22 @@ export default {
 @media (max-width: 768px) {
   .webinar-card__header {
     flex-direction: column;
+    align-items: flex-start;
     gap: 12px;
   }
-  
+
+  .webinar-card__title {
+    white-space: normal; /* Разрешаем перенос на мобильных */
+  }
+
+  .webinar-card__status {
+    align-self: flex-start; /* Выравниваем статус по левому краю */
+  }
+
   .webinar-card__meta {
     grid-template-columns: 1fr;
   }
-  
+
   .webinar-card__actions {
     flex-direction: column;
   }

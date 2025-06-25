@@ -47,6 +47,7 @@ export const useAuthStore = defineStore("auth", () => {
   // Getters (вычисляемые свойства)
   const isLoggedIn = computed(() => !!accessToken.value);
   const authUser = computed(() => user.value);
+  const getUser = computed(() => user.value);
   const getAccessToken = computed(() => accessToken.value);
   const getRefreshToken = computed(() => refreshToken.value);
   const getError = computed(() => error.value);
@@ -301,6 +302,7 @@ export const useAuthStore = defineStore("auth", () => {
     // Getters
     isLoggedIn,
     authUser,
+    getUser,
     getAccessToken,
     getRefreshToken,
     getError,

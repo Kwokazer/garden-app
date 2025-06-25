@@ -124,15 +124,11 @@ export default {
         }
 
         const interfaceConfig = {
-          TOOLBAR_BUTTONS: [
-            'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
-            'fodeviceselection', 'hangup', 'profile', 'chat', 'recording',
-            'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
-            'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
-            'tileview', 'videobackgroundblur', 'download', 'help', 'mute-everyone'
-          ],
+          // Используем конфигурацию из backend, если она есть, иначе базовую
           ...props.jitsiConfig.interface_config_overwrite
         }
+
+        console.log('Interface config TOOLBAR_BUTTONS:', interfaceConfig.TOOLBAR_BUTTONS)
 
         const options = {
           roomName: props.jitsiConfig.room_name,

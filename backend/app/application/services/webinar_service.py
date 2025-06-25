@@ -342,14 +342,22 @@ class WebinarService(BaseService[Webinar]):
 
         # Проверяем статус вебинара - можно подключиться только к активным вебинарам
         if webinar.status != WebinarStatus.LIVE:
-            if webinar.status == WebinarStatus.SCHEDULED:
-                raise AuthorizationError("Вебинар еще не начался")
-            elif webinar.status == WebinarStatus.ENDED:
-                raise AuthorizationError("Вебинар уже завершен")
-            elif webinar.status == WebinarStatus.CANCELLED:
-                raise AuthorizationError("Вебинар отменен")
-            else:
-                raise AuthorizationError(f"Невозможно подключиться к вебинару со статусом {webinar.status.value}")
+            status_messages = {
+                WebinarStatus.SCHEDULED: "Вебинар еще не начался",
+                WebinarStatus.ENDED: "Вебинар уже завершен",
+                WebinarStatus.CANCELLED: "Вебинар отменен"
+            }
+            message = status_messages.get(webinar.status, f"Невозможно подключиться к вебинару со статусом {webinar.status.value}")
+
+            return {
+                "can_join": False,
+                "message": message,
+                "status": webinar.status.value,
+                "jwt_token": None,
+                "jitsi_url": None,
+                "expires_at": None,
+                "config": None
+            }
 
         # Проверяем доступность вебинара
         if not webinar.is_public and user.id != webinar.host_id:
@@ -382,15 +390,16 @@ class WebinarService(BaseService[Webinar]):
         participant.joined_at = datetime.now(timezone.utc)
         await self.db.commit()
         
-        # Генерируем JWT токен и конфигурацию для Jitsi
+        # Генерируем JWT токен для Jitsi
         jwt_data = self.jitsi_service.generate_jwt_token(user, webinar)
-        jitsi_config = self.jitsi_service.get_jitsi_config(user, webinar)
-        
+
         return {
+            "can_join": True,
+            "message": "Успешное подключение к вебинару",
+            "status": webinar.status.value,
             "jwt_token": jwt_data["token"],
             "jitsi_url": jwt_data["jitsi_url"],
-            "expires_at": jwt_data["expires_at"],
-            "config": jitsi_config
+            "expires_at": jwt_data["expires_at"]
         }
     
     async def _validate_webinar_data(self, webinar_data: WebinarCreate) -> None:

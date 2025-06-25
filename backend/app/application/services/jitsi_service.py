@@ -55,21 +55,39 @@ class JitsiService(BaseService):
             # Время истечения токена
             exp_time = datetime.utcnow() + timedelta(minutes=expires_in_minutes)
             
+            # Генерируем уникальные идентификаторы для сессии
+            session_id = str(uuid.uuid4())
+            jwt_id = str(uuid.uuid4())
+
             # Payload для JWT токена
             payload = {
-                "iss": self.app_id,
-                "aud": "jitsi",
+                "iss": self.app_id,  # Возвращаем оригинальный issuer
+                "aud": "jitsi",  # Используем jitsi как audience
+                "app_id": self.app_id,  # Добавляем app_id для Prosody
                 "exp": int(exp_time.timestamp()),
                 "iat": int(datetime.utcnow().timestamp()),
-                "sub": "meet.jitsi",  # Базовый домен для JWT
+                "jti": jwt_id,  # Уникальный JWT ID
+                "sub": f"user_{user.id}",  # Используем ID пользователя как subject
                 "room": webinar.room_name,
+                "moderator": is_moderator,  # Добавляем moderator на верхний уровень
+                "admin": is_moderator,  # Добавляем admin на верхний уровень
+                "affiliation": "owner" if is_moderator else "member",  # Добавляем affiliation на верхний уровень
                 "context": {
                     "user": {
                         "id": str(user.id),
                         "name": user.username,
                         "email": user.email,
                         "avatar": user.avatar_url or "",
-                        "moderator": is_moderator
+                        "moderator": is_moderator,
+                        "admin": is_moderator,
+                        "affiliation": "owner" if is_moderator else "member",  # Добавляем affiliation для правильного определения роли
+                        "session_id": session_id,  # Уникальный идентификатор сессии
+                        "timestamp": int(datetime.utcnow().timestamp() * 1000)  # Уникальный timestamp в миллисекундах
+                    },
+                    "room": {
+                        "name": webinar.room_name,
+                        "isGuest": not is_moderator,  # Явно указываем, является ли пользователь гостем
+                        "moderator": is_moderator  # Дублируем moderator в room контексте
                     },
                     "features": {
                         "livestreaming": is_moderator,
@@ -79,14 +97,23 @@ class JitsiService(BaseService):
                     }
                 }
             }
+
+            # Добавляем дополнительные поля для более точного контроля ролей
+            if not is_moderator:
+                # Для обычных пользователей добавляем ограничения
+                payload["context"]["features"]["screen-sharing"] = False
+                payload["context"]["features"]["invite"] = False
+                payload["context"]["features"]["kick-out"] = False
+                payload["context"]["features"]["mute-others"] = False
             
             # Генерируем токен
             token = jwt.encode(payload, self.app_secret, algorithm="HS256")
-            
+
             # Формируем URL для подключения к Jitsi серверу
             jitsi_url = f"{settings.JITSI_HTTP_URL}/{webinar.room_name}?jwt={token}"
-            
-            self._log_info(f"Generated JWT token for user {user.id} in webinar {webinar.id}")
+
+            self._log_info(f"Generated JWT token for user {user.id} in webinar {webinar.id}, is_moderator: {is_moderator}, affiliation: {'owner' if is_moderator else 'member'}")
+            self._log_debug(f"JWT payload: {payload}")
             
             return {
                 "token": token,
@@ -100,154 +127,53 @@ class JitsiService(BaseService):
             self._log_error(f"Failed to generate JWT token for user {user.id}", e)
             raise BusinessLogicError(f"Не удалось создать токен для подключения: {str(e)}")
     
-    def get_jitsi_config(
-        self, 
-        user: User, 
-        webinar: Webinar
-    ) -> Dict[str, Any]:
-        """
-        Возвращает конфигурацию для встраивания Jitsi Meet
-        
-        Args:
-            user: Пользователь
-            webinar: Вебинар
-            
-        Returns:
-            Dict с конфигурацией для iframe
-        """
-        try:
-            is_moderator = self._is_user_moderator(user, webinar)
-            
-            # Базовая конфигурация
-            config = {
-                "room_name": webinar.room_name,
-                "domain": self.jitsi_domain,
-                "config_overwrite": {
-                    "startWithAudioMuted": not is_moderator,
-                    "startWithVideoMuted": not is_moderator,
-                    "enableWelcomePage": False,
-                    "enableUserRolesBasedOnToken": True,
-                    "prejoinPageEnabled": False,
-                    "requireDisplayName": True,
-                    "disableDeepLinking": True,
-                    "defaultLanguage": "ru",
-                    "enableEmailInStats": False,
-                    "enableDisplayNameInStats": False,
-                    "enableClosePage": False,
-                    "disableInviteFunctions": not is_moderator,
-                    "doNotStoreRoom": True,
-                    "disableRemoteMute": not is_moderator,
-                    "disableModeratorIndicator": False,
-                    "disableJoinLeaveSounds": False,
-                    "enableLipSync": False,
-                    "hideLobbyButton": not is_moderator,
-                    "enableLobbyChat": False,
-                    "enableInsecureRoomNameWarning": False,
-                    "enableAutomaticUrlCopy": False,
-                    "liveStreamingEnabled": is_moderator,
-                    "recordingEnabled": is_moderator,
-                    "fileRecordingsEnabled": is_moderator,
-                    "localRecording": {
-                        "enabled": is_moderator,
-                        "format": "flac"
-                    }
-                },
-                "interface_config_overwrite": {
-                    "TOOLBAR_BUTTONS": self._get_toolbar_buttons(is_moderator),
-                    "SETTINGS_SECTIONS": ["devices", "language", "moderator", "profile"],
-                    "SHOW_JITSI_WATERMARK": False,
-                    "SHOW_WATERMARK_FOR_GUESTS": False,
-                    "SHOW_BRAND_WATERMARK": False,
-                    "BRAND_WATERMARK_LINK": "",
-                    "SHOW_POWERED_BY": False,
-                    "DISPLAY_WELCOME_PAGE_CONTENT": False,
-                    "DISPLAY_WELCOME_PAGE_TOOLBAR_ADDITIONAL_CONTENT": False,
-                    "APP_NAME": "Garden Webinar",
-                    "NATIVE_APP_NAME": "Garden Webinar",
-                    "PROVIDER_NAME": "Garden",
-                    "LANG_DETECTION": False,
-                    "CONNECTION_INDICATOR_AUTO_HIDE_ENABLED": True,
-                    "CONNECTION_INDICATOR_AUTO_HIDE_TIMEOUT": 5000,
-                    "CONNECTION_INDICATOR_DISABLED": False,
-                    "VIDEO_LAYOUT_FIT": "both",
-                    "FILM_STRIP_MAX_HEIGHT": 120,
-                    "TILE_VIEW_MAX_COLUMNS": 5,
-                    "VERTICAL_FILMSTRIP": True,
-                    "CLOSE_PAGE_GUEST_HINT": False,
-                    "RANDOM_AVATAR_URL_PREFIX": False,
-                    "RANDOM_AVATAR_URL_SUFFIX": False,
-                    "FILM_STRIP_ONLY": False,
-                    "HIDE_INVITE_MORE_HEADER": not is_moderator
-                },
-                "user_info": {
-                    "displayName": user.username,
-                    "email": user.email
-                }
-            }
-            
-            # Применяем пользовательскую конфигурацию вебинара, если есть
-            if webinar.jitsi_room_config:
-                config["config_overwrite"].update(webinar.jitsi_room_config)
-            
-            return config
-            
-        except Exception as e:
-            self._log_error(f"Failed to get Jitsi config for user {user.id}", e)
-            raise BusinessLogicError(f"Не удалось получить конфигурацию: {str(e)}")
+
     
     def _is_user_moderator(self, user: User, webinar: Webinar) -> bool:
         """
         Проверяет, является ли пользователь модератором вебинара
-        
+
         Args:
             user: Пользователь
             webinar: Вебинар
-            
+
         Returns:
             True если пользователь модератор
         """
-        # Ведущий всегда модератор
+        # Ведущий всегда модератор (только если он admin или plant_expert)
         if user.id == webinar.host_id:
-            return True
-            
+            if user.has_role("admin") or user.has_role("plant_expert"):
+                self._log_info(f"User {user.id} is moderator: host with admin/plant_expert role")
+                return True
+            else:
+                self._log_info(f"User {user.id} is host but not admin/plant_expert, not moderator")
+                return False
+
         # Админы всегда модераторы
         if user.has_role("admin"):
+            self._log_info(f"User {user.id} is moderator: has admin role")
             return True
-            
-        # Проверяем роль участника в вебинаре
+
+        # Эксперты растений всегда модераторы
+        if user.has_role("plant_expert"):
+            self._log_info(f"User {user.id} is moderator: has plant_expert role")
+            return True
+
+        # Проверяем роль участника в вебинаре (только для admin и plant_expert)
         for participant in webinar.participants:
             if participant.user_id == user.id:
-                return participant.role in [ParticipantRole.HOST, ParticipantRole.MODERATOR]
-        
+                if participant.role in [ParticipantRole.HOST, ParticipantRole.MODERATOR]:
+                    if user.has_role("admin") or user.has_role("plant_expert"):
+                        self._log_info(f"User {user.id} is moderator: participant role {participant.role} with admin/plant_expert")
+                        return True
+                    else:
+                        self._log_info(f"User {user.id} has participant role {participant.role} but not admin/plant_expert, not moderator")
+                        return False
+
+        self._log_info(f"User {user.id} is not moderator: no qualifying conditions met")
         return False
     
-    def _get_toolbar_buttons(self, is_moderator: bool) -> list:
-        """
-        Возвращает список кнопок тулбара в зависимости от роли
-        
-        Args:
-            is_moderator: Является ли пользователь модератором
-            
-        Returns:
-            Список кнопок тулбара
-        """
-        base_buttons = [
-            "microphone", "camera", "closedcaptions", "desktop", "fullscreen",
-            "fodeviceselection", "hangup", "profile", "chat", "recording",
-            "livestreaming", "etherpad", "sharedvideo", "settings", "raisehand",
-            "videoquality", "filmstrip", "invite", "feedback", "stats", "shortcuts",
-            "tileview", "videobackgroundblur", "download", "help", "mute-everyone",
-            "security"
-        ]
-        
-        if not is_moderator:
-            # Убираем кнопки модератора для обычных участников
-            moderator_buttons = [
-                "recording", "livestreaming", "invite", "mute-everyone", "security"
-            ]
-            base_buttons = [btn for btn in base_buttons if btn not in moderator_buttons]
-        
-        return base_buttons
+
     
     def validate_room_name(self, room_name: str) -> bool:
         """

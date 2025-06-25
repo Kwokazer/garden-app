@@ -37,27 +37,6 @@
         <button @click="clearError" class="error-close">×</button>
       </div>
     </div>
-
-    <!-- Модальное окно успеха -->
-    <div v-if="showSuccessModal" class="modal-overlay" @click="closeSuccessModal">
-      <div class="modal" @click.stop>
-        <div class="modal-header">
-          <h3>Вебинар создан успешно! 🎉</h3>
-        </div>
-        <div class="modal-body">
-          <p>Ваш вебинар <strong>"{{ createdWebinar?.title }}"</strong> был успешно создан.</p>
-          <p>Участники смогут присоединиться к нему в назначенное время.</p>
-        </div>
-        <div class="modal-actions">
-          <button @click="goToWebinar" class="btn btn--primary">
-            Перейти к вебинару
-          </button>
-          <button @click="goToWebinarsList" class="btn btn--secondary">
-            К списку вебинаров
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -80,26 +59,30 @@ export default {
     
     const isLoading = ref(false)
     const error = ref(null)
-    const showSuccessModal = ref(false)
-    const createdWebinar = ref(null)
     
     // Computed properties
     const user = computed(() => authStore.getUser)
     
     const canCreateWebinar = computed(() => {
       if (!user.value) return false
-      return user.value.roles?.some(role => ['admin', 'plant_expert'].includes(role.name))
+      return user.value.roles?.some(role => ['admin', 'plant_expert'].includes(role))
     })
     
     // Methods
     const handleCreateWebinar = async (webinarData) => {
       isLoading.value = true
       error.value = null
-      
+
       try {
         const newWebinar = await webinarsStore.createWebinar(webinarData)
-        createdWebinar.value = newWebinar
-        showSuccessModal.value = true
+
+        // Сразу перенаправляем на страницу созданного вебинара
+        if (newWebinar && newWebinar.id) {
+          router.push(`/webinars/${newWebinar.id}`)
+        } else {
+          // Если нет ID, перенаправляем на список вебинаров
+          router.push('/webinars')
+        }
       } catch (err) {
         console.error('Error creating webinar:', err)
         error.value = err.message || 'Произошла ошибка при создании вебинара'
@@ -114,20 +97,6 @@ export default {
     
     const clearError = () => {
       error.value = null
-    }
-    
-    const closeSuccessModal = () => {
-      showSuccessModal.value = false
-    }
-    
-    const goToWebinar = () => {
-      if (createdWebinar.value) {
-        router.push(`/webinars/${createdWebinar.value.id}`)
-      }
-    }
-    
-    const goToWebinarsList = () => {
-      router.push('/webinars')
     }
     
     // Lifecycle
@@ -148,15 +117,10 @@ export default {
     return {
       isLoading,
       error,
-      showSuccessModal,
-      createdWebinar,
       canCreateWebinar,
       handleCreateWebinar,
       handleCancel,
-      clearError,
-      closeSuccessModal,
-      goToWebinar,
-      goToWebinarsList
+      clearError
     }
   }
 }
@@ -321,78 +285,6 @@ export default {
   border-radius: 4px;
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.modal {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
-  width: 90%;
-  max-height: 90vh;
-  overflow: auto;
-  animation: scaleIn 0.3s ease-out;
-}
-
-@keyframes scaleIn {
-  from {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.modal-header {
-  padding: 24px 24px 0;
-  text-align: center;
-}
-
-.modal-header h3 {
-  color: #1a202c;
-  margin: 0;
-}
-
-.modal-body {
-  padding: 20px 24px;
-  text-align: center;
-}
-
-.modal-body p {
-  color: #4a5568;
-  margin-bottom: 12px;
-}
-
-.modal-body p:last-child {
-  margin-bottom: 0;
-}
-
-.modal-actions {
-  padding: 0 24px 24px;
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-}
-
 @media (max-width: 768px) {
   .error-message {
     position: relative;
@@ -400,10 +292,6 @@ export default {
     right: auto;
     margin-bottom: 20px;
     max-width: none;
-  }
-  
-  .modal-actions {
-    flex-direction: column;
   }
 }
 </style>

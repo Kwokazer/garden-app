@@ -160,23 +160,23 @@ export default {
     
     // Computed properties
     const webinar = computed(() => webinarsStore.getCurrentWebinar)
-    const user = computed(() => authStore.authUser)
-    
+    const user = computed(() => authStore.getUser)
+
     const canJoin = computed(() => {
       if (!webinar.value || !user.value) return false
-      return webinar.value.status === 'SCHEDULED' || webinar.value.status === 'LIVE'
+      return webinar.value.status === 'LIVE'
     })
-    
+
     const canEdit = computed(() => {
       if (!webinar.value || !user.value) return false
-      return user.value.id === webinar.value.host_id || 
-             user.value.roles?.some(role => role.name === 'admin')
+      return user.value.id === webinar.value.host_id ||
+             user.value.roles?.some(role => role === 'admin')
     })
-    
+
     const canDelete = computed(() => {
       if (!webinar.value || !user.value) return false
-      return user.value.id === webinar.value.host_id || 
-             user.value.roles?.some(role => role.name === 'admin')
+      return user.value.id === webinar.value.host_id ||
+             user.value.roles?.some(role => role === 'admin')
     })
     
     // Methods
@@ -209,11 +209,17 @@ export default {
         // Получаем данные для подключения к Jitsi
         const connectionData = await webinarsStore.joinWebinar(webinar.value.id)
 
+        // Проверяем, можно ли подключиться
+        if (!connectionData.can_join) {
+          alert(connectionData.message || 'Невозможно подключиться к вебинару')
+          return
+        }
+
         // Открываем Jitsi в новой вкладке
         if (connectionData.jitsi_url) {
           window.open(connectionData.jitsi_url, '_blank')
         } else {
-          throw new Error('Не удалось получить ссылку на вебинар')
+          alert('Не удалось получить ссылку на вебинар')
         }
 
       } catch (err) {

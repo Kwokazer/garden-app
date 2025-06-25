@@ -264,29 +264,6 @@ export const webinarsApi = {
   },
 
   /**
-   * Get Jitsi configuration for embedding
-   * @param {string|number} id - Webinar ID
-   * @returns {Promise<Object>} - Server response with Jitsi config
-   */
-  async getJitsiConfig(id) {
-    try {
-      const url = `${BASE_API_URL}/webinars/${id}/jitsi-config`;
-      console.log("Getting Jitsi config for webinar:", id);
-
-      const response = await fetch(url, {
-        method: "GET",
-        headers: getAuthHeaders(),
-      });
-
-      const result = await handleResponse(response);
-      return result.data;
-    } catch (error) {
-      console.error(`Error getting Jitsi config for webinar ${id}:`, error);
-      throw error;
-    }
-  },
-
-  /**
    * Get webinars hosted by current user
    * @param {number} page - Page number
    * @param {number} per_page - Number of webinars per page

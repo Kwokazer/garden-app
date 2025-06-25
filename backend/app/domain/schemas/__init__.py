@@ -36,8 +36,7 @@ from app.domain.schemas.webinar import (WebinarBase, WebinarCreate, WebinarUpdat
                                        WebinarFilterParams, WebinarStatusEnum,
                                        ParticipantRoleEnum, WebinarParticipantRef,
                                        WebinarParticipantCreate, WebinarParticipantUpdate,
-                                       JitsiTokenRequest, JitsiTokenResponse,
-                                       JitsiConfigResponse)
+                                       JitsiTokenRequest, JitsiTokenResponse)
 
 __all__ = [
     # Base schemas
@@ -89,6 +88,5 @@ __all__ = [
     "WebinarBase", "WebinarCreate", "WebinarUpdate", "WebinarResponse",
     "WebinarListResponse", "WebinarFilterParams", "WebinarStatusEnum",
     "ParticipantRoleEnum", "WebinarParticipantRef", "WebinarParticipantCreate",
-    "WebinarParticipantUpdate", "JitsiTokenRequest", "JitsiTokenResponse",
-    "JitsiConfigResponse"
+    "WebinarParticipantUpdate", "JitsiTokenRequest", "JitsiTokenResponse"
 ]

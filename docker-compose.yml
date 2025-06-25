@@ -133,10 +133,23 @@ services:
       - ./jitsi/web:/config
       - ./jitsi/web/crontabs:/var/spool/cron/crontabs
     environment:
+      - AUTH_TYPE=jwt
       - ENABLE_AUTH=1
       - ENABLE_GUESTS=0
+      - ENABLE_AUTO_OWNER=0
+      - DISABLE_ANONYMOUS_DOMAIN_LOGIN=1
       - JWT_APP_ID=garden_app
       - JWT_APP_SECRET=jwt_secret_for_garden_app_123
+      - JWT_ACCEPTED_ISSUERS=garden_app
+      - JWT_ACCEPTED_AUDIENCES=jitsi
+      - JWT_ASAP_KEYSERVER=
+      - JWT_ALLOW_EMPTY_ROOM=0
+      - MUC_ALLOWNERS=false
+      - ENABLE_LOBBY=0
+      - ENABLE_GUEST_DOMAIN=0
+      - TOKEN_AUTH_URL=
+      - ENABLE_LOBBY=false
+      - ENABLE_PREJOIN_PAGE=false
       - ENABLE_RECORDING=1
       - ENABLE_TRANSCRIPTIONS=0
       - ENABLE_LOBBY=0
@@ -173,8 +186,24 @@ services:
       - AUTH_TYPE=jwt
       - ENABLE_AUTH=1
       - ENABLE_GUESTS=0
+      - ENABLE_AUTO_OWNER=0
+      - DISABLE_ANONYMOUS_DOMAIN_LOGIN=1
       - JWT_APP_ID=garden_app
       - JWT_APP_SECRET=jwt_secret_for_garden_app_123
+      - JWT_ACCEPTED_ISSUERS=garden_app
+      - JWT_ACCEPTED_AUDIENCES=jitsi
+      - JWT_ASAP_KEYSERVER=
+      - JWT_ALLOW_EMPTY_ROOM=0
+      - JWT_AUTH_TYPE=token
+      - JWT_TOKEN_AUTH_MODULE=token_verification
+      - MUC_ALLOWNERS=false
+      - ENABLE_LOBBY=0
+      - ENABLE_GUEST_DOMAIN=0
+      - TOKEN_AUTH_URL=
+      - PROSODY_RESERVATION_ENABLED=false
+      - PROSODY_RESERVATION_REST_BASE_URL=
+      - GLOBAL_MODULES=token_verification
+      - GLOBAL_CONFIG=consider_bosh_secure = true; app_id = "garden_app"; app_secret = "jwt_secret_for_garden_app_123"; allow_empty_token = false;
       - XMPP_DOMAIN=meet.jitsi
       - XMPP_AUTH_DOMAIN=auth.meet.jitsi
       - XMPP_GUEST_DOMAIN=guest.meet.jitsi
@@ -201,11 +230,16 @@ services:
       - JICOFO_COMPONENT_SECRET=s3cr3t
       - JICOFO_AUTH_USER=focus
       - JICOFO_AUTH_PASSWORD=jicofo_auth_password
-      - JVB_BREWERY_MUC=jvbbrewery@internal-muc.meet.jitsi
-      - JIBRI_BREWERY_MUC=jibribrewery@internal-muc.meet.jitsi
       - TZ=Europe/Moscow
       - ENABLE_AUTH=1
       - ENABLE_RECORDING=1
+      - AUTH_TYPE=jwt
+      - JWT_APP_ID=garden_app
+      - JWT_APP_SECRET=jwt_secret_for_garden_app_123
+      - JWT_ACCEPTED_ISSUERS=garden_app
+      - JWT_ACCEPTED_AUDIENCES=jitsi
+      - JWT_ASAP_KEYSERVER=
+      - JWT_ALLOW_EMPTY_ROOM=0
     depends_on:
       - prosody
     networks:
@@ -215,6 +249,7 @@ services:
     image: jitsi/jvb:stable
     ports:
       - "10001:10000/udp"
+      - "8080:8080"
     volumes:
       - ./jitsi/jvb:/config
     environment:
@@ -226,11 +261,14 @@ services:
       - JVB_AUTH_PASSWORD=jvb_auth_password
       - JVB_BREWERY_MUC=jvbbrewery@internal-muc.meet.jitsi
       - JVB_PORT=10000
-      - JVB_ADVERTISE_IPS=localhost
-      - JVB_ADVERTISE_PRIVATE_CANDIDATES=false
+      - JVB_ADVERTISE_IPS=127.0.0.1
+      - JVB_ADVERTISE_PRIVATE_CANDIDATES=true
       - JVB_STUN_SERVERS=stun.l.google.com:19302,stun1.l.google.com:19302
       - JICOFO_AUTH_USER=focus
       - TZ=Europe/Moscow
+      - JVB_ENABLE_APIS=rest,colibri
+      - JVB_MUC_NICKNAME=jvb-docker
+      - JVB_XMPP_PING_INTERVAL=30000
     depends_on:
       - prosody
     networks:

@@ -133,13 +133,13 @@ export default {
     const isLoadingParticipating = ref(false)
 
     // Computed properties
-    const user = computed(() => authStore.authUser)
+    const user = computed(() => authStore.getUser)
     const hostedWebinars = computed(() => webinarsStore.getMyHostedWebinars)
     const participatingWebinars = computed(() => webinarsStore.getMyParticipatingWebinars)
 
     const canCreateWebinar = computed(() => {
       if (!user.value) return false
-      return user.value.roles?.some(role => ['admin', 'plant_expert'].includes(role.name))
+      return user.value.roles?.some(role => ['admin', 'plant_expert'].includes(role))
     })
 
     const tabs = computed(() => {

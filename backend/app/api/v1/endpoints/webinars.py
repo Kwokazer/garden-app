@@ -13,7 +13,7 @@ from app.domain.models import User
 from app.domain.schemas.webinar import (
     WebinarCreate, WebinarUpdate, WebinarResponse, WebinarListResponse,
     WebinarFilterParams, WebinarParticipantCreate, WebinarParticipantUpdate,
-    JitsiTokenRequest, JitsiTokenResponse, JitsiConfigResponse,
+    JitsiTokenRequest, JitsiTokenResponse,
     WebinarStatusEnum, ParticipantRoleEnum
 )
 from app.infrastructure.database import get_db
@@ -238,13 +238,7 @@ async def join_webinar(
     """
     try:
         connection_data = await webinar_service.join_webinar(webinar_id, current_user)
-        return {
-            "message": "Успешно присоединились к вебинару",
-            "jwt_token": connection_data["jwt_token"],
-            "jitsi_url": connection_data["jitsi_url"],
-            "expires_at": connection_data["expires_at"],
-            "config": connection_data["config"]
-        }
+        return connection_data
     except NotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -296,39 +290,7 @@ async def get_jitsi_token(
             detail=f"Вебинар с ID {webinar_id} не найден"
         )
 
-@router.get("/{webinar_id}/jitsi-config", response_model=JitsiConfigResponse)
-async def get_jitsi_config(
-    webinar_id: int = Path(..., ge=1, description="ID вебинара"),
-    current_user: User = Depends(get_current_active_user),
-    webinar_service: WebinarService = Depends(get_webinar_service),
-    jitsi_service: JitsiService = Depends(get_jitsi_service)
-) -> JitsiConfigResponse:
-    """
-    Получить конфигурацию для встраивания Jitsi Meet.
-    """
-    try:
-        webinar = await webinar_service.get_webinar(webinar_id)
 
-        # Проверяем доступ к вебинару
-        if not webinar.is_public and current_user.id != webinar.host_id:
-            # Проверяем, что пользователь является участником
-            is_participant = any(
-                p.user_id == current_user.id for p in webinar.participants
-            )
-            if not is_participant:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Доступ к приватному вебинару запрещен"
-                )
-
-        config = jitsi_service.get_jitsi_config(current_user, webinar)
-
-        return JitsiConfigResponse(**config)
-    except NotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Вебинар с ID {webinar_id} не найден"
-        )
 
 # Дополнительные эндпоинты
 @router.get("/my/hosted", response_model=WebinarListResponse)

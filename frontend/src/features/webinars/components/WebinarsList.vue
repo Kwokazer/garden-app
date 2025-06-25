@@ -142,7 +142,7 @@ export default {
     const canCreateWebinar = computed(() => {
       const user = authStore.getUser
       if (!user) return false
-      return user.roles?.some(role => ['admin', 'plant_expert'].includes(role.name))
+      return user.roles?.some(role => ['admin', 'plant_expert'].includes(role))
     })
     
     // Methods
