@@ -70,7 +70,7 @@ class QuestionRepository(BaseRepository[Question]):
                 .options(
                     joinedload(Question.author),
                     joinedload(Question.plant),
-                    joinedload(Question.answers).joinedload(Answer.author)
+                    joinedload(Question.answers).joinedload(Answer.author).joinedload(User.roles)
                 )
                 .where(Question.id == question_id)
             )
@@ -142,16 +142,21 @@ class QuestionRepository(BaseRepository[Question]):
                     
                     # Добавляем информацию об авторе ответа
                     if answer.author:
+                        # Получаем роли автора
+                        author_roles = [role.name for role in answer.author.roles] if answer.author.roles else []
+
                         answer_dict["author"] = {
                             "id": answer.author.id,
                             "username": answer.author.username,
-                            "avatar_url": getattr(answer.author, "avatar_url", None)
+                            "avatar_url": getattr(answer.author, "avatar_url", None),
+                            "roles": author_roles
                         }
                     else:
                         answer_dict["author"] = {
                             "id": answer.author_id,
                             "username": "Неизвестно",
-                            "avatar_url": None
+                            "avatar_url": None,
+                            "roles": []
                         }
                     
                     # Добавляем информацию о голосе пользователя за ответ

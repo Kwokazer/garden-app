@@ -9,10 +9,24 @@
           <p class="text-muted mb-0">Найдите ответы на ваши вопросы или поделитесь своими знаниями</p>
         </div>
         <div class="col-md-4 text-md-end mt-3 mt-md-0">
-          <router-link to="/questions/ask" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-2"></i>
-            Задать вопрос
-          </router-link>
+          <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+            <!-- Кнопка "Мои вопросы" (только для авторизованных пользователей) -->
+            <button
+              v-if="authStore.isLoggedIn"
+              class="btn btn-outline-primary"
+              @click="toggleMyQuestions"
+              :class="{ 'active': showingMyQuestions }"
+            >
+              <i class="bi bi-person-circle me-2"></i>
+              {{ showingMyQuestions ? 'Все вопросы' : 'Мои вопросы' }}
+            </button>
+
+            <!-- Кнопка "Задать вопрос" -->
+            <router-link to="/questions/ask" class="btn btn-primary">
+              <i class="bi bi-plus-circle me-2"></i>
+              Задать вопрос
+            </router-link>
+          </div>
         </div>
       </div>
       
@@ -220,6 +234,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuestionsStore } from '../store/questionsStore';
+import { useAuthStore } from '@/features/auth/store/authStore';
 import { useConfirm } from '@/composables/useConfirm';
 import { useNotificationStore } from '@/stores/notificationStore';
 import QuestionFilters from '../components/QuestionFilters.vue';
@@ -228,12 +243,14 @@ import QuestionCard from '../components/QuestionCard.vue';
 const route = useRoute();
 const router = useRouter();
 const questionsStore = useQuestionsStore();
+const authStore = useAuthStore();
 const { confirmDelete } = useConfirm();
 const notificationStore = useNotificationStore();
 
 // Состояние компонента
 const isLoading = ref(false);
 const error = ref(null);
+const showingMyQuestions = ref(false);
 
 // Вычисляемые свойства
 const questions = computed(() => questionsStore.questions);
@@ -421,6 +438,31 @@ async function applyFilters(filters) {
   await questionsStore.updateFilters(filters);
 }
 
+// Переключение между всеми вопросами и моими вопросами
+async function toggleMyQuestions() {
+  showingMyQuestions.value = !showingMyQuestions.value;
+
+  if (showingMyQuestions.value) {
+    console.log('👤 QuestionsListPage: Showing my questions for user:', authStore.user?.id);
+    // Применяем фильтр по автору (текущий пользователь)
+    const myQuestionsFilter = {
+      ...questionsStore.activeFilters,
+      author_id: authStore.user?.id
+    };
+    console.log('👤 QuestionsListPage: Applying filters:', myQuestionsFilter);
+    await questionsStore.updateFilters(myQuestionsFilter);
+  } else {
+    console.log('🌍 QuestionsListPage: Showing all questions');
+    // Убираем фильтр по автору, устанавливая его в null
+    const allQuestionsFilter = {
+      ...questionsStore.activeFilters,
+      author_id: null
+    };
+    console.log('🌍 QuestionsListPage: Applying filters:', allQuestionsFilter);
+    await questionsStore.updateFilters(allQuestionsFilter);
+  }
+}
+
 async function clearFilters() {
   console.log('🗑️ QuestionsListPage: Clearing filters');
   await questionsStore.clearFilters();
@@ -591,6 +633,36 @@ watch(() => route.query, (newQuery) => {
 .btn-group .btn {
   font-size: 0.875rem;
   padding: 0.25rem 0.75rem;
+}
+
+/* Стили для кнопки "Мои вопросы" */
+.btn-outline-primary.active {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: white;
+}
+
+.btn-outline-primary.active:hover {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: white;
+  opacity: 0.9;
+}
+
+/* Адаптивность для кнопок в заголовке */
+@media (max-width: 768px) {
+  .d-flex.gap-2 {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .d-flex.gap-2 .btn {
+    margin-bottom: 0.5rem;
+  }
+
+  .d-flex.gap-2 .btn:last-child {
+    margin-bottom: 0;
+  }
 }
 
 /* Адаптивность */

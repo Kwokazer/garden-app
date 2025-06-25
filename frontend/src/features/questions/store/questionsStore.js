@@ -685,7 +685,7 @@ export const useQuestionsStore = defineStore("questions", () => {
    */
   async function updateFilters(newFilters) {
     Object.keys(newFilters).forEach((key) => {
-      if (newFilters[key] !== undefined && key in activeFilters.value) {
+      if (newFilters[key] !== undefined) {
         activeFilters.value[key] = newFilters[key];
       }
     });

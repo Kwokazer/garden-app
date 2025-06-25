@@ -18,7 +18,7 @@ class QuestionVote(BaseModel, TimestampedModel):
     __tablename__ = "question_votes"
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id"), nullable=False)
+    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id", ondelete="CASCADE"), nullable=False)
     vote_type: Mapped[VoteType] = mapped_column(String(10), nullable=False)
 
     # Отношения
@@ -35,7 +35,7 @@ class AnswerVote(BaseModel, TimestampedModel):
     __tablename__ = "answer_votes"
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    answer_id: Mapped[int] = mapped_column(ForeignKey("answers.id"), nullable=False)
+    answer_id: Mapped[int] = mapped_column(ForeignKey("answers.id", ondelete="CASCADE"), nullable=False)
     vote_type: Mapped[VoteType] = mapped_column(String(10), nullable=False)
 
     # Отношения

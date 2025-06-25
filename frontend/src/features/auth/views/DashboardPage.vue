@@ -78,7 +78,24 @@
                   </div>
                 </li>
               </ul>
-              
+
+              <!-- Информация для обычных пользователей о возможности стать экспертом -->
+              <div v-if="isRegularUser" class="alert alert-info mt-3" role="alert">
+                <div class="d-flex align-items-start">
+                  <i class="bi bi-info-circle-fill me-2 mt-1 flex-shrink-0"></i>
+                  <div>
+                    <strong>Хотите стать экспертом?</strong><br>
+                    <small class="text-muted">
+                      Если вы хотите стать экспертом по растениям и помогать другим садоводам,
+                      напишите на почту
+                      <a href="mailto:support@garden-app.com" class="text-decoration-none">
+                        <strong>support@garden-app.com</strong>
+                      </a>
+                    </small>
+                  </div>
+                </div>
+              </div>
+
               <div class="d-grid gap-2 mt-4">
                 <button class="btn btn-outline-primary">
                   <i class="bi bi-pencil-square me-2"></i>
@@ -226,6 +243,20 @@
       return auth.user.first_name;
     }
     return auth.user?.username || 'Пользователь';
+  });
+
+  // Проверка, является ли пользователь обычным пользователем (не экспертом и не админом)
+  const isRegularUser = computed(() => {
+    if (!auth.user?.roles || auth.user.roles.length === 0) {
+      return true; // Если нет ролей, то это обычный пользователь
+    }
+
+    // Проверяем, есть ли роли кроме "user"
+    const hasExpertOrAdminRole = auth.user.roles.some(role =>
+      role === 'plant_expert' || role === 'admin'
+    );
+
+    return !hasExpertOrAdminRole;
   });
   
   // Динамическое приветствие в зависимости от времени суток

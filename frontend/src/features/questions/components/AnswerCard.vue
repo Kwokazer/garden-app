@@ -1,7 +1,12 @@
 <!-- Полный код AnswerCard.vue -->
 <template>
   <div class="answer-card">
-    <div class="card shadow-sm border-0 mb-3" :class="{ 'accepted-answer': answer.is_accepted }">
+    <div class="card shadow-sm border-0 mb-3" :class="{
+      'accepted-answer': answer.is_accepted,
+      'regular-user-answer': isRegularUser,
+      'expert-answer': isExpert,
+      'admin-answer': isAdmin
+    }">
       <div class="card-body">
         <div class="d-flex">
           <!-- Панель голосования с уникальным ключом -->
@@ -49,15 +54,31 @@
               
               <!-- Мета-информация и действия -->
               <div class="answer-meta d-flex flex-wrap justify-content-between align-items-center mt-3">
-                <div class="author-info">
-                  <small class="text-muted">
-                    Автор: 
+                <div class="author-info d-flex align-items-center flex-wrap">
+                  <small class="text-muted me-2">
+                    Автор:
                     <span class="author-name">{{ answer.author?.username || 'Неизвестно' }}</span>
                     <span class="mx-1">•</span>
                     <time :datetime="answer.created_at" :title="getFullDate(answer.created_at)">
                       {{ getRelativeTime(answer.created_at) }}
                     </time>
                   </small>
+
+                  <!-- Бейдж роли автора -->
+                  <div class="author-role-badges">
+                    <span v-if="isRegularUser" class="badge bg-primary-subtle text-primary me-1">
+                      <i class="bi bi-person me-1"></i>
+                      Садовод
+                    </span>
+                    <span v-else-if="isExpert" class="badge bg-success-subtle text-success me-1">
+                      <i class="bi bi-award me-1"></i>
+                      Эксперт
+                    </span>
+                    <span v-else-if="isAdmin" class="badge bg-danger-subtle text-danger me-1">
+                      <i class="bi bi-shield-check me-1"></i>
+                      Администратор
+                    </span>
+                  </div>
                 </div>
                 
                 <div class="answer-actions d-flex flex-wrap">
@@ -174,6 +195,31 @@ const isQuestionAuthor = computed(() => {
 
 const canEdit = computed(() => {
   return authStore.isLoggedIn && authStore.user && authStore.user.id === props.answer.author_id;
+});
+
+// Вычисляемые свойства для ролей автора ответа
+const authorRoles = computed(() => {
+  return props.answer.author?.roles || [];
+});
+
+const isRegularUser = computed(() => {
+  const roles = authorRoles.value;
+  if (roles.length === 0) return true; // Если нет ролей, то обычный пользователь
+
+  // Проверяем, есть ли роли кроме "user"
+  const hasExpertOrAdminRole = roles.some(role =>
+    role === 'plant_expert' || role === 'admin'
+  );
+
+  return !hasExpertOrAdminRole;
+});
+
+const isExpert = computed(() => {
+  return authorRoles.value.includes('plant_expert');
+});
+
+const isAdmin = computed(() => {
+  return authorRoles.value.includes('admin');
 });
 
 // Методы форматирования
@@ -536,5 +582,55 @@ async function handleDelete() {
   100% {
     box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
   }
+}
+
+/* Стили для выделения ответов по ролям */
+.regular-user-answer {
+  border-left: 4px solid #0d6efd !important;
+  background: linear-gradient(135deg, rgba(13, 110, 253, 0.02) 0%, rgba(13, 110, 253, 0.05) 100%);
+}
+
+.expert-answer {
+  border-left: 4px solid #198754 !important;
+  background: linear-gradient(135deg, rgba(25, 135, 84, 0.02) 0%, rgba(25, 135, 84, 0.05) 100%);
+}
+
+.admin-answer {
+  border-left: 4px solid #dc3545 !important;
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.02) 0%, rgba(220, 53, 69, 0.05) 100%);
+}
+
+/* Стили для бейджей ролей */
+.bg-primary-subtle {
+  background-color: rgba(13, 110, 253, 0.1) !important;
+}
+
+.bg-success-subtle {
+  background-color: rgba(25, 135, 84, 0.1) !important;
+}
+
+.bg-danger-subtle {
+  background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+.author-role-badges .badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 12px;
+  padding: 4px 8px;
+}
+
+/* Дополнительное выделение для принятых ответов */
+.accepted-answer.regular-user-answer {
+  border-left: 4px solid #198754 !important;
+  background: linear-gradient(135deg, rgba(25, 135, 84, 0.05) 0%, rgba(25, 135, 84, 0.1) 100%);
+}
+
+.accepted-answer.expert-answer {
+  background: linear-gradient(135deg, rgba(25, 135, 84, 0.08) 0%, rgba(25, 135, 84, 0.15) 100%);
+}
+
+.accepted-answer.admin-answer {
+  background: linear-gradient(135deg, rgba(25, 135, 84, 0.08) 0%, rgba(25, 135, 84, 0.15) 100%);
 }
 </style>
