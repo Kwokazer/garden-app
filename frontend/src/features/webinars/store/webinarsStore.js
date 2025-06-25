@@ -1,13 +1,13 @@
 // src/features/webinars/store/webinarsStore.js
 
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
-import { webinarsApi } from '../api/webinarsApi';
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import { webinarsApi } from "../api/webinarsApi";
 
 /**
  * Webinars state management store
  */
-export const useWebinarsStore = defineStore('webinars', () => {
+export const useWebinarsStore = defineStore("webinars", () => {
   // State
   const webinars = ref([]);
   const currentWebinar = ref(null);
@@ -19,16 +19,16 @@ export const useWebinarsStore = defineStore('webinars', () => {
     page: 1,
     total_pages: 1,
     total_items: 0,
-    per_page: 20
+    per_page: 20,
   });
   const activeFilters = ref({
-    title: '',
+    title: "",
     host_id: null,
     status: null,
     is_public: null,
     plant_topic_id: null,
     date_from: null,
-    date_to: null
+    date_to: null,
   });
 
   // Jitsi connection data
@@ -38,7 +38,9 @@ export const useWebinarsStore = defineStore('webinars', () => {
   const getWebinars = computed(() => webinars.value);
   const getCurrentWebinar = computed(() => currentWebinar.value);
   const getMyHostedWebinars = computed(() => myHostedWebinars.value);
-  const getMyParticipatingWebinars = computed(() => myParticipatingWebinars.value);
+  const getMyParticipatingWebinars = computed(
+    () => myParticipatingWebinars.value
+  );
   const getIsLoading = computed(() => isLoading.value);
   const getError = computed(() => error.value);
   const getPagination = computed(() => pagination.value);
@@ -54,13 +56,13 @@ export const useWebinarsStore = defineStore('webinars', () => {
 
     if (resetFilters) {
       activeFilters.value = {
-        title: '',
+        title: "",
         host_id: null,
         status: null,
         is_public: null,
         plant_topic_id: null,
         date_from: null,
-        date_to: null
+        date_to: null,
       };
     }
 
@@ -70,20 +72,20 @@ export const useWebinarsStore = defineStore('webinars', () => {
         per_page,
         activeFilters.value
       );
-      
+
       webinars.value = response.items || [];
-      
+
       pagination.value = {
         page: response.page || page,
         total_pages: response.total_pages || 1,
         total_items: response.total_items || 0,
-        per_page: response.per_page || per_page
+        per_page: response.per_page || per_page,
       };
 
       return webinars.value;
     } catch (e) {
-      error.value = e.message || 'Ошибка загрузки списка вебинаров';
-      console.error('Error loading webinars list:', e);
+      error.value = e.message || "Ошибка загрузки списка вебинаров";
+      console.error("Error loading webinars list:", e);
       return [];
     } finally {
       isLoading.value = false;
@@ -95,7 +97,7 @@ export const useWebinarsStore = defineStore('webinars', () => {
    */
   async function loadWebinarById(id) {
     if (!id) {
-      error.value = 'ID вебинара не указан';
+      error.value = "ID вебинара не указан";
       return null;
     }
 
@@ -129,8 +131,8 @@ export const useWebinarsStore = defineStore('webinars', () => {
       await loadWebinars(pagination.value.page, pagination.value.per_page);
       return newWebinar;
     } catch (e) {
-      error.value = e.message || 'Ошибка создания вебинара';
-      console.error('Error creating webinar:', e);
+      error.value = e.message || "Ошибка создания вебинара";
+      console.error("Error creating webinar:", e);
       throw e;
     } finally {
       isLoading.value = false;
@@ -146,18 +148,18 @@ export const useWebinarsStore = defineStore('webinars', () => {
 
     try {
       const updatedWebinar = await webinarsApi.updateWebinar(id, webinarData);
-      
+
       // If this is the current webinar, update it in store
       if (currentWebinar.value && currentWebinar.value.id === id) {
         currentWebinar.value = updatedWebinar;
       }
-      
+
       // Update in webinars list if present
-      const index = webinars.value.findIndex(webinar => webinar.id === id);
+      const index = webinars.value.findIndex((webinar) => webinar.id === id);
       if (index !== -1) {
         webinars.value[index] = updatedWebinar;
       }
-      
+
       return updatedWebinar;
     } catch (e) {
       error.value = e.message || `Ошибка обновления вебинара с ID ${id}`;
@@ -177,15 +179,15 @@ export const useWebinarsStore = defineStore('webinars', () => {
 
     try {
       await webinarsApi.deleteWebinar(id);
-      
+
       // Remove from current list
-      webinars.value = webinars.value.filter(webinar => webinar.id !== id);
-      
+      webinars.value = webinars.value.filter((webinar) => webinar.id !== id);
+
       // Clear current webinar if it's the one being deleted
       if (currentWebinar.value && currentWebinar.value.id === id) {
         currentWebinar.value = null;
       }
-      
+
       return true;
     } catch (e) {
       error.value = e.message || `Ошибка удаления вебинара с ID ${id}`;
@@ -217,6 +219,57 @@ export const useWebinarsStore = defineStore('webinars', () => {
   }
 
   /**
+   * Register for webinar (add to participants list)
+   */
+  async function registerForWebinar(id) {
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      const result = await webinarsApi.registerForWebinar(id);
+
+      // Обновляем список вебинаров, чтобы отразить изменения в участниках
+      await loadWebinars();
+
+      // Также обновляем список вебинаров, в которых пользователь участвует
+      await loadMyParticipatingWebinars();
+
+      return result;
+    } catch (e) {
+      error.value = e.message || `Ошибка регистрации на вебинар с ID ${id}`;
+      console.error(`Error registering for webinar with ID ${id}:`, e);
+      throw e;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /**
+   * Unregister from webinar (remove from participants list)
+   */
+  async function unregisterFromWebinar(id) {
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      await webinarsApi.unregisterFromWebinar(id);
+
+      // Обновляем список вебинаров, чтобы отразить изменения в участниках
+      await loadWebinars();
+
+      // Также обновляем список вебинаров, в которых пользователь участвует
+      await loadMyParticipatingWebinars();
+    } catch (e) {
+      error.value =
+        e.message || `Ошибка отмены регистрации на вебинар с ID ${id}`;
+      console.error(`Error unregistering from webinar with ID ${id}:`, e);
+      throw e;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /**
    * Get Jitsi token for webinar
    */
   async function getJitsiToken(id) {
@@ -224,7 +277,8 @@ export const useWebinarsStore = defineStore('webinars', () => {
       const tokenData = await webinarsApi.getJitsiToken(id);
       return tokenData;
     } catch (e) {
-      error.value = e.message || `Ошибка получения токена для вебинара с ID ${id}`;
+      error.value =
+        e.message || `Ошибка получения токена для вебинара с ID ${id}`;
       console.error(`Error getting Jitsi token for webinar ${id}:`, e);
       throw e;
     }
@@ -238,7 +292,8 @@ export const useWebinarsStore = defineStore('webinars', () => {
       const configData = await webinarsApi.getJitsiConfig(id);
       return configData;
     } catch (e) {
-      error.value = e.message || `Ошибка получения конфигурации для вебинара с ID ${id}`;
+      error.value =
+        e.message || `Ошибка получения конфигурации для вебинара с ID ${id}`;
       console.error(`Error getting Jitsi config for webinar ${id}:`, e);
       throw e;
     }
@@ -256,8 +311,8 @@ export const useWebinarsStore = defineStore('webinars', () => {
       myHostedWebinars.value = response.items || [];
       return myHostedWebinars.value;
     } catch (e) {
-      error.value = e.message || 'Ошибка загрузки моих вебинаров';
-      console.error('Error loading my hosted webinars:', e);
+      error.value = e.message || "Ошибка загрузки моих вебинаров";
+      console.error("Error loading my hosted webinars:", e);
       return [];
     } finally {
       isLoading.value = false;
@@ -272,12 +327,16 @@ export const useWebinarsStore = defineStore('webinars', () => {
     error.value = null;
 
     try {
-      const response = await webinarsApi.getMyParticipatingWebinars(page, per_page);
+      const response = await webinarsApi.getMyParticipatingWebinars(
+        page,
+        per_page
+      );
       myParticipatingWebinars.value = response.items || [];
       return myParticipatingWebinars.value;
     } catch (e) {
-      error.value = e.message || 'Ошибка загрузки вебинаров, в которых я участвую';
-      console.error('Error loading my participating webinars:', e);
+      error.value =
+        e.message || "Ошибка загрузки вебинаров, в которых я участвую";
+      console.error("Error loading my participating webinars:", e);
       return [];
     } finally {
       isLoading.value = false;
@@ -288,12 +347,12 @@ export const useWebinarsStore = defineStore('webinars', () => {
    * Update filters and load webinars
    */
   async function updateFilters(newFilters) {
-    Object.keys(newFilters).forEach(key => {
+    Object.keys(newFilters).forEach((key) => {
       if (newFilters[key] !== undefined && key in activeFilters.value) {
         activeFilters.value[key] = newFilters[key];
       }
     });
-    
+
     return await loadWebinars(1, pagination.value.per_page);
   }
 
@@ -330,7 +389,7 @@ export const useWebinarsStore = defineStore('webinars', () => {
     pagination,
     activeFilters,
     jitsiConnectionData,
-    
+
     // Getters
     getWebinars,
     getCurrentWebinar,
@@ -341,7 +400,7 @@ export const useWebinarsStore = defineStore('webinars', () => {
     getPagination,
     getActiveFilters,
     getJitsiConnectionData,
-    
+
     // Actions
     loadWebinars,
     loadWebinarById,
@@ -349,6 +408,8 @@ export const useWebinarsStore = defineStore('webinars', () => {
     updateWebinar,
     deleteWebinar,
     joinWebinar,
+    registerForWebinar,
+    unregisterFromWebinar,
     getJitsiToken,
     getJitsiConfig,
     loadMyHostedWebinars,
@@ -356,6 +417,6 @@ export const useWebinarsStore = defineStore('webinars', () => {
     updateFilters,
     clearFilters,
     clearError,
-    clearJitsiConnectionData
+    clearJitsiConnectionData,
   };
 });

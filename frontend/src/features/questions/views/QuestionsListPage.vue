@@ -220,12 +220,16 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuestionsStore } from '../store/questionsStore';
+import { useConfirm } from '@/composables/useConfirm';
+import { useNotificationStore } from '@/stores/notificationStore';
 import QuestionFilters from '../components/QuestionFilters.vue';
 import QuestionCard from '../components/QuestionCard.vue';
 
 const route = useRoute();
 const router = useRouter();
 const questionsStore = useQuestionsStore();
+const { confirmDelete } = useConfirm();
+const notificationStore = useNotificationStore();
 
 // Состояние компонента
 const isLoading = ref(false);
@@ -468,21 +472,22 @@ async function handleVote(voteData) {
     
   } catch (error) {
     console.error('❌ QuestionsListPage: Vote error:', error);
-    alert('Ошибка при голосовании: ' + error.message);
+    notificationStore.error('Ошибка голосования', error.message || 'Не удалось проголосовать');
   }
 }
 
 async function handleDelete(questionId) {
-  const confirmed = confirm('Вы уверены, что хотите удалить этот вопрос? Это действие нельзя отменить.');
+  const confirmed = await confirmDelete('Вы уверены, что хотите удалить этот вопрос? Это действие нельзя отменить.');
   if (!confirmed) return;
-  
+
   try {
     await questionsStore.deleteQuestion(questionId);
     // Перезагружаем текущую страницу
     await loadQuestions(currentPage.value, questionsStore.pagination.size);
+    notificationStore.success('Вопрос удален', 'Вопрос был успешно удален');
   } catch (error) {
     console.error('Error deleting question:', error);
-    alert('Ошибка при удалении вопроса: ' + error.message);
+    notificationStore.error('Ошибка удаления', error.message || 'Не удалось удалить вопрос');
   }
 }
 

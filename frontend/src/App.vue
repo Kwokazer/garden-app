@@ -143,11 +143,15 @@
         </div>
       </div>
     </footer>
+
+    <!-- Контейнер для уведомлений -->
+    <NotificationContainer />
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue';
+import NotificationContainer from '@/components/ui/NotificationContainer.vue';
 import { useAuthStore } from './features/auth/store/authStore';
 
 const auth = useAuthStore();

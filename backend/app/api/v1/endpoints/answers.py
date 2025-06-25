@@ -59,7 +59,7 @@ async def delete_answer(
         )
     return None
 
-@router.post("/{answer_id}/accept", response_model=QuestionDetailResponse)
+@router.post("/{answer_id}/accept", response_model=AnswerResponse)
 async def accept_answer(
     answer_id: int,
     current_user: User = Depends(get_current_user),

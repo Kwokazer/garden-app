@@ -226,6 +226,63 @@ async def remove_participant(
             detail=f"Вебинар с ID {webinar_id} не найден"
         )
 
+# Регистрация на вебинар
+@router.post("/{webinar_id}/register")
+async def register_for_webinar(
+    webinar_id: int = Path(..., ge=1, description="ID вебинара"),
+    current_user: User = Depends(get_current_active_user),
+    webinar_service: WebinarService = Depends(get_webinar_service)
+):
+    """
+    Зарегистрироваться на вебинар. Добавляет пользователя в список участников.
+    Доступно для вебинаров со статусом SCHEDULED.
+    """
+    try:
+        participant = await webinar_service.register_for_webinar(webinar_id, current_user)
+        return {
+            "message": "Вы успешно зарегистрированы на вебинар",
+            "participant_id": participant.id,
+            "webinar_id": webinar_id
+        }
+    except NotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Вебинар с ID {webinar_id} не найден"
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except AuthorizationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
+
+# Отмена регистрации на вебинар
+@router.delete("/{webinar_id}/unregister", status_code=status.HTTP_204_NO_CONTENT)
+async def unregister_from_webinar(
+    webinar_id: int = Path(..., ge=1, description="ID вебинара"),
+    current_user: User = Depends(get_current_active_user),
+    webinar_service: WebinarService = Depends(get_webinar_service)
+) -> None:
+    """
+    Отменить регистрацию на вебинар (удалить себя из списка участников).
+    """
+    try:
+        await webinar_service.unregister_from_webinar(webinar_id, current_user)
+    except NotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Вебинар с ID {webinar_id} не найден или вы не зарегистрированы на него"
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
 # Присоединение к вебинару
 @router.post("/{webinar_id}/join")
 async def join_webinar(
@@ -324,12 +381,11 @@ async def get_my_participating_webinars(
     """
     Получить список вебинаров, в которых участвует текущий пользователь.
     """
-    # Этот эндпоинт требует дополнительной логики в сервисе
-    # Пока возвращаем пустой список
-    return WebinarListResponse(
-        items=[],
-        total_items=0,
-        total_pages=0,
-        page=page,
-        per_page=per_page
-    )
+    try:
+        result = await webinar_service.get_participating_webinars(current_user, page, per_page)
+        return WebinarListResponse(**result)
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )

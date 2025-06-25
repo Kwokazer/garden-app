@@ -41,32 +41,53 @@
     </div>
     
     <div class="webinar-card__actions">
-      <button 
-        v-if="canJoin" 
+      <!-- Кнопка регистрации для запланированных вебинаров -->
+      <button
+        v-if="canRegister && !isUserRegistered"
+        @click="$emit('register', webinar.id)"
+        class="btn btn--success"
+        :disabled="isLoading"
+      >
+        Зарегистрироваться
+      </button>
+
+      <!-- Кнопка отмены регистрации для зарегистрированных пользователей -->
+      <button
+        v-if="canUnregister && isUserRegistered"
+        @click="$emit('unregister', webinar.id)"
+        class="btn btn--warning"
+        :disabled="isLoading"
+      >
+        Отменить регистрацию
+      </button>
+
+      <!-- Кнопка присоединения для активных вебинаров -->
+      <button
+        v-if="canJoin"
         @click="$emit('join', webinar.id)"
         class="btn btn--primary"
         :disabled="isLoading"
       >
-        {{ webinar.status === 'LIVE' ? 'Присоединиться' : 'Подключиться' }}
+        Присоединиться
       </button>
-      
-      <button 
-        v-if="canEdit" 
+
+      <button
+        v-if="canEdit"
         @click="$emit('edit', webinar.id)"
         class="btn btn--secondary"
       >
         Редактировать
       </button>
-      
-      <button 
-        v-if="canDelete" 
+
+      <button
+        v-if="canDelete"
         @click="$emit('delete', webinar.id)"
         class="btn btn--danger"
       >
         Удалить
       </button>
-      
-      <router-link 
+
+      <router-link
         :to="`/webinars/${webinar.id}`"
         class="btn btn--outline"
       >
@@ -92,12 +113,36 @@ export default {
       default: false
     }
   },
-  emits: ['join', 'edit', 'delete'],
+  emits: ['join', 'register', 'unregister', 'edit', 'delete'],
   setup(props) {
     const authStore = useAuthStore()
-    
+
     const canJoin = computed(() => {
-      return props.webinar.status === 'SCHEDULED' || props.webinar.status === 'LIVE'
+      return props.webinar.status === 'LIVE'
+    })
+
+    const canRegister = computed(() => {
+      const user = authStore.getUser
+      if (!user) return false
+
+      // Показываем кнопку регистрации только для запланированных вебинаров
+      return props.webinar.status === 'SCHEDULED'
+    })
+
+    const canUnregister = computed(() => {
+      const user = authStore.getUser
+      if (!user) return false
+
+      // Показываем кнопку отмены регистрации только для запланированных вебинаров
+      return props.webinar.status === 'SCHEDULED'
+    })
+
+    const isUserRegistered = computed(() => {
+      const user = authStore.getUser
+      if (!user || !props.webinar.participants) return false
+
+      // Проверяем, зарегистрирован ли пользователь на вебинар
+      return props.webinar.participants.some(participant => participant.user.id === user.id)
     })
     
     const canEdit = computed(() => {
@@ -144,6 +189,9 @@ export default {
     
     return {
       canJoin,
+      canRegister,
+      canUnregister,
+      isUserRegistered,
       canEdit,
       canDelete,
       getStatusText,
@@ -301,6 +349,29 @@ export default {
 
 .btn--secondary:hover {
   background-color: #e2e8f0;
+}
+
+.btn--success {
+  background-color: #38a169;
+  color: white;
+}
+
+.btn--success:hover:not(:disabled) {
+  background-color: #2f855a;
+}
+
+.btn--success:disabled {
+  background-color: #68d391;
+  cursor: default;
+}
+
+.btn--warning {
+  background-color: #ed8936;
+  color: white;
+}
+
+.btn--warning:hover:not(:disabled) {
+  background-color: #dd6b20;
 }
 
 .btn--danger {

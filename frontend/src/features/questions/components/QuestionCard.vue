@@ -122,6 +122,8 @@
 import { ref, computed, watch, nextTick } from 'vue';
 import { useAuthStore } from '../../auth/store/authStore';
 import { useQuestionsStore } from '../store/questionsStore';
+import { useConfirm } from '@/composables/useConfirm';
+import { useNotificationStore } from '@/stores/notificationStore';
 import VotingButtons from './VotingButtons.vue';
 
 const props = defineProps({
@@ -139,6 +141,8 @@ const emit = defineEmits(['vote', 'delete']);
 
 const authStore = useAuthStore();
 const questionsStore = useQuestionsStore();
+const { confirmDelete } = useConfirm();
+const notificationStore = useNotificationStore();
 
 // Состояние компонента
 const isVoting = ref(false);
@@ -286,18 +290,19 @@ async function handleVote(voteData) {
 
 async function handleDelete() {
   if (isDeleting.value) return;
-  
-  const confirmed = confirm('Вы уверены, что хотите удалить этот вопрос? Это действие нельзя отменить.');
+
+  const confirmed = await confirmDelete('Вы уверены, что хотите удалить этот вопрос? Это действие нельзя отменить.');
   if (!confirmed) return;
-  
+
   isDeleting.value = true;
-  
+
   try {
     await questionsStore.deleteQuestion(props.question.id);
     emit('delete', props.question.id);
+    notificationStore.success('Вопрос удален', 'Вопрос был успешно удален');
   } catch (error) {
     console.error('Error deleting question:', error);
-    alert('Ошибка при удалении вопроса: ' + error.message);
+    notificationStore.error('Ошибка удаления', error.message || 'Не удалось удалить вопрос');
   } finally {
     isDeleting.value = false;
   }

@@ -277,10 +277,12 @@
   </template>
   
   <script setup>
-  import { ref, computed, onMounted, watch } from 'vue';
+  import { ref, computed, onMounted, watch, nextTick } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { useQuestionsStore } from '../store/questionsStore';
   import { useAuthStore } from '../../auth/store/authStore';
+  import { useNotificationStore } from '@/stores/notificationStore';
+  import { useConfirm } from '@/composables/useConfirm';
   import VotingButtons from '../components/VotingButtons.vue';
   import AnswerCard from '../components/AnswerCard.vue';
   import AnswerForm from '../components/AnswerForm.vue';
@@ -289,6 +291,8 @@
   const router = useRouter();
   const questionsStore = useQuestionsStore();
   const authStore = useAuthStore();
+  const notificationStore = useNotificationStore();
+  const { confirmDelete, confirmAction } = useConfirm();
   const answersListKey = ref(Date.now());
   
   // Состояние компонента
@@ -296,6 +300,7 @@
   const error = ref(null);
   const isVoting = ref(false);
   const isDeletingQuestion = ref(false);
+  const isDeletingAnswer = ref(false);
   const isCreatingAnswer = ref(false);
   const answerFormError = ref(null);
   const answersSortOrder = ref('votes');
@@ -344,9 +349,18 @@
       router.push('/questions');
       return;
     }
-    
+
     await loadQuestion();
     await loadSimilarQuestions();
+  });
+
+  // Отслеживаем изменения в ответах для принудительного обновления
+  watch(() => question.value?.answers?.length, (newLength, oldLength) => {
+    if (newLength !== oldLength) {
+      console.log('🔄 Component: Answers count changed from', oldLength, 'to', newLength);
+      // Принудительно обновляем ключ для ререндера
+      answersListKey.value = Date.now();
+    }
   });
   
   // Методы
@@ -390,7 +404,7 @@
       await questionsStore.voteForQuestion(voteData.itemId, voteData.voteType);
     } catch (error) {
       console.error('Ошибка при голосовании за вопрос:', error);
-      alert('Ошибка при голосовании: ' + error.message);
+      notificationStore.error('Ошибка голосования', error.message || 'Не удалось проголосовать');
     } finally {
       isVoting.value = false;
     }
@@ -404,7 +418,7 @@
     answersListKey.value = Date.now();
   } catch (error) {
     console.error('Ошибка при голосовании за ответ:', error);
-    alert('Ошибка при голосовании: ' + error.message);
+    notificationStore.error('Ошибка голосования', error.message || 'Не удалось проголосовать');
   }
 }
 
@@ -416,21 +430,20 @@ watch(() => questionsStore.currentQuestion, () => {
   async function handleAcceptAnswer(answerId) {
     try {
       await questionsStore.acceptAnswer(answerId);
+      notificationStore.success('Ответ принят', 'Ответ отмечен как решение');
     } catch (error) {
       console.error('Ошибка при принятии ответа:', error);
-      alert('Ошибка при принятии ответа: ' + error.message);
+      notificationStore.error('Ошибка принятия', error.message || 'Не удалось принять ответ');
     }
   }
   
   async function handleUnacceptAnswer(answerId) {
-    const confirmed = confirm('Вы уверены, что хотите отменить принятие этого ответа?');
-    if (!confirmed) return;
-    
     try {
       await questionsStore.unacceptAnswer(answerId);
+      notificationStore.success('Принятие отменено', 'Ответ больше не отмечен как решение');
     } catch (error) {
       console.error('Ошибка при отмене принятия ответа:', error);
-      alert('Ошибка при отмене принятия ответа: ' + error.message);
+      notificationStore.error('Ошибка отмены', error.message || 'Не удалось отменить принятие ответа');
     }
   }
   
@@ -444,46 +457,28 @@ watch(() => questionsStore.currentQuestion, () => {
     // Создаем ответ через store
     const newAnswer = await questionsStore.createAnswer(answerData);
     console.log('Новый ответ создан:', newAnswer);
-    
+
     // Очищаем форму после успешного создания
     const answerForm = document.getElementById('answerBody');
     if (answerForm) {
       answerForm.value = '';
     }
-    
-    // Принудительно обновляем список ответов
+
+    // Перезагружаем вопрос из API для обеспечения актуальности данных
+    await loadQuestion();
+
+    // Ждем следующий тик для обновления DOM
+    await nextTick();
+
+    // Принудительно обновляем ключ для ререндера списка ответов
     answersListKey.value = Date.now();
-    
-    // Обновляем sortedAnswers для мгновенного отображения
-    // 1. Обновляем данные в функции
-    updateSortedAnswers();
-    
-    // 2. Если ответ не появился в sortedAnswers (возможно из-за задержки обновления в store)
-    // добавляем его напрямую в массив
-    if (!sortedAnswers.value.find(a => a.id === newAnswer.id)) {
-      console.log('Добавляем новый ответ напрямую в список');
-      sortedAnswers.value = [...sortedAnswers.value, newAnswer];
-      
-      // Пересортируем ответы
-      sortedAnswers.value.sort((a, b) => {
-        if (a.is_accepted && !b.is_accepted) return -1;
-        if (!a.is_accepted && b.is_accepted) return 1;
-        
-        switch (answersSortOrder.value) {
-          case 'votes':
-            return (b.votes_up - b.votes_down) - (a.votes_up - a.votes_down);
-          case 'date_new':
-            return new Date(b.created_at) - new Date(a.created_at);
-          case 'date_old':
-            return new Date(a.created_at) - new Date(b.created_at);
-          default:
-            return 0;
-        }
-      });
-    }
-    
-    // Отображаем сообщение об успехе
-    alert('Ваш ответ успешно добавлен!');
+
+    console.log('🎯 Component: Вопрос перезагружен, sortedAnswers должен обновиться');
+    console.log('📊 Component: Текущее количество ответов в sortedAnswers:', sortedAnswers.value.length);
+    console.log('📊 Component: Текущее количество ответов в question.answers:', question.value?.answers?.length || 0);
+
+    // Показываем уведомление об успехе
+    notificationStore.success('Ответ добавлен', 'Ваш ответ успешно опубликован!');
     
   } catch (error) {
     console.error('Ошибка при создании ответа:', error);
@@ -496,38 +491,44 @@ watch(() => questionsStore.currentQuestion, () => {
   async function handleUpdateAnswer(updateData) {
     try {
       await questionsStore.updateAnswer(updateData.id, updateData.data);
+      notificationStore.success('Ответ обновлен', 'Изменения сохранены');
     } catch (error) {
       console.error('Ошибка при обновлении ответа:', error);
-      alert('Ошибка при обновлении ответа: ' + error.message);
+      notificationStore.error('Ошибка обновления', error.message || 'Не удалось обновить ответ');
     }
   }
   
   async function handleDeleteAnswer(answerId) {
-    const confirmed = confirm('Вы уверены, что хотите удалить этот ответ? Это действие нельзя отменить.');
-    if (!confirmed) return;
-    
+    if (isDeletingAnswer.value) return;
+
+    isDeletingAnswer.value = true;
+
     try {
       await questionsStore.deleteAnswer(answerId);
+      notificationStore.success('Ответ удален', 'Ответ был успешно удален');
     } catch (error) {
       console.error('Ошибка при удалении ответа:', error);
-      alert('Ошибка при удалении ответа: ' + error.message);
+      notificationStore.error('Ошибка удаления', error.message || 'Не удалось удалить ответ');
+    } finally {
+      isDeletingAnswer.value = false;
     }
   }
   
   async function handleDeleteQuestion() {
     if (isDeletingQuestion.value) return;
-    
-    const confirmed = confirm('Вы уверены, что хотите удалить этот вопрос? Это действие нельзя отменить.');
+
+    const confirmed = await confirmDelete('Вы уверены, что хотите удалить этот вопрос? Это действие нельзя отменить.');
     if (!confirmed) return;
-    
+
     isDeletingQuestion.value = true;
-    
+
     try {
       await questionsStore.deleteQuestion(question.value.id);
+      notificationStore.success('Вопрос удален', 'Вопрос был успешно удален');
       router.push('/questions');
     } catch (error) {
       console.error('Ошибка при удалении вопроса:', error);
-      alert('Ошибка при удалении вопроса: ' + error.message);
+      notificationStore.error('Ошибка удаления', error.message || 'Не удалось удалить вопрос');
     } finally {
       isDeletingQuestion.value = false;
     }

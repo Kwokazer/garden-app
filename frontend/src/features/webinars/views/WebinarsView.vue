@@ -75,6 +75,8 @@
             :webinar="webinar"
             :is-loading="isLoadingHosted"
             @join="handleJoinWebinar"
+            @register="handleRegisterWebinar"
+            @unregister="handleUnregisterWebinar"
             @edit="handleEditWebinar"
             @delete="handleDeleteWebinar"
           />
@@ -101,6 +103,8 @@
             :webinar="webinar"
             :is-loading="isLoadingParticipating"
             @join="handleJoinWebinar"
+            @register="handleRegisterWebinar"
+            @unregister="handleUnregisterWebinar"
             @edit="handleEditWebinar"
             @delete="handleDeleteWebinar"
           />
@@ -115,6 +119,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWebinarsStore } from '../store/webinarsStore'
 import { useAuthStore } from '@/features/auth/store/authStore'
+import { useNotificationStore } from '@/stores/notificationStore'
+import { useConfirm } from '@/composables/useConfirm'
 import WebinarsList from '../components/WebinarsList.vue'
 import WebinarCard from '../components/WebinarCard.vue'
 
@@ -128,6 +134,8 @@ export default {
     const router = useRouter()
     const webinarsStore = useWebinarsStore()
     const authStore = useAuthStore()
+    const notificationStore = useNotificationStore()
+    const { confirmDelete, confirmAction } = useConfirm()
     
     const isLoadingHosted = ref(false)
     const isLoadingParticipating = ref(false)
@@ -214,7 +222,59 @@ export default {
         console.error('Error navigating to webinar:', error)
       }
     }
-    
+
+    const handleRegisterWebinar = async (webinarId) => {
+      try {
+        await webinarsStore.registerForWebinar(webinarId)
+        notificationStore.success(
+          'Регистрация успешна!',
+          'Вы успешно зарегистрированы на вебинар'
+        )
+        // Обновляем списки после регистрации
+        if (activeTab.value === 'hosted') {
+          await loadHostedWebinars()
+        } else if (activeTab.value === 'participating') {
+          await loadParticipatingWebinars()
+        }
+      } catch (error) {
+        console.error('Error registering for webinar:', error)
+        notificationStore.error(
+          'Ошибка регистрации',
+          error.message || 'Не удалось зарегистрироваться на вебинар'
+        )
+      }
+    }
+
+    const handleUnregisterWebinar = async (webinarId) => {
+      const confirmed = await confirmAction(
+        'Отменить регистрацию?',
+        'Вы уверены, что хотите отменить регистрацию на этот вебинар?',
+        'Отменить регистрацию'
+      )
+
+      if (confirmed) {
+        try {
+          await webinarsStore.unregisterFromWebinar(webinarId)
+          notificationStore.success(
+            'Регистрация отменена',
+            'Вы больше не зарегистрированы на этот вебинар'
+          )
+          // Обновляем списки после отмены регистрации
+          if (activeTab.value === 'hosted') {
+            await loadHostedWebinars()
+          } else if (activeTab.value === 'participating') {
+            await loadParticipatingWebinars()
+          }
+        } catch (error) {
+          console.error('Error unregistering from webinar:', error)
+          notificationStore.error(
+            'Ошибка отмены регистрации',
+            error.message || 'Не удалось отменить регистрацию'
+          )
+        }
+      }
+    }
+
     const handleEditWebinar = async (webinarId) => {
       try {
         await router.push(`/webinars/${webinarId}/edit`)
@@ -224,15 +284,27 @@ export default {
     }
     
     const handleDeleteWebinar = async (webinarId) => {
-      if (confirm('Вы уверены, что хотите удалить этот вебинар?')) {
+      const confirmed = await confirmDelete(
+        'Это действие нельзя будет отменить. Все данные вебинара будут удалены.'
+      )
+
+      if (confirmed) {
         try {
           await webinarsStore.deleteWebinar(webinarId)
+          notificationStore.success(
+            'Вебинар удален',
+            'Вебинар был успешно удален'
+          )
           // Обновляем список после удаления
           if (activeTab.value === 'hosted') {
             await loadHostedWebinars()
           }
         } catch (error) {
           console.error('Error deleting webinar:', error)
+          notificationStore.error(
+            'Ошибка удаления',
+            error.message || 'Не удалось удалить вебинар'
+          )
         }
       }
     }
@@ -267,6 +339,8 @@ export default {
       isLoadingHosted,
       isLoadingParticipating,
       handleJoinWebinar,
+      handleRegisterWebinar,
+      handleUnregisterWebinar,
       handleEditWebinar,
       handleDeleteWebinar
     }

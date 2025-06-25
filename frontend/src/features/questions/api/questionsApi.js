@@ -1,7 +1,7 @@
 // frontend/src/features/questions/api/questionsApi.js
 
 // Используем тот же BASE_API_URL как в других API модулях
-const BASE_API_URL = "/api/v1"
+const BASE_API_URL = "/api/v1";
 
 /**
  * Обрабатывает ответы от API (такая же функция как в authApi.js и plantsApi.js)
@@ -45,15 +45,15 @@ async function handleResponse(response) {
  * Получает токен доступа из localStorage
  */
 function getAuthHeaders() {
-  const token = localStorage.getItem('accessToken');
+  const token = localStorage.getItem("accessToken");
   const headers = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
-  
+
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
-  
+
   return headers;
 }
 
@@ -71,46 +71,46 @@ export const questionsApi = {
   async getQuestions(page = 1, per_page = 20, filters = {}) {
     try {
       const params = new URLSearchParams();
-      params.append('page', page);
-      params.append('per_page', per_page);
-      
+      params.append("page", page);
+      params.append("per_page", per_page);
+
       // Добавляем фильтры в запрос
       if (filters.search) {
-        params.append('search', filters.search);
+        params.append("search", filters.search);
       }
-      
+
       if (filters.plant_id) {
-        params.append('plant_id', filters.plant_id);
+        params.append("plant_id", filters.plant_id);
       }
-      
+
       if (filters.author_id) {
-        params.append('author_id', filters.author_id);
+        params.append("author_id", filters.author_id);
       }
-      
+
       if (filters.is_solved !== null && filters.is_solved !== undefined) {
-        params.append('is_solved', filters.is_solved);
+        params.append("is_solved", filters.is_solved);
       }
-      
+
       if (filters.sort_by) {
-        params.append('sort_by', filters.sort_by);
+        params.append("sort_by", filters.sort_by);
       }
-      
+
       if (filters.sort_order) {
-        params.append('sort_order', filters.sort_order);
+        params.append("sort_order", filters.sort_order);
       }
-      
+
       const url = `${BASE_API_URL}/questions?${params.toString()}`;
-      console.log('API: Fetching questions URL:', url);
-      
+      console.log("API: Fetching questions URL:", url);
+
       const response = await fetch(url, {
-        method: 'GET',
-        headers: getAuthHeaders()
+        method: "GET",
+        headers: getAuthHeaders(),
       });
-      
+
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error('API: Error fetching questions list:', error);
+      console.error("API: Error fetching questions list:", error);
       throw error;
     }
   },
@@ -126,38 +126,41 @@ export const questionsApi = {
   async getQuestionsByPlant(plantId, page = 1, per_page = 10, filters = {}) {
     try {
       const params = new URLSearchParams();
-      params.append('page', page);
-      params.append('per_page', per_page);
-      
+      params.append("page", page);
+      params.append("per_page", per_page);
+
       // Добавляем дополнительные фильтры
       if (filters.search) {
-        params.append('search', filters.search);
+        params.append("search", filters.search);
       }
-      
+
       if (filters.is_solved !== undefined) {
-        params.append('is_solved', filters.is_solved);
+        params.append("is_solved", filters.is_solved);
       }
-      
+
       if (filters.sort_by) {
-        params.append('sort_by', filters.sort_by);
+        params.append("sort_by", filters.sort_by);
       }
-      
+
       if (filters.sort_order) {
-        params.append('sort_order', filters.sort_order);
+        params.append("sort_order", filters.sort_order);
       }
-      
+
       const url = `${BASE_API_URL}/questions/by-plant/${plantId}?${params.toString()}`;
-      console.log('API: Fetching questions by plant URL:', url);
-      
+      console.log("API: Fetching questions by plant URL:", url);
+
       const response = await fetch(url, {
-        method: 'GET',
-        headers: getAuthHeaders()
+        method: "GET",
+        headers: getAuthHeaders(),
       });
-      
+
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error(`API: Error fetching questions for plant ${plantId}:`, error);
+      console.error(
+        `API: Error fetching questions for plant ${plantId}:`,
+        error
+      );
       throw error;
     }
   },
@@ -170,13 +173,13 @@ export const questionsApi = {
   async getQuestionById(questionId) {
     try {
       const url = `${BASE_API_URL}/questions/${questionId}`;
-      console.log('API: Fetching question details URL:', url);
-      
+      console.log("API: Fetching question details URL:", url);
+
       const response = await fetch(url, {
-        method: 'GET',
-        headers: getAuthHeaders()
+        method: "GET",
+        headers: getAuthHeaders(),
       });
-      
+
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
@@ -193,18 +196,18 @@ export const questionsApi = {
   async createQuestion(questionData) {
     try {
       const url = `${BASE_API_URL}/questions`;
-      console.log('API: Creating question URL:', url);
-      
+      console.log("API: Creating question URL:", url);
+
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: getAuthHeaders(),
-        body: JSON.stringify(questionData)
+        body: JSON.stringify(questionData),
       });
-      
+
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
-      console.error('API: Error creating question:', error);
+      console.error("API: Error creating question:", error);
       throw error;
     }
   },
@@ -218,14 +221,14 @@ export const questionsApi = {
   async updateQuestion(questionId, questionData) {
     try {
       const url = `${BASE_API_URL}/questions/${questionId}`;
-      console.log('API: Updating question URL:', url);
-      
+      console.log("API: Updating question URL:", url);
+
       const response = await fetch(url, {
-        method: 'PUT',
+        method: "PUT",
         headers: getAuthHeaders(),
-        body: JSON.stringify(questionData)
+        body: JSON.stringify(questionData),
       });
-      
+
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
@@ -242,15 +245,30 @@ export const questionsApi = {
   async deleteQuestion(questionId) {
     try {
       const url = `${BASE_API_URL}/questions/${questionId}`;
-      console.log('API: Deleting question URL:', url);
-      
+      console.log("API: Deleting question URL:", url);
+
       const response = await fetch(url, {
-        method: 'DELETE',
-        headers: getAuthHeaders()
+        method: "DELETE",
+        headers: getAuthHeaders(),
       });
-      
-      const result = await handleResponse(response);
-      return result.data;
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorData.detail || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      // DELETE запросы могут возвращать пустое тело, это нормально
+      console.log("API: Question deleted successfully");
+      return { success: true };
     } catch (error) {
       console.error(`API: Error deleting question ${questionId}:`, error);
       throw error;
@@ -265,52 +283,69 @@ export const questionsApi = {
    */
   async voteForQuestion(questionId, voteType) {
     try {
-      console.log('🗳️ API: Starting vote for question', { questionId, voteType });
-      
+      console.log("🗳️ API: Starting vote for question", {
+        questionId,
+        voteType,
+      });
+
       const url = `${BASE_API_URL}/questions/${questionId}/vote`;
       const payload = { vote_type: voteType };
-      
-      console.log('📤 API: Request URL:', url);
-      console.log('📤 API: Request payload:', payload);
-      
+
+      console.log("📤 API: Request URL:", url);
+      console.log("📤 API: Request payload:", payload);
+
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: getAuthHeaders(),
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
-      
-      console.log('📥 API: Response status:', response.status);
-      console.log('📥 API: Response ok:', response.ok);
-      
+
+      console.log("📥 API: Response status:", response.status);
+      console.log("📥 API: Response ok:", response.ok);
+
       if (!response.ok) {
         let errorText;
         try {
           errorText = await response.text();
-          console.error('❌ API: Error response text:', errorText);
+          console.error("❌ API: Error response text:", errorText);
         } catch (e) {
           errorText = response.statusText;
         }
-        
-        let errorMessage = 'Не удалось проголосовать за вопрос';
+
+        let errorMessage = "Не удалось проголосовать за вопрос";
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.detail || errorData.message || errorMessage;
         } catch (e) {
           errorMessage = errorText || errorMessage;
         }
-        
+
         throw new Error(errorMessage);
       }
-      
-      const result = await handleResponse(response);
-      console.log('✅ API: Vote success:', result.data);
-      
-      return result.data;
+
+      // POST запросы для голосования могут возвращать пустое тело или JSON
+      let data = { success: true };
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const text = await response.text();
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            console.warn(
+              "Failed to parse JSON response, using default success response"
+            );
+          }
+        }
+      }
+
+      console.log("✅ API: Vote success:", data);
+      return data;
     } catch (error) {
       console.error(`❌ API: Error voting for question ${questionId}:`, error);
       throw error;
     }
-  }
+  },
 };
 
 /**
@@ -325,18 +360,20 @@ export const answersApi = {
   async createAnswer(answerData) {
     try {
       const url = `${BASE_API_URL}/answers`;
-      console.log('API: Creating answer URL:', url);
-      
+      console.log("📤 API: Creating answer URL:", url);
+      console.log("📤 API: Answer data:", answerData);
+
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: getAuthHeaders(),
-        body: JSON.stringify(answerData)
+        body: JSON.stringify(answerData),
       });
-      
+
       const result = await handleResponse(response);
+      console.log("📥 API: Answer created, response:", result.data);
       return result.data;
     } catch (error) {
-      console.error('API: Error creating answer:', error);
+      console.error("❌ API: Error creating answer:", error);
       throw error;
     }
   },
@@ -350,14 +387,14 @@ export const answersApi = {
   async updateAnswer(answerId, answerData) {
     try {
       const url = `${BASE_API_URL}/answers/${answerId}`;
-      console.log('API: Updating answer URL:', url);
-      
+      console.log("API: Updating answer URL:", url);
+
       const response = await fetch(url, {
-        method: 'PUT',
+        method: "PUT",
         headers: getAuthHeaders(),
-        body: JSON.stringify(answerData)
+        body: JSON.stringify(answerData),
       });
-      
+
       const result = await handleResponse(response);
       return result.data;
     } catch (error) {
@@ -374,15 +411,30 @@ export const answersApi = {
   async deleteAnswer(answerId) {
     try {
       const url = `${BASE_API_URL}/answers/${answerId}`;
-      console.log('API: Deleting answer URL:', url);
-      
+      console.log("API: Deleting answer URL:", url);
+
       const response = await fetch(url, {
-        method: 'DELETE',
-        headers: getAuthHeaders()
+        method: "DELETE",
+        headers: getAuthHeaders(),
       });
-      
-      const result = await handleResponse(response);
-      return result.data;
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorData.detail || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      // DELETE запросы могут возвращать пустое тело, это нормально
+      console.log("API: Answer deleted successfully");
+      return { success: true };
     } catch (error) {
       console.error(`API: Error deleting answer ${answerId}:`, error);
       throw error;
@@ -397,15 +449,45 @@ export const answersApi = {
   async acceptAnswer(answerId) {
     try {
       const url = `${BASE_API_URL}/answers/${answerId}/accept`;
-      console.log('API: Accepting answer URL:', url);
-      
+      console.log("API: Accepting answer URL:", url);
+
       const response = await fetch(url, {
-        method: 'POST',
-        headers: getAuthHeaders()
+        method: "POST",
+        headers: getAuthHeaders(),
       });
-      
-      const result = await handleResponse(response);
-      return result.data;
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorData.detail || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      // POST запросы для принятия ответа могут возвращать пустое тело или JSON
+      let data = { success: true };
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const text = await response.text();
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            console.warn(
+              "Failed to parse JSON response, using default success response"
+            );
+          }
+        }
+      }
+
+      console.log("API: Answer accepted successfully");
+      return data;
     } catch (error) {
       console.error(`API: Error accepting answer ${answerId}:`, error);
       throw error;
@@ -420,15 +502,45 @@ export const answersApi = {
   async unacceptAnswer(answerId) {
     try {
       const url = `${BASE_API_URL}/answers/${answerId}/unaccept`;
-      console.log('API: Unaccepting answer URL:', url);
-      
+      console.log("API: Unaccepting answer URL:", url);
+
       const response = await fetch(url, {
-        method: 'POST',
-        headers: getAuthHeaders()
+        method: "POST",
+        headers: getAuthHeaders(),
       });
-      
-      const result = await handleResponse(response);
-      return result.data;
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorData.detail || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      // POST запросы для отмены принятия ответа могут возвращать пустое тело или JSON
+      let data = { success: true };
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const text = await response.text();
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            console.warn(
+              "Failed to parse JSON response, using default success response"
+            );
+          }
+        }
+      }
+
+      console.log("API: Answer unaccepted successfully");
+      return data;
     } catch (error) {
       console.error(`API: Error unaccepting answer ${answerId}:`, error);
       throw error;
@@ -443,50 +555,64 @@ export const answersApi = {
    */
   async voteForAnswer(answerId, voteType) {
     try {
-      console.log('🗳️ API: Starting vote for answer', { answerId, voteType });
-      
+      console.log("🗳️ API: Starting vote for answer", { answerId, voteType });
+
       const url = `${BASE_API_URL}/answers/${answerId}/vote`;
       const payload = { vote_type: voteType };
-      
-      console.log('📤 API: Request URL:', url);
-      console.log('📤 API: Request payload:', payload);
-      
+
+      console.log("📤 API: Request URL:", url);
+      console.log("📤 API: Request payload:", payload);
+
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: getAuthHeaders(),
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
-      
-      console.log('📥 API: Response status:', response.status);
-      console.log('📥 API: Response ok:', response.ok);
-      
+
+      console.log("📥 API: Response status:", response.status);
+      console.log("📥 API: Response ok:", response.ok);
+
       if (!response.ok) {
         let errorText;
         try {
           errorText = await response.text();
-          console.error('❌ API: Error response text:', errorText);
+          console.error("❌ API: Error response text:", errorText);
         } catch (e) {
           errorText = response.statusText;
         }
-        
-        let errorMessage = 'Не удалось проголосовать за ответ';
+
+        let errorMessage = "Не удалось проголосовать за ответ";
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.detail || errorData.message || errorMessage;
         } catch (e) {
           errorMessage = errorText || errorMessage;
         }
-        
+
         throw new Error(errorMessage);
       }
-      
-      const result = await handleResponse(response);
-      console.log('✅ API: Vote success:', result.data);
-      
-      return result.data;
+
+      // POST запросы для голосования могут возвращать пустое тело или JSON
+      let data = { success: true };
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const text = await response.text();
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            console.warn(
+              "Failed to parse JSON response, using default success response"
+            );
+          }
+        }
+      }
+
+      console.log("✅ API: Vote success:", data);
+      return data;
     } catch (error) {
       console.error(`❌ API: Error voting for answer ${answerId}:`, error);
       throw error;
     }
-  }
+  },
 };

@@ -9,14 +9,26 @@ async function handleResponse(response) {
   const contentType = response.headers.get("content-type");
   let data;
 
-  if (contentType && contentType.includes("application/json")) {
-    data = await response.json();
+  // Для статуса 204 (No Content) не пытаемся парсить тело ответа
+  if (response.status === 204) {
+    data = null;
+  } else if (contentType && contentType.includes("application/json")) {
+    const text = await response.text();
+    if (text) {
+      data = JSON.parse(text);
+    } else {
+      data = null;
+    }
   } else {
     const textData = await response.text();
-    try {
-      data = JSON.parse(textData);
-    } catch (e) {
-      data = { message: textData || response.statusText };
+    if (textData) {
+      try {
+        data = JSON.parse(textData);
+      } catch (e) {
+        data = { message: textData || response.statusText };
+      }
+    } else {
+      data = null;
     }
   }
 
@@ -236,6 +248,56 @@ export const webinarsApi = {
       return result.data;
     } catch (error) {
       console.error(`Error joining webinar with ID ${id}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Register for webinar (add to participants list)
+   * @param {string|number} id - Webinar ID
+   * @returns {Promise<Object>} - Server response with registration result
+   */
+  async registerForWebinar(id) {
+    try {
+      const url = `${BASE_API_URL}/webinars/${id}/register`;
+      console.log("Registering for webinar:", id);
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: getAuthHeaders(),
+      });
+
+      const result = await handleResponse(response);
+      return result.data;
+    } catch (error) {
+      console.error(`Error registering for webinar with ID ${id}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Unregister from webinar (remove from participants list)
+   * @param {string|number} id - Webinar ID
+   * @returns {Promise<void>} - Server response
+   */
+  async unregisterFromWebinar(id) {
+    try {
+      const url = `${BASE_API_URL}/webinars/${id}/unregister`;
+      console.log("Unregistering from webinar:", id);
+
+      const response = await fetch(url, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+
+      // Для DELETE запросов с 204 статусом не пытаемся парсить JSON
+      if (response.status === 204) {
+        return; // Успешно, но нет содержимого
+      }
+
+      await handleResponse(response);
+    } catch (error) {
+      console.error(`Error unregistering from webinar with ID ${id}:`, error);
       throw error;
     }
   },

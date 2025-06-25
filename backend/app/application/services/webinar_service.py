@@ -189,6 +189,60 @@ class WebinarService(BaseService[Webinar]):
             "page": page,
             "per_page": per_page
         }
+
+    async def get_participating_webinars(
+        self,
+        user: User,
+        page: int = 1,
+        per_page: int = 20
+    ) -> Dict[str, Any]:
+        """
+        Получает список вебинаров, в которых участвует пользователь
+
+        Args:
+            user: Пользователь
+            page: Номер страницы
+            per_page: Количество элементов на странице
+
+        Returns:
+            Dict с вебинарами и метаданными пагинации
+        """
+        # Запрос для получения вебинаров, где пользователь является участником
+        query = select(Webinar).options(
+            selectinload(Webinar.host),
+            selectinload(Webinar.plant_topic),
+            selectinload(Webinar.participants).selectinload(WebinarParticipant.user)
+        ).join(WebinarParticipant).where(
+            WebinarParticipant.user_id == user.id
+        )
+
+        # Сортировка по дате
+        query = query.order_by(Webinar.scheduled_at.desc())
+
+        # Подсчет общего количества
+        count_query = select(func.count(Webinar.id)).join(WebinarParticipant).where(
+            WebinarParticipant.user_id == user.id
+        )
+
+        total_result = await self.db.execute(count_query)
+        total_items = total_result.scalar()
+
+        # Пагинация
+        offset = (page - 1) * per_page
+        query = query.offset(offset).limit(per_page)
+
+        result = await self.db.execute(query)
+        webinars = result.scalars().all()
+
+        total_pages = (total_items + per_page - 1) // per_page
+
+        return {
+            "items": webinars,
+            "total_items": total_items,
+            "total_pages": total_pages,
+            "page": page,
+            "per_page": per_page
+        }
     
     async def update_webinar(
         self, 
@@ -326,7 +380,100 @@ class WebinarService(BaseService[Webinar]):
         if participant:
             await self.db.delete(participant)
             await self.db.commit()
-    
+
+    async def register_for_webinar(self, webinar_id: int, user: User) -> WebinarParticipant:
+        """
+        Регистрирует пользователя на вебинар (добавляет в список участников)
+
+        Args:
+            webinar_id: ID вебинара
+            user: Пользователь
+
+        Returns:
+            Запись об участнике
+
+        Raises:
+            NotFoundError: Если вебинар не найден
+            ValidationError: Если вебинар не в статусе SCHEDULED или достигнут лимит участников
+            AuthorizationError: Если доступ к приватному вебинару запрещен
+        """
+        # Получаем вебинар
+        webinar = await self.get_webinar(webinar_id)
+
+        # Проверяем статус вебинара - регистрация доступна только для запланированных вебинаров
+        if webinar.status != WebinarStatus.SCHEDULED:
+            raise ValidationError(f"Регистрация доступна только для запланированных вебинаров. Текущий статус: {webinar.status.value}")
+
+        # Проверяем доступность вебинара
+        if not webinar.is_public:
+            # Для приватных вебинаров проверяем, что пользователь уже приглашен или является ведущим
+            if user.id != webinar.host_id:
+                participant_query = select(WebinarParticipant).where(
+                    and_(
+                        WebinarParticipant.webinar_id == webinar_id,
+                        WebinarParticipant.user_id == user.id
+                    )
+                )
+                participant_result = await self.db.execute(participant_query)
+                existing_participant = participant_result.scalar_one_or_none()
+
+                if not existing_participant:
+                    raise AuthorizationError("Регистрация на приватный вебинар доступна только по приглашению")
+
+        # Проверяем лимит участников
+        if webinar.max_participants:
+            current_participants_count = len(webinar.participants)
+            if current_participants_count >= webinar.max_participants:
+                raise ValidationError(f"Достигнут максимальный лимит участников ({webinar.max_participants})")
+
+        # Добавляем участника (метод add_participant уже проверяет на дубликаты)
+        participant = await self.add_participant(webinar_id, user.id, ParticipantRole.PARTICIPANT)
+
+        self._log_info(f"User {user.id} registered for webinar {webinar_id}")
+        return participant
+
+    async def unregister_from_webinar(self, webinar_id: int, user: User) -> None:
+        """
+        Отменяет регистрацию пользователя на вебинар (удаляет из списка участников)
+
+        Args:
+            webinar_id: ID вебинара
+            user: Пользователь
+
+        Raises:
+            NotFoundError: Если вебинар не найден или пользователь не зарегистрирован
+            ValidationError: Если отмена регистрации недоступна
+        """
+        # Получаем вебинар
+        webinar = await self.get_webinar(webinar_id)
+
+        # Проверяем, что пользователь зарегистрирован на вебинар
+        participant_query = select(WebinarParticipant).where(
+            and_(
+                WebinarParticipant.webinar_id == webinar_id,
+                WebinarParticipant.user_id == user.id
+            )
+        )
+        participant_result = await self.db.execute(participant_query)
+        participant = participant_result.scalar_one_or_none()
+
+        if not participant:
+            raise NotFoundError("WebinarParticipant", f"user {user.id} in webinar {webinar_id}")
+
+        # Проверяем, что это не ведущий (ведущий не может отменить свою регистрацию)
+        if participant.role == ParticipantRole.HOST:
+            raise ValidationError("Ведущий не может отменить регистрацию на собственный вебинар")
+
+        # Проверяем статус вебинара - отмена регистрации доступна только для запланированных вебинаров
+        if webinar.status != WebinarStatus.SCHEDULED:
+            raise ValidationError(f"Отмена регистрации доступна только для запланированных вебинаров. Текущий статус: {webinar.status.value}")
+
+        # Удаляем участника
+        await self.db.delete(participant)
+        await self.db.commit()
+
+        self._log_info(f"User {user.id} unregistered from webinar {webinar_id}")
+
     async def join_webinar(self, webinar_id: int, user: User) -> Dict[str, Any]:
         """
         Присоединяет пользователя к вебинару и возвращает данные для подключения

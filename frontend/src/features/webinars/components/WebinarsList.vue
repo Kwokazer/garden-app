@@ -77,6 +77,8 @@
         :webinar="webinar"
         :is-loading="isLoading"
         @join="handleJoinWebinar"
+        @register="handleRegisterWebinar"
+        @unregister="handleUnregisterWebinar"
         @edit="handleEditWebinar"
         @delete="handleDeleteWebinar"
       />
@@ -113,6 +115,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWebinarsStore } from '../store/webinarsStore'
 import { useAuthStore } from '@/features/auth/store/authStore'
+import { useNotificationStore } from '@/stores/notificationStore'
+import { useConfirm } from '@/composables/useConfirm'
 import WebinarCard from './WebinarCard.vue'
 
 export default {
@@ -124,6 +128,8 @@ export default {
     const router = useRouter()
     const webinarsStore = useWebinarsStore()
     const authStore = useAuthStore()
+    const notificationStore = useNotificationStore()
+    const { confirmDelete, confirmAction } = useConfirm()
     
     const filters = ref({
       title: '',
@@ -189,7 +195,47 @@ export default {
         console.error('Error navigating to webinar:', error)
       }
     }
-    
+
+    const handleRegisterWebinar = async (webinarId) => {
+      try {
+        await webinarsStore.registerForWebinar(webinarId)
+        notificationStore.success(
+          'Регистрация успешна!',
+          'Вы успешно зарегистрированы на вебинар'
+        )
+      } catch (error) {
+        console.error('Error registering for webinar:', error)
+        notificationStore.error(
+          'Ошибка регистрации',
+          error.message || 'Не удалось зарегистрироваться на вебинар'
+        )
+      }
+    }
+
+    const handleUnregisterWebinar = async (webinarId) => {
+      const confirmed = await confirmAction(
+        'Отменить регистрацию?',
+        'Вы уверены, что хотите отменить регистрацию на этот вебинар?',
+        'Отменить регистрацию'
+      )
+
+      if (confirmed) {
+        try {
+          await webinarsStore.unregisterFromWebinar(webinarId)
+          notificationStore.success(
+            'Регистрация отменена',
+            'Вы больше не зарегистрированы на этот вебинар'
+          )
+        } catch (error) {
+          console.error('Error unregistering from webinar:', error)
+          notificationStore.error(
+            'Ошибка отмены регистрации',
+            error.message || 'Не удалось отменить регистрацию'
+          )
+        }
+      }
+    }
+
     const handleEditWebinar = async (webinarId) => {
       try {
         await router.push(`/webinars/${webinarId}/edit`)
@@ -199,11 +245,23 @@ export default {
     }
     
     const handleDeleteWebinar = async (webinarId) => {
-      if (confirm('Вы уверены, что хотите удалить этот вебинар?')) {
+      const confirmed = await confirmDelete(
+        'Это действие нельзя будет отменить. Все данные вебинара будут удалены.'
+      )
+
+      if (confirmed) {
         try {
           await webinarsStore.deleteWebinar(webinarId)
+          notificationStore.success(
+            'Вебинар удален',
+            'Вебинар был успешно удален'
+          )
         } catch (error) {
           console.error('Error deleting webinar:', error)
+          notificationStore.error(
+            'Ошибка удаления',
+            error.message || 'Не удалось удалить вебинар'
+          )
         }
       }
     }
@@ -226,6 +284,8 @@ export default {
       clearFilters,
       goToPage,
       handleJoinWebinar,
+      handleRegisterWebinar,
+      handleUnregisterWebinar,
       handleEditWebinar,
       handleDeleteWebinar
     }

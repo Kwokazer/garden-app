@@ -120,6 +120,8 @@
 import { ref, computed, watch, nextTick } from 'vue';
 import { useAuthStore } from '../../auth/store/authStore';
 import { useQuestionsStore } from '../store/questionsStore';
+import { useConfirm } from '@/composables/useConfirm';
+import { useNotificationStore } from '@/stores/notificationStore';
 import VotingButtons from './VotingButtons.vue';
 import AnswerForm from './AnswerForm.vue';
 
@@ -138,6 +140,8 @@ const emit = defineEmits(['vote', 'accept', 'unaccept', 'update', 'delete']);
 
 const authStore = useAuthStore();
 const questionsStore = useQuestionsStore();
+const { confirmDelete, confirmAction } = useConfirm();
+const notificationStore = useNotificationStore();
 
 // Состояние компонента
 const isVoting = ref(false);
@@ -223,7 +227,7 @@ async function handleVote(voteData) {
   
   // Проверяем, не пытается ли пользователь голосовать за свой ответ
   if (authStore.isLoggedIn && authStore.user && authStore.user.id === props.answer.author_id) {
-    alert('Вы не можете голосовать за свой собственный ответ');
+    notificationStore.warning('Нельзя голосовать', 'Вы не можете голосовать за свой собственный ответ');
     return;
   }
   
@@ -253,11 +257,11 @@ async function handleVote(voteData) {
     
   } catch (error) {
     console.error('❌ AnswerCard: Vote error:', error);
-    
+
     // Показываем пользователю ошибку
     const errorMessage = error.message || 'Ошибка при голосовании';
-    alert(`Ошибка при голосовании: ${errorMessage}`);
-    
+    notificationStore.error('Ошибка голосования', errorMessage);
+
   } finally {
     isVoting.value = false;
     console.log('🏁 AnswerCard: Vote process finished');
@@ -275,7 +279,7 @@ async function handleAccept() {
     emit('accept', props.answer.id);
   } catch (error) {
     console.error('Error accepting answer:', error);
-    alert('Ошибка при принятии ответа: ' + error.message);
+    notificationStore.error('Ошибка принятия', error.message || 'Не удалось принять ответ');
   } finally {
     isAccepting.value = false;
   }
@@ -284,18 +288,22 @@ async function handleAccept() {
 // Обработка отмены принятия ответа
 async function handleUnaccept() {
   if (isAccepting.value) return;
-  
-  const confirmed = confirm('Вы уверены, что хотите отменить принятие этого ответа?');
+
+  const confirmed = await confirmAction(
+    'Отменить принятие ответа?',
+    'Вы уверены, что хотите отменить принятие этого ответа?',
+    'Отменить принятие'
+  );
   if (!confirmed) return;
-  
+
   isAccepting.value = true;
-  
+
   try {
     console.log(`❌ AnswerCard: Unaccepting answer ${props.answer.id}`);
     emit('unaccept', props.answer.id);
   } catch (error) {
     console.error('Error unaccepting answer:', error);
-    alert('Ошибка при отмене принятия ответа: ' + error.message);
+    notificationStore.error('Ошибка отмены', error.message || 'Не удалось отменить принятие ответа');
   } finally {
     isAccepting.value = false;
   }
@@ -319,7 +327,7 @@ async function handleUpdate(formData) {
     isEditing.value = false;
   } catch (error) {
     console.error('Error updating answer:', error);
-    alert('Ошибка при обновлении ответа: ' + error.message);
+    notificationStore.error('Ошибка обновления', error.message || 'Не удалось обновить ответ');
   } finally {
     isUpdating.value = false;
   }
@@ -328,18 +336,18 @@ async function handleUpdate(formData) {
 // Удаление ответа
 async function handleDelete() {
   if (isDeleting.value) return;
-  
-  const confirmed = confirm('Вы уверены, что хотите удалить этот ответ? Это действие нельзя отменить.');
+
+  const confirmed = await confirmDelete('Вы уверены, что хотите удалить этот ответ? Это действие нельзя отменить.');
   if (!confirmed) return;
-  
+
   isDeleting.value = true;
-  
+
   try {
     console.log(`🗑️ AnswerCard: Deleting answer ${props.answer.id}`);
     emit('delete', props.answer.id);
   } catch (error) {
     console.error('Error deleting answer:', error);
-    alert('Ошибка при удалении ответа: ' + error.message);
+    notificationStore.error('Ошибка удаления', error.message || 'Не удалось удалить ответ');
   } finally {
     isDeleting.value = false;
   }
