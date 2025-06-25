@@ -109,43 +109,36 @@
         <div class="row gy-4">
           <div class="col-md-4">
             <h5 class="mb-3 text-success">Garden</h5>
-            <p class="text-muted mb-0">Приложение для садоводов, которое поможет вам выращивать растения и общаться с единомышленниками.</p>
+            <p class="text-white mb-0">Приложение для садоводов, которое поможет вам выращивать растения и общаться с единомышленниками.</p>
           </div>
           
           <div class="col-md-4">
             <h5 class="mb-3 text-success">Ссылки</h5>
             <ul class="list-unstyled">
-              <li><a href="#" class="link-light text-decoration-none mb-2 d-inline-block">О нас</a></li>
-              <li><a href="#" class="link-light text-decoration-none mb-2 d-inline-block">Блог</a></li>
-              <li><a href="#" class="link-light text-decoration-none mb-2 d-inline-block">Помощь</a></li>
-              <li><a href="#" class="link-light text-decoration-none d-inline-block">Контакты</a></li>
+              <li><router-link to="/plants" class="text-white text-decoration-none mb-2 d-inline-block footer-link">Растения</router-link></li>
+              <li><router-link to="/webinars" class="text-white text-decoration-none mb-2 d-inline-block footer-link">Вебинары</router-link></li>
+              <li><router-link to="/questions" class="text-white text-decoration-none mb-2 d-inline-block footer-link">Вопросы и ответы</router-link></li>
+              <li><router-link to="/dashboard" class="text-white text-decoration-none d-inline-block footer-link">Мой профиль</router-link></li>
             </ul>
           </div>
           
           <div class="col-md-4">
             <h5 class="mb-3 text-success">Контакты</h5>
-            <ul class="list-unstyled text-muted">
-              <li class="mb-2"><i class="bi bi-envelope me-2"></i> support@garden-app.com</li>
-              <li class="mb-2"><i class="bi bi-telephone me-2"></i> +7 (123) 456-7890</li>
-              <li><i class="bi bi-geo-alt me-2"></i> Москва, Россия</li>
+            <ul class="list-unstyled text-white">
+              <li class="mb-2"><i class="bi bi-envelope me-2 text-success"></i> support@garden-app.com</li>
+              <li class="mb-2"><i class="bi bi-telephone me-2 text-success"></i> +7 (123) 456-7890</li>
+              <li><i class="bi bi-geo-alt me-2 text-success"></i> Москва, Россия</li>
             </ul>
-            
-            <div class="social-links mt-3">
-              <a href="#" class="text-white me-3"><i class="bi bi-facebook"></i></a>
-              <a href="#" class="text-white me-3"><i class="bi bi-twitter"></i></a>
-              <a href="#" class="text-white me-3"><i class="bi bi-instagram"></i></a>
-              <a href="#" class="text-white"><i class="bi bi-telegram"></i></a>
-            </div>
           </div>
         </div>
         
         <hr class="my-4 bg-secondary">
         
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
-          <p class="mb-2 mb-md-0">© {{ currentYear }} Garden. Все права защищены.</p>
+          <p class="mb-2 mb-md-0 text-white">© {{ currentYear }} Garden. Все права защищены.</p>
           <div>
-            <a href="#" class="link-light text-decoration-none me-3">Условия использования</a>
-            <a href="#" class="link-light text-decoration-none">Политика конфиденциальности</a>
+            <span class="text-white-50 me-3">Условия использования</span>
+            <span class="text-white-50">Политика конфиденциальности</span>
           </div>
         </div>
       </div>
@@ -290,14 +283,16 @@ body {
   background-color: rgba(220, 53, 69, 0.1);
 }
 
-/* Социальные иконки */
-.social-links a {
-  font-size: 1.25rem;
-  transition: transform 0.3s;
-  display: inline-block;
+/* Стили для футера */
+.footer-link {
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
 }
 
-.social-links a:hover {
-  transform: translateY(-3px);
+.footer-link:hover {
+  opacity: 1;
+  color: var(--bs-primary) !important;
 }
+
+
 </style>

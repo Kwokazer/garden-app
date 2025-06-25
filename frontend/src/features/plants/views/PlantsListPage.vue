@@ -117,9 +117,9 @@
               <div class="row g-0">
                 <div class="col-md-3">
                   <div class="plant-list-img position-relative h-100">
-                    <img 
-                      v-if="plant.images && plant.images.length > 0" 
-                      :src="plant.images[0].url" 
+                    <img
+                      v-if="getPrimaryImage(plant)"
+                      :src="getPrimaryImage(plant).url"
                       :alt="plant.name"
                       class="list-img"
                       @error="handleImageError"
@@ -385,6 +385,17 @@
     return lightLabels[level] || level;
   }
   
+  // Get primary plant image
+  function getPrimaryImage(plant) {
+    if (!plant.images || plant.images.length === 0) {
+      return null;
+    }
+    // Ищем основное изображение
+    const primary = plant.images.find(img => img.is_primary);
+    // Если основного нет, берем первое
+    return primary || plant.images[0];
+  }
+
   // Handle image load errors
   function handleImageError(event) {
     // Replace broken image with placeholder

@@ -25,7 +25,7 @@
           </div>
           <div class="col-lg-6">
             <div class="hero-image-container text-center">
-              <img src="https://placehold.co/600x400?text=Garden+Plants" alt="Коллекция комнатных растений" class="img-fluid rounded" />
+              <img src="/images/hero-plants-collection.jpg" alt="Коллекция комнатных растений" class="img-fluid rounded shadow-lg" @error="handleImageError($event, 'hero')" />
             </div>
           </div>
         </div>
@@ -192,7 +192,7 @@
         <div class="row align-items-center">
           <div class="col-md-6 order-md-2 mb-4 mb-md-0">
             <div class="app-image text-center">
-              <img src="https://placehold.co/300x500?text=Mobile+App" alt="Мобильное приложение Garden" class="img-fluid">
+              <img src="/images/mobile-app-plants.jpg" alt="Мобильное приложение Garden" class="img-fluid rounded shadow" @error="handleImageError($event, 'app')">
             </div>
           </div>
           <div class="col-md-6 order-md-1">
@@ -217,11 +217,19 @@
               </li>
             </ul>
             <div class="d-flex flex-wrap">
-              <a href="#" class="app-store-badge me-2 mb-2">
-                <img src="https://placehold.co/140x40?text=App+Store" alt="Скачать в App Store" width="140">
+              <a href="#" class="btn btn-dark app-store-badge me-2 mb-2 d-flex align-items-center">
+                <i class="bi bi-apple me-2"></i>
+                <div class="text-start">
+                  <div class="small">Скачать в</div>
+                  <div class="fw-bold">App Store</div>
+                </div>
               </a>
-              <a href="#" class="google-play-badge mb-2">
-                <img src="https://placehold.co/140x40?text=Google+Play" alt="Скачать в Google Play" width="140">
+              <a href="#" class="btn btn-dark google-play-badge mb-2 d-flex align-items-center">
+                <i class="bi bi-google-play me-2"></i>
+                <div class="text-start">
+                  <div class="small">Доступно в</div>
+                  <div class="fw-bold">Google Play</div>
+                </div>
               </a>
             </div>
           </div>
@@ -296,6 +304,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '../features/auth/store/authStore';
 import { usePlantsStore } from '../features/plants/store/plantsStore';
 
+
 const authStore = useAuthStore();
 const plantsStore = usePlantsStore();
 
@@ -353,13 +362,13 @@ function handleImageError(event, imageType) {
   // Set appropriate placeholder based on image type
   switch (imageType) {
     case 'hero':
-      event.target.src = 'https://placehold.co/800x500?text=Garden+Plants';
+      event.target.src = '/images/hero-plants.jpg';
       break;
     case 'plant':
       event.target.src = 'https://placehold.co/300x200?text=Plant';
       break;
     case 'app':
-      event.target.src = 'https://placehold.co/300x600?text=Mobile+App';
+      event.target.src = mobileAppImage;
       break;
     case 'app-store':
     case 'google-play':
@@ -479,18 +488,29 @@ const recentQuestions = [
 
 .hero-image-container {
   position: relative;
+  overflow: hidden;
+}
+
+.hero-image-container img {
+  transition: transform 0.3s ease;
+  border-radius: 1rem !important;
+}
+
+.hero-image-container:hover img {
+  transform: scale(1.05);
 }
 
 .hero-image-container::before {
   content: '';
   position: absolute;
-  top: -10px;
-  right: -10px;
+  top: -15px;
+  right: -15px;
   width: 100%;
   height: 100%;
-  border: 2px dashed var(--bs-primary);
-  border-radius: 0.5rem;
+  border: 3px dashed var(--bs-primary);
+  border-radius: 1rem;
   z-index: -1;
+  opacity: 0.3;
 }
 
 .section-title {
@@ -587,14 +607,18 @@ const recentQuestions = [
   padding: 0.5rem 0;
 }
 
-.app-store-badge img,
-.google-play-badge img {
-  transition: transform 0.3s ease;
+.app-store-badge,
+.google-play-badge {
+  min-width: 140px;
+  padding: 0.5rem 1rem;
+  transition: all 0.3s ease;
+  border-radius: 8px;
 }
 
-.app-store-badge:hover img,
-.google-play-badge:hover img {
+.app-store-badge:hover,
+.google-play-badge:hover {
   transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Testimonials */

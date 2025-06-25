@@ -381,22 +381,22 @@ export default {
 }
 
 .btn--primary {
-  background-color: #4299e1;
+  background-color: #28a745;
   color: white;
 }
 
 .btn--primary:hover {
-  background-color: #3182ce;
+  background-color: #218838;
 }
 
 .btn--outline {
   background-color: transparent;
-  color: #4299e1;
-  border: 1px solid #4299e1;
+  color: #28a745;
+  border: 1px solid #28a745;
 }
 
 .btn--outline:hover {
-  background-color: #4299e1;
+  background-color: #28a745;
   color: white;
 }
 

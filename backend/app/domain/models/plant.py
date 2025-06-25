@@ -153,7 +153,8 @@ class Plant(BaseModel, TimestampedModel):
         "ClimateZone", secondary=plant_to_climate_zone, back_populates="plants"
     )
     images: Mapped[List["PlantImage"]] = relationship(
-        "PlantImage", back_populates="plant", cascade="all, delete-orphan"
+        "PlantImage", back_populates="plant", cascade="all, delete-orphan",
+        order_by="desc(PlantImage.is_primary), PlantImage.id"
     )
     tags: Mapped[List["Tag"]] = relationship(
         "Tag", secondary="plant_tag", back_populates="plants"

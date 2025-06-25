@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: Optional[str] = None
     REDIS_SSL: bool = False
 
+    # Cache settings
+    DISABLE_CACHE: bool = False
+
     # Celery
     CELERY_BROKER_URL: str = "redis://localhost:6379/1"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"

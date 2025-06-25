@@ -498,12 +498,12 @@ export default {
 }
 
 .btn--primary {
-  background-color: #4299e1;
+  background-color: #28a745;
   color: white;
 }
 
 .btn--primary:hover:not(:disabled) {
-  background-color: #3182ce;
+  background-color: #218838;
 }
 
 .btn--secondary {

@@ -3,9 +3,9 @@
     <div class="card plant-card h-100 border-0 shadow-sm">
       <!-- Plant image -->
       <div class="card-img-top-wrapper">
-        <img v-if="plant.images && plant.images.length > 0" 
-             :src="plant.images[0].url" 
-             :alt="plant.images[0].alt || plant.name"
+        <img v-if="primaryImage"
+             :src="primaryImage.url"
+             :alt="primaryImage.alt || plant.name"
              class="card-img-top"
              @error="handleImageError">
         <div v-else class="card-img-placeholder d-flex align-items-center justify-content-center bg-light text-muted">
@@ -75,6 +75,17 @@
     }
   });
   
+  // Get primary plant image
+  const primaryImage = computed(() => {
+    if (!props.plant.images || props.plant.images.length === 0) {
+      return null;
+    }
+    // Ищем основное изображение
+    const primary = props.plant.images.find(img => img.is_primary);
+    // Если основного нет, берем первое
+    return primary || props.plant.images[0];
+  });
+
   // Get primary plant category
   const primaryCategory = computed(() => {
     if (props.plant.category) {

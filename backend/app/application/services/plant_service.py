@@ -15,6 +15,7 @@ from app.domain.schemas.plant_image import PlantImageCreate, PlantImageResponse
 from app.infrastructure.database.repositories import (
     PlantRepository, PlantCategoryRepository, ClimateZoneRepository)
 from app.infrastructure.cache.plant_cache import PlantCacheService
+from app.core.config import settings
 
 class PlantService(BaseService):
     """
@@ -39,13 +40,13 @@ class PlantService(BaseService):
         """
         Получить список растений с применением фильтров и пагинации
         """
-        # Пытаемся получить данные из кэша, если кэш доступен
-        if self.plant_cache:
+        # Пытаемся получить данные из кэша, если кэш доступен и не отключен
+        if self.plant_cache and not settings.DISABLE_CACHE:
             # Преобразуем фильтры в словарь для формирования ключа кэша
             filters_dict = None
             if filters:
                 filters_dict = filters.model_dump(exclude_unset=True)
-                
+
             cached_result = await self.plant_cache.get_plants_list(skip, limit, filters_dict)
             if cached_result:
                 self._log_info(f"Получен список растений из кэша с пагинацией skip={skip}, limit={limit}")
@@ -93,6 +94,8 @@ class PlantService(BaseService):
                     plant_dict['climate_zones'] = []
                 
                 if plant.images:
+                    # Сортируем изображения: основные первыми
+                    sorted_images = sorted(plant.images, key=lambda img: (not img.is_primary, img.id))
                     plant_dict['images'] = [
                         {
                             'id': img.id,
@@ -102,7 +105,7 @@ class PlantService(BaseService):
                             'description': img.description,
                             'thumbnail_url': img.thumbnail_url,
                             'is_primary': img.is_primary
-                        } for img in plant.images
+                        } for img in sorted_images
                     ]
                 else:
                     plant_dict['images'] = []
@@ -128,8 +131,8 @@ class PlantService(BaseService):
                 per_page=limit     # Изменено с size
             )
             
-            # Кэшируем результат, если кэш доступен
-            if self.plant_cache:
+            # Кэшируем результат, если кэш доступен и не отключен
+            if self.plant_cache and not settings.DISABLE_CACHE:
                 await self.plant_cache.set_plants_list(result, skip, limit, filters_dict)
                 self._log_info(f"Сохранен список растений в кэш с пагинацией skip={skip}, limit={limit}")
             
@@ -143,8 +146,8 @@ class PlantService(BaseService):
         Получить растение по ID
         """
         try:
-            # Пытаемся получить данные из кэша, если кэш доступен
-            if self.plant_cache:
+            # Пытаемся получить данные из кэша, если кэш доступен и не отключен
+            if self.plant_cache and not settings.DISABLE_CACHE:
                 cached_plant = await self.plant_cache.get_plant_detail(plant_id)
                 if cached_plant:
                     self._log_info(f"Получено растение из кэша с ID {plant_id}")
@@ -187,6 +190,8 @@ class PlantService(BaseService):
                 plant_dict['climate_zones'] = []
             
             if plant.images:
+                # Сортируем изображения: основные первыми
+                sorted_images = sorted(plant.images, key=lambda img: (not img.is_primary, img.id))
                 plant_dict['images'] = [
                     {
                         'id': img.id,
@@ -196,7 +201,7 @@ class PlantService(BaseService):
                         'description': img.description,
                         'thumbnail_url': img.thumbnail_url,
                         'is_primary': img.is_primary
-                    } for img in plant.images
+                    } for img in sorted_images
                 ]
             else:
                 plant_dict['images'] = []
@@ -211,8 +216,8 @@ class PlantService(BaseService):
             # Создаем объект PlantResponse
             result = PlantResponse.model_validate(plant_dict)
             
-            # Кэшируем результат, если кэш доступен
-            if self.plant_cache:
+            # Кэшируем результат, если кэш доступен и не отключен
+            if self.plant_cache and not settings.DISABLE_CACHE:
                 await self.plant_cache.set_plant_detail(result)
                 self._log_info(f"Сохранено растение в кэш с ID {plant_id}")
             

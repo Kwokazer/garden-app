@@ -11,6 +11,7 @@ from app.domain.models.plant_category import PlantCategory, plant_to_category as
 from app.domain.models.climate_zone import ClimateZone, plant_to_climate_zone as plant_climate_zone
 from app.domain.schemas.plant import PlantFilterParams, PlantResponse, PlantListResponse
 from app.infrastructure.cache.plant_cache import PlantCacheService  # Изменено с PlantCache
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ class PlantSearchService(BaseService):
             filters_dict = filters.model_dump(exclude_unset=True)
             
         # Если включено использование кэша и есть кэш-сервис, пробуем получить из кэша
-        if use_cache and self.plant_cache and not query:  # Не кэшируем результаты поиска
+        if use_cache and self.plant_cache and not query and not settings.DISABLE_CACHE:  # Не кэшируем результаты поиска
             cached_result = await self.plant_cache.get_plants_list(skip, limit, filters_dict)
             if cached_result:
                 self._log_info(f"Данные получены из кэша для skip={skip}, limit={limit}, filters={filters_dict}")
@@ -77,7 +78,7 @@ class PlantSearchService(BaseService):
         )
         
         # Если кэширование включено и нет поискового запроса, сохраняем результат в кэш
-        if use_cache and self.plant_cache and not query:
+        if use_cache and self.plant_cache and not query and not settings.DISABLE_CACHE:
             await self.plant_cache.set_plants_list(result, skip, limit, filters_dict)
             self._log_info(f"Данные сохранены в кэш для skip={skip}, limit={limit}, filters={filters_dict}")
         
