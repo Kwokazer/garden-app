@@ -125,6 +125,9 @@ export default {
       const user = authStore.getUser
       if (!user) return false
 
+      // Хост не может регистрироваться на свой собственный вебинар
+      if (user.id === props.webinar.host_id) return false
+
       // Показываем кнопку регистрации только для запланированных вебинаров
       return props.webinar.status === 'SCHEDULED'
     })
@@ -132,6 +135,9 @@ export default {
     const canUnregister = computed(() => {
       const user = authStore.getUser
       if (!user) return false
+
+      // Хост не может отменить регистрацию на свой собственный вебинар
+      if (user.id === props.webinar.host_id) return false
 
       // Показываем кнопку отмены регистрации только для запланированных вебинаров
       return props.webinar.status === 'SCHEDULED'

@@ -75,6 +75,30 @@
           {{ webinar.status === 'LIVE' ? 'Присоединиться к вебинару' : 'Подключиться к вебинару' }}
         </button>
 
+        <!-- Кнопка регистрации для незарегистрированных пользователей -->
+        <button
+          v-if="canRegister && !isUserRegistered"
+          @click="registerForWebinar"
+          :disabled="isRegistering"
+          class="btn btn--success btn--large"
+        >
+          <span v-if="isRegistering" class="loading-spinner"></span>
+          <i class="bi bi-person-plus me-2"></i>
+          Зарегистрироваться
+        </button>
+
+        <!-- Кнопка отмены регистрации для зарегистрированных пользователей -->
+        <button
+          v-if="canUnregister && isUserRegistered"
+          @click="unregisterFromWebinar"
+          :disabled="isUnregistering"
+          class="btn btn--warning btn--large"
+        >
+          <span v-if="isUnregistering" class="loading-spinner"></span>
+          <i class="bi bi-person-dash me-2"></i>
+          Отменить регистрацию
+        </button>
+
         <router-link
           v-if="canEdit"
           :to="`/webinars/${webinar.id}/edit`"
@@ -145,6 +169,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useWebinarsStore } from '../store/webinarsStore'
 import { useAuthStore } from '@/features/auth/store/authStore'
+import { useConfirm } from '@/composables/useConfirm'
+import { useNotificationStore } from '@/stores/notificationStore'
 
 export default {
   name: 'WebinarView',
@@ -153,10 +179,14 @@ export default {
     const router = useRouter()
     const webinarsStore = useWebinarsStore()
     const authStore = useAuthStore()
+    const { confirmAction, confirmDelete } = useConfirm()
+    const notificationStore = useNotificationStore()
     
     const isLoading = ref(true)
     const error = ref(null)
     const isJoining = ref(false)
+    const isRegistering = ref(false)
+    const isUnregistering = ref(false)
     
     // Computed properties
     const webinar = computed(() => webinarsStore.getCurrentWebinar)
@@ -177,6 +207,33 @@ export default {
       if (!webinar.value || !user.value) return false
       return user.value.id === webinar.value.host_id ||
              user.value.roles?.some(role => role === 'admin')
+    })
+
+    const canRegister = computed(() => {
+      if (!webinar.value || !user.value) return false
+
+      // Хост не может регистрироваться на свой собственный вебинар
+      if (user.value.id === webinar.value.host_id) return false
+
+      // Показываем кнопку регистрации только для запланированных вебинаров
+      return webinar.value.status === 'SCHEDULED'
+    })
+
+    const canUnregister = computed(() => {
+      if (!webinar.value || !user.value) return false
+
+      // Хост не может отменить регистрацию на свой собственный вебинар
+      if (user.value.id === webinar.value.host_id) return false
+
+      // Показываем кнопку отмены регистрации только для запланированных вебинаров
+      return webinar.value.status === 'SCHEDULED'
+    })
+
+    const isUserRegistered = computed(() => {
+      if (!webinar.value || !user.value || !webinar.value.participants) return false
+
+      // Проверяем, зарегистрирован ли пользователь на вебинар
+      return webinar.value.participants.some(participant => participant.user.id === user.value.id)
     })
     
     // Methods
@@ -211,20 +268,21 @@ export default {
 
         // Проверяем, можно ли подключиться
         if (!connectionData.can_join) {
-          alert(connectionData.message || 'Невозможно подключиться к вебинару')
+          notificationStore.warning('Невозможно подключиться', connectionData.message || 'Невозможно подключиться к вебинару')
           return
         }
 
         // Открываем Jitsi в новой вкладке
         if (connectionData.jitsi_url) {
           window.open(connectionData.jitsi_url, '_blank')
+          notificationStore.success('Подключение к вебинару', 'Вебинар открыт в новой вкладке')
         } else {
-          alert('Не удалось получить ссылку на вебинар')
+          notificationStore.error('Ошибка подключения', 'Не удалось получить ссылку на вебинар')
         }
 
       } catch (err) {
         console.error('Error joining webinar:', err)
-        alert(err.message || 'Ошибка присоединения к вебинару')
+        notificationStore.error('Ошибка подключения', err.message || 'Ошибка присоединения к вебинару')
       } finally {
         isJoining.value = false
       }
@@ -232,14 +290,58 @@ export default {
     
     const deleteWebinar = async () => {
       if (!webinar.value) return
-      
-      if (confirm('Вы уверены, что хотите удалить этот вебинар?')) {
+
+      const confirmed = await confirmDelete('Вы уверены, что хотите удалить этот вебинар? Это действие нельзя будет отменить.')
+      if (confirmed) {
         try {
           await webinarsStore.deleteWebinar(webinar.value.id)
+          notificationStore.success('Вебинар удален', 'Вебинар был успешно удален')
           router.push('/webinars')
         } catch (err) {
           console.error('Error deleting webinar:', err)
-          alert(err.message || 'Ошибка удаления вебинара')
+          notificationStore.error('Ошибка удаления', err.message || 'Не удалось удалить вебинар')
+        }
+      }
+    }
+
+    const registerForWebinar = async () => {
+      if (!webinar.value || !user.value) return
+
+      isRegistering.value = true
+      try {
+        await webinarsStore.registerForWebinar(webinar.value.id)
+        // Перезагружаем данные вебинара для обновления списка участников
+        await loadWebinar()
+        notificationStore.success('Регистрация успешна', 'Вы успешно зарегистрированы на вебинар')
+      } catch (err) {
+        console.error('❌ Ошибка регистрации на вебинар:', err)
+        notificationStore.error('Ошибка регистрации', err.message || 'Не удалось зарегистрироваться на вебинар')
+      } finally {
+        isRegistering.value = false
+      }
+    }
+
+    const unregisterFromWebinar = async () => {
+      if (!webinar.value || !user.value) return
+
+      const confirmed = await confirmAction(
+        'Отменить регистрацию?',
+        'Вы уверены, что хотите отменить регистрацию на этот вебинар?',
+        'Отменить регистрацию'
+      )
+
+      if (confirmed) {
+        isUnregistering.value = true
+        try {
+          await webinarsStore.unregisterFromWebinar(webinar.value.id)
+          // Перезагружаем данные вебинара для обновления списка участников
+          await loadWebinar()
+          notificationStore.success('Регистрация отменена', 'Ваша регистрация на вебинар была отменена')
+        } catch (err) {
+          console.error('❌ Ошибка отмены регистрации:', err)
+          notificationStore.error('Ошибка отмены регистрации', err.message || 'Не удалось отменить регистрацию')
+        } finally {
+          isUnregistering.value = false
         }
       }
     }
@@ -291,10 +393,17 @@ export default {
       error,
       webinar,
       isJoining,
+      isRegistering,
+      isUnregistering,
       canJoin,
+      canRegister,
+      canUnregister,
       canEdit,
       canDelete,
+      isUserRegistered,
       joinWebinar,
+      registerForWebinar,
+      unregisterFromWebinar,
       deleteWebinar,
       getStatusText,
       getRoleText,
@@ -522,6 +631,24 @@ export default {
 
 .btn--danger:hover {
   background-color: #feb2b2;
+}
+
+.btn--success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn--success:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.btn--warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.btn--warning:hover:not(:disabled) {
+  background-color: #e0a800;
 }
 
 .loading-spinner {

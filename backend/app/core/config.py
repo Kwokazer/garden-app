@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "Garden API"
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = False
-    ENVIRONMENT: str = "production"  # development, testing, production
+    ENVIRONMENT: str = "development"  # development, testing, production
     API_V1_STR: str = "/api/v1"
     
     # URL фронтенда для формирования ссылок в письмах
